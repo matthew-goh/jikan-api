@@ -1,7 +1,8 @@
 package baseSpec
 
 import akka.stream.Materializer
-//import connectors.GithubConnector
+import connectors.JikanConnector
+import services.JikanService
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -13,9 +14,6 @@ import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
 import play.api.mvc.{AnyContentAsEmpty, MessagesControllerComponents}
-//import repositories.DataRepository
-//import services.{GithubService, RepositoryService}
-//import shared.TestRequest
 
 import scala.concurrent.ExecutionContext
 
@@ -31,8 +29,8 @@ trait BaseSpecWithApplication extends BaseSpec with GuiceOneServerPerSuite with 
   lazy val component: MessagesControllerComponents = injector.instanceOf[MessagesControllerComponents]
 //  lazy val repoService: RepositoryService = injector.instanceOf[RepositoryService]
 //  lazy val repository: DataRepository = injector.instanceOf[DataRepository]
-//  lazy val service: GithubService = injector.instanceOf[GithubService]
-//  lazy val connector: GithubConnector = injector.instanceOf[GithubConnector]
+  lazy val service: JikanService = injector.instanceOf[JikanService]
+  lazy val connector: JikanConnector = injector.instanceOf[JikanConnector]
 
   implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   lazy val injector: Injector = app.injector

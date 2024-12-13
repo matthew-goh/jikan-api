@@ -1,0 +1,33 @@
+package connectors
+
+import cats.data.EitherT
+import models.APIError
+import play.api.libs.json._
+import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
+
+import javax.inject._
+import scala.concurrent.{ExecutionContext, Future}
+
+class JikanConnector @Inject()(ws: WSClient) {
+  def get[Response](url: String)(implicit rds: OFormat[Response], ec: ExecutionContext): EitherT[Future, APIError, Response] = {
+    val request: WSRequest = ws.url(url)
+    val response = request.get()
+
+    // EitherT allows us to return either Future[APIError] or Future[Response]
+    EitherT {
+      response.map {
+          result => {
+            val resultJson: JsValue = Json.parse(result.body)
+            val message: Option[String] = (resultJson \ "message").asOpt[String]
+            resultJson.validate[Response] match {
+              case JsSuccess(responseItem, _) => Right(responseItem)
+              case JsError(_) => Left(APIError.BadAPIResponse(result.status, message.getOrElse("Unknown error")))
+            }
+          }
+        }
+        .recover { //case _: WSResponse =>
+          case _ => Left(APIError.BadAPIResponse(500, "Could not connect"))
+        }
+    }
+  }
+}
