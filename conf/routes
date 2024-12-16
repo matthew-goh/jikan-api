@@ -3,7 +3,7 @@
 GET     /                           controllers.HomeController.index()
 
 GET     /searchanime/:search/:page/*queryExt    controllers.ApplicationController.getAnimeResults(search: String, page: Int, queryExt: String)
-#POST     /searchanime       controllers.ApplicationController.searchAnime()
+POST     /searchanime       controllers.ApplicationController.searchAnime()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
@@ -11,4 +11,4 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 # invalid routes
 GET     /*path     controllers.ApplicationController.invalidRoute(path: String)
 
-# localhost:9000/searchanime/shoshimin/1/&status=&min_score=&max_score=&order_by=
+# localhost:9000/searchanime/shoshimin/1/&status=&min_score=&max_score=&order_by=&sort=

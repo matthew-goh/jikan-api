@@ -8,16 +8,41 @@
     <p>Have a look at the documentation for the API <a href="https://docs.api.jikan.moe/" target="_blank">here</a></p>
   </div>
 
-@*  <div class="container mb-5">*@
-@*    <p><a href="@routes.ApplicationController.listAllUsers()"> Show all users in database </a></p>*@
-@*    <br>*@
-@*    <h3>Search for a GitHub user</h3>*@
-@*    @form(action = routes.ApplicationController.searchUser()) {*@
-@*      @CSRF.formField*@
-@*      <div>*@
-@*        <input type="text" name="username" placeholder="Enter username" required>*@
-@*        <button type="submit">Search</button>*@
-@*      </div>*@
-@*    }*@
-@*  </div>*@
+  <div class="container mb-5">
+    <h3>Search Anime</h3>
+    @form(action = routes.ApplicationController.searchAnime()) {
+      @CSRF.formField
+      <div class="form-div">
+        <input type="text" name="search" placeholder="Enter search term" size="40" required>
+      </div>
+      <div class="form-div">
+        Optional parameters: <br>
+        <select name="status">
+          <option value="" selected>Status</option>
+          <option value="airing">Airing</option>
+          <option value="complete">Complete</option>
+          <option value="upcoming">Upcoming</option>
+        </select>
+        <input type="number" name="minScore" placeholder="Min score" min="0" max="10" step="0.01">
+        <input type="number" name="maxScore" placeholder="Max score" min="0" max="10" step="0.01">
+        <select name="orderBy">
+          <option value="" selected>Order by...</option>
+          <option value="title">Title</option>
+          <option value="score">Average score</option>
+          <option value="scored_by">No. of scores given</option>
+          <option value="episodes">No. of episodes</option>
+          <option value="start_date">Start date</option>
+          <option value="end_date">End date</option>
+        </select>
+        <select name="sort">
+          <option value="" selected>Sort order</option>
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit">Search</button>
+      </div>
+    }
+  </div>
 }

@@ -7,7 +7,7 @@
 
   <p><a href="@routes.HomeController.index()"> Back </a></p>
 
-  <h2>Search results</h2>
+  <h2>Search results: @search</h2>
 
   @if(animeResults.isEmpty) {
     <p>No search results.</p>
@@ -28,7 +28,7 @@
         <p><b>@anime.title</b>
           @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
         </p>
-        <p>@{anime.`type`}, @anime.year.getOrElse("Year not available")</p>
+        <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}</p>
         <p>@if(anime.numEpisodes.nonEmpty){
           Episodes: @anime.numEpisodes
         } else {
@@ -37,7 +37,7 @@
         </p>
         <p>Status: @anime.status</p>
         @if(anime.avgScore.nonEmpty){
-          <p>Average score: @anime.avgScore from @anime.scoredBy reviews</p>
+          <p>Average score: @anime.avgScore from @anime.scoredBy users</p>
         }
       </li>
 @*      <form action="@routes.ApplicationController.addFromSearch()" method="POST" class="button-form">*@
