@@ -29,7 +29,7 @@ class JikanConnector @Inject()(ws: WSClient) {
                   }
                   case 400 => {
                     val messages: Option[String] = (resultJson \ "messages").asOpt[Map[String, Seq[String]]].map {
-                      messageMap => messageMap.values.toList.mkString(" ")
+                      messageMap => messageMap.values.flatten.mkString(" ")
                     }
                     Left(APIError.BadAPIResponse(400, messages.getOrElse("Unknown error")))
                   }

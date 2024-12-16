@@ -2,7 +2,7 @@ package services
 
 import cats.data.EitherT
 import connectors.JikanConnector
-import models.{APIError, AnimeData, AnimeModel, AnimeSearchParams, AnimeSearchResult, Genre}
+import models._
 import play.api.libs.json._
 
 import java.util.Base64
@@ -11,7 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
 class JikanService @Inject()(connector: JikanConnector) {
-  def getAnimeSearchResults(search: String, page: Int, queryExt: String, urlOverride: Option[String] = None)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeSearchResult] = {
+  def getAnimeSearchResults(search: String, page: String, queryExt: String, urlOverride: Option[String] = None)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeSearchResult] = {
     connector.get[AnimeSearchResult](urlOverride.getOrElse(s"https://api.jikan.moe/v4/anime?q=$search&page=$page&$queryExt"))
   }
 
@@ -41,5 +41,9 @@ class JikanService @Inject()(connector: JikanConnector) {
       synopsis = animeData.synopsis,
       genres = animeData.genres.map(genre => genre.name),
       year = animeData.year)
+  }
+
+  def getAnimeById(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeIdSearchResult] = {
+    connector.get[AnimeIdSearchResult](s"https://api.jikan.moe/v4/anime/$id")
   }
 }
