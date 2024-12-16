@@ -14,10 +14,10 @@
 
   <div class="container mb-5">
     <h2>User details</h2>
-    <p>Username: @user.username</p>
-    <p>Location: @user.location.getOrElse("Not provided")</p>
-    <p>Date joined: @{new SimpleDateFormat("dd MMM yyyy").format(user.joined)}</p>
-    <p>Last online: @{user.last_online.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
+    <p><b>Username</b>: @user.username</p>
+    <p><b>Location</b>: @user.location.getOrElse("Not provided")</p>
+    <p><b>Date joined</b>: @{new SimpleDateFormat("dd MMM yyyy").format(user.joined)}</p>
+    <p><b>Last online</b>: @{user.last_online.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
     <br>
 
     <h3>Anime Statistics</h3>

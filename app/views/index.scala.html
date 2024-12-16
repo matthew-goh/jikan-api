@@ -9,6 +9,17 @@
   </div>
 
   <div class="container mb-5">
+    <h3>Search for a MAL User</h3>
+    @form(action = routes.ApplicationController.searchUser()) {
+      @CSRF.formField
+      <div>
+        <input type="text" name="username" placeholder="Enter username" size="30" required>
+        <button type="submit">Search</button>
+      </div>
+    }
+  </div>
+
+  <div class="container mb-5">
     <h3>Search Anime</h3>
     @form(action = routes.ApplicationController.searchAnime()) {
       @CSRF.formField

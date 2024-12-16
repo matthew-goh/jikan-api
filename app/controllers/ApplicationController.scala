@@ -44,7 +44,7 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
         val maxScore: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("maxScore").flatMap(_.headOption))
         val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
         val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sort").flatMap(_.headOption))
-        val queryExt = s"status=${status.getOrElse("")}&min_score=${minScore.getOrElse("")}&max_score=${maxScore.getOrElse("")}&order_by=${orderBy.getOrElse("")}&sort=${sortOrder.getOrElse()}"
+        val queryExt = s"status=${status.getOrElse("")}&min_score=${minScore.getOrElse("")}&max_score=${maxScore.getOrElse("")}&order_by=${orderBy.getOrElse("")}&sort=${sortOrder.getOrElse("")}"
         Future.successful(Redirect(routes.ApplicationController.getAnimeResults(search = search, page = "1", queryExt = queryExt)))
       }
     }
@@ -64,6 +64,16 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
     service.getUserProfile(username).value.map{
       case Right(userResult) => Ok(views.html.userdetails(userResult.data))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def searchUser(): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    println(request.body.asFormUrlEncoded)
+    val usernameSubmitted: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("username").flatMap(_.headOption))
+    usernameSubmitted match {
+      case None | Some("") => Future.successful(BadRequest(views.html.unsuccessful("No username provided")))
+      case Some(username) => Future.successful(Redirect(routes.ApplicationController.getUserProfile(username)))
     }
   }
 }
