@@ -18,10 +18,23 @@ class JikanConnector @Inject()(ws: WSClient) {
       response.map {
           result => {
             val resultJson: JsValue = Json.parse(result.body)
-            val message: Option[String] = (resultJson \ "message").asOpt[String]
+//            println(resultJson)
             resultJson.validate[Response] match {
               case JsSuccess(responseItem, _) => Right(responseItem)
-              case JsError(_) => Left(APIError.BadAPIResponse(result.status, message.getOrElse("Unknown error")))
+              case JsError(_) =>
+                result.status match {
+                  case 404 => {
+                    val message: Option[String] = (resultJson \ "message").asOpt[String]
+                    Left(APIError.BadAPIResponse(404, message.getOrElse("Unknown error")))
+                  }
+                  case 400 => {
+                    val messages: Option[String] = (resultJson \ "messages").asOpt[Map[String, Seq[String]]].map {
+                      messageMap => messageMap.values.toList.mkString(" ")
+                    }
+                    Left(APIError.BadAPIResponse(400, messages.getOrElse("Unknown error")))
+                  }
+                  case _ => Left(APIError.BadAPIResponse(result.status, "Unknown error"))
+                }
             }
           }
         }
@@ -31,3 +44,8 @@ class JikanConnector @Inject()(ws: WSClient) {
     }
   }
 }
+
+//{"status":400,"type":"ValidationException","messages":{"min_score":["The min score must be a number."]},
+// "error":"Invalid or incomplete request. Make sure your request is correct. https:\/\/docs.api.jikan.moe\/"}
+
+//{"status":404,"type":"HttpException","message":"Not Found","error":null}

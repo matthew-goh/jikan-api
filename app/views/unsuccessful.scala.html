@@ -1,0 +1,10 @@
+@(reason: String)
+
+@main("Unsuccessful"){
+  <div class="container mb-5">
+    <h3>Unsuccessful:</h3>
+    <p>@reason</p>
+    <br>
+    <p><a href="@routes.HomeController.index()"> Back </a></p>
+  </div>
+}
