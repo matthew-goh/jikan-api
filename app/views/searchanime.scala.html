@@ -1,13 +1,48 @@
 @import helper._
 
 @*RequestHeader needed for form with CRSF*@
-@(animeResults: Seq[AnimeModel], pagination: AnimeSearchPagination, search: String, queryExt: String)(implicit request: RequestHeader)
+@(animeResults: Seq[AnimeModel], pagination: AnimeSearchPagination, search: String, queryExt: String, queryParams: AnimeSearchParams)(implicit request: RequestHeader)
 @main("Search Anime"){
   <h1>Jikan API</h1>
 
   <p><a href="@routes.HomeController.index()"> Back </a></p>
 
   <h2>Search results: @search</h2>
+
+  <div class="form-div">
+    @form(action = routes.ApplicationController.searchAnime()) {
+      @CSRF.formField
+      <div class="form-div">
+        <h3>Modify Search: <input type="text" name="search" value="@search" placeholder="Enter search term" size="40" required>
+        <button type="submit">Search</button></h3>
+      </div>
+      <div class="form-div">
+        <select name="status">
+          <option value="" @(if(queryParams.status == "") "selected" else "")>Status</option>
+          <option value="airing" @(if(queryParams.status == "airing") "selected" else "")>Airing</option>
+          <option value="complete" @(if(queryParams.status == "complete") "selected" else "")>Complete</option>
+          <option value="upcoming" @(if(queryParams.status == "upcoming") "selected" else "")>Upcoming</option>
+        </select>
+        <input type="number" name="minScore" value="@queryParams.minScore" placeholder="Min score" min="0" max="10" step="0.01">
+        <input type="number" name="maxScore" value="@queryParams.maxScore" placeholder="Max score" min="0" max="10" step="0.01">
+        <select name="orderBy">
+          <option value="" @(if(queryParams.orderBy == "") "selected" else "")>Order by...</option>
+          <option value="title" @(if(queryParams.orderBy == "title") "selected" else "")>Title</option>
+          <option value="score" @(if(queryParams.orderBy == "score") "selected" else "")>Average score</option>
+          <option value="scored_by" @(if(queryParams.orderBy == "scored_by") "selected" else "")>No. of scores given</option>
+          <option value="episodes" @(if(queryParams.orderBy == "episodes") "selected" else "")>No. of episodes</option>
+          <option value="start_date" @(if(queryParams.orderBy == "start_date") "selected" else "")>Start date</option>
+          <option value="end_date" @(if(queryParams.orderBy == "end_date") "selected" else "")>End date</option>
+        </select>
+        <select name="sort">
+          <option value="" @(if(queryParams.sort == "") "selected" else "")>Sort order</option>
+          <option value="asc" @(if(queryParams.sort == "asc") "selected" else "")>Ascending</option>
+          <option value="desc" @(if(queryParams.sort == "desc") "selected" else "")>Descending</option>
+        </select>
+      </div>
+    }
+    <br>
+  </div>
 
   @if(animeResults.isEmpty) {
     <p>No search results.</p>

@@ -1,6 +1,6 @@
 package controllers
 
-import models.{APIError, AnimeModel}
+import models.{APIError, AnimeModel, AnimeSearchParams}
 import play.api.libs.json._
 import play.api.mvc._
 import play.filters.csrf.CSRF
@@ -26,7 +26,8 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
     service.getAnimeSearchResults(search, page, queryExt).value.map{
       case Right(searchResult) => {
         val animeResults: Seq[AnimeModel] = searchResult.data.map(service.animeDataToModel)
-        Ok(views.html.searchanime(animeResults, searchResult.pagination, search, queryExt))
+        val queryParams: AnimeSearchParams = service.queryExtToAnimeSearchParams(queryExt)
+        Ok(views.html.searchanime(animeResults, searchResult.pagination, search, queryExt, queryParams))
       }
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
@@ -42,8 +43,8 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
         val minScore: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("minScore").flatMap(_.headOption))
         val maxScore: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("maxScore").flatMap(_.headOption))
         val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
-        val sort: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sort").flatMap(_.headOption))
-        val queryExt = s"&status=${status.getOrElse("")}&min_score=${minScore.getOrElse("")}&max_score=${maxScore.getOrElse("")}&order_by=${orderBy.getOrElse("")}&sort=${sort.getOrElse()}"
+        val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sort").flatMap(_.headOption))
+        val queryExt = s"status=${status.getOrElse("")}&min_score=${minScore.getOrElse("")}&max_score=${maxScore.getOrElse("")}&order_by=${orderBy.getOrElse("")}&sort=${sortOrder.getOrElse()}"
         Future.successful(Redirect(routes.ApplicationController.getAnimeResults(search = search, page = 1, queryExt = queryExt)))
       }
     }
