@@ -46,4 +46,8 @@ class JikanService @Inject()(connector: JikanConnector) {
   def getAnimeById(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeIdSearchResult] = {
     connector.get[AnimeIdSearchResult](s"https://api.jikan.moe/v4/anime/$id")
   }
+
+  def getUserProfile(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserProfileResult] = {
+    connector.get[UserProfileResult](s"https://api.jikan.moe/v4/users/$username/full")
+  }
 }
