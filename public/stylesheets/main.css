@@ -168,9 +168,6 @@ th, td {
 /*}*/
 
 /* Form inputs */
-.file-name-input {
-    margin-left: 28pt;
-}
 .input-note {
     color: grey;
     font-size: 0.9em; /* Adjust size as needed */
@@ -183,11 +180,17 @@ th, td {
 }
 
 input[type="text"],
-textarea {
+input[type="number"],
+textarea,
+select {
     border: 1px solid #ccc;    /* Add a border to inputs */
     padding: 10px;             /* Add padding */
     font-size: 14px;           /* Adjust font size */
     border-radius: 4px;        /* Rounded corners */
+}
+
+input[type="number"] {
+    width: 85px
 }
 
 label {
@@ -196,8 +199,8 @@ label {
     font-weight: bold;         /* Make label text bold */
 }
 
-.error-text {
-    color: red;
+.form-div {
+    margin-bottom: 12px;
 }
 
 .error {

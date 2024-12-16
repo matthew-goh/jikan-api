@@ -2,28 +2,48 @@ package services
 
 import cats.data.EitherT
 import connectors.JikanConnector
-import models.{APIError, AnimeSearchResult}
+import models._
 import play.api.libs.json._
 
 import java.util.Base64
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Try}
 
 class JikanService @Inject()(connector: JikanConnector) {
-  def getAnimeSearchResults(search: String, minScore: Option[String] = None, maxScore: Option[String] = None,
-                            orderBy: Option[String] = None, page: Int = 1)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeSearchResult] = {
-    val minScoreExt = minScore match {
-      case Some(score) => s"&min_score=$score"
-      case None => ""
-    }
-    val maxScoreExt = maxScore match {
-      case Some(score) => s"&max_score=$score"
-      case None => ""
-    }
-    val orderByExt = orderBy match {
-      case Some(attr) => s"&order_by=$attr"
-      case None => ""
-    }
-    connector.get[AnimeSearchResult](s"https://api.jikan.moe/v4/anime?q=$search&page=$page$minScoreExt$maxScoreExt$orderByExt")
+  def getAnimeSearchResults(search: String, page: String, queryExt: String, urlOverride: Option[String] = None)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeSearchResult] = {
+    connector.get[AnimeSearchResult](urlOverride.getOrElse(s"https://api.jikan.moe/v4/anime?q=$search&page=$page&$queryExt"))
+  }
+
+  def queryExtToAnimeSearchParams(queryExt: String): AnimeSearchParams = {
+    val queryParamMap: Map[String, String] =
+      queryExt.split("&").map { param =>
+        val parts = param.split("=", 2)
+        parts(0) -> (if (parts.length > 1) parts(1) else "")
+      }.toMap
+
+    AnimeSearchParams(queryParamMap.getOrElse("status", ""), queryParamMap.getOrElse("min_score", ""),
+      queryParamMap.getOrElse("max_score", ""), queryParamMap.getOrElse("order_by", ""), queryParamMap.getOrElse("sort", ""))
+  }
+
+  def animeDataToModel(animeData: AnimeData): AnimeModel = {
+    AnimeModel(MALId = animeData.mal_id,
+      title = animeData.title,
+      titleEnglish = animeData.title_english,
+      `type` = animeData.`type`,
+      numEpisodes = animeData.episodes,
+      status = animeData.status,
+      startDate = animeData.aired.from,
+      endDate = animeData.aired.to,
+      maturityRating = animeData.rating,
+      avgScore = animeData.score,
+      scoredBy = animeData.scored_by,
+      synopsis = animeData.synopsis,
+      genres = animeData.genres.map(genre => genre.name),
+      year = animeData.year)
+  }
+
+  def getAnimeById(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeIdSearchResult] = {
+    connector.get[AnimeIdSearchResult](s"https://api.jikan.moe/v4/anime/$id")
   }
 }

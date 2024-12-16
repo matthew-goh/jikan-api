@@ -1,0 +1,42 @@
+@import java.text.NumberFormat
+@import java.text.SimpleDateFormat
+
+@(anime: AnimeModel)
+@main("Anime Details"){
+  <div class="container mb-5">
+  <h1>Jikan API</h1>
+
+  <h2>Anime details</h2>
+  <h3>@anime.title (MAL ID: @anime.MALId)</h3>
+  @if(anime.titleEnglish.nonEmpty) { <h3><i>@anime.titleEnglish</i></h3> }
+  <br>
+  <p><b>Type:</b> @{anime.`type`}</p>
+  <p><b>Maturity rating:</b> @anime.maturityRating</p>
+  <p><b>Genres:</b> @anime.genres.mkString(", ") </p>
+  <br>
+  <p><b>No. of episodes:</b> @anime.numEpisodes.getOrElse("Not available")</p>
+  <p><b>Status:</b> @anime.status</p>
+  @if(anime.startDate.nonEmpty) { <p><b>Start date:</b> @{new SimpleDateFormat("E, dd MMM yyyy").format(anime.startDate.get)}</p> }
+  @if(anime.endDate.nonEmpty) { <p><b>End date:</b> @{new SimpleDateFormat("E, dd MMM yyyy").format(anime.endDate.get)}</p> }
+  <br>
+  <p><b>Average score:</b> @anime.avgScore.getOrElse("N/A")</p>
+  @if(anime.scoredBy.nonEmpty) {
+    @if(anime.scoredBy.get == 1){
+      <p>Scored by 1 user</p>
+    } else {
+      <p>Scored by @NumberFormat.getInstance().format(anime.scoredBy.get) users</p>
+    }
+  }
+  <br>
+  <p><b>Synopsis:</b><br>@anime.synopsis.getOrElse("Not available")</p>
+
+@*    <form action="@routes.ApplicationController.updateBook(bookData._id)" method="GET" class="button-form">*@
+@*      <button type="submit">Update</button>*@
+@*    </form>*@
+@*    <form action="@routes.ApplicationController.deleteBook(bookData._id)" method="GET" class="button-form">*@
+@*      <button type="submit">Delete</button>*@
+@*    </form>*@
+  <br>
+  <p><a href="@routes.HomeController.index()"> Back to Home </a></p>
+  </div>
+}
