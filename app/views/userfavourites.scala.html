@@ -2,7 +2,7 @@
 @import java.text.NumberFormat
 
 @*RequestHeader needed for form with CRSF*@
-@(animeFaves: Seq[AnimeFavourite], username: String)
+@(animeFaves: Seq[AnimeFavourite], username: String, orderBy: String, sortOrder: String)(implicit request: RequestHeader)
 @main("User Favourites"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -18,6 +18,28 @@
 
   <div class="container mb-5">
     <h2>@username's Favourites</h2>
+    @form(action = routes.ApplicationController.sortFavourites()) {
+      @CSRF.formField
+      <div class="form-div">
+        <h3>Sort favourites:</h3>
+        <input type="text" name="username" value="@username" hidden>
+        Order by:
+        <select name="orderBy">
+          <option value="none" @(if(orderBy == "none") "selected" else "")>Select</option>
+          <option value="title" @(if(orderBy == "title") "selected" else "")>Title</option>
+          <option value="start_year" @(if(orderBy == "start_year") "selected" else "")>Start year</option>
+        </select>
+          &nbsp;&nbsp; Sort order:
+        <select name="sortOrder">
+          <option value="none" @(if(sortOrder == "none") "selected" else "")>Select</option>
+          <option value="asc" @(if(sortOrder == "asc") "selected" else "")>Ascending</option>
+          <option value="desc" @(if(sortOrder == "desc") "selected" else "")>Descending</option>
+        </select>
+        <button type="submit">Sort</button>
+      </div>
+    }
+
+    <br>
     @if(animeFaves.isEmpty) {
       <p>No favourites.</p>
     } else {
