@@ -1,7 +1,6 @@
 @import helper._
 
 @import java.text.NumberFormat
-@import java.text.SimpleDateFormat
 @import java.time.format.DateTimeFormatter
 @import java.time.ZoneId
 
@@ -19,7 +18,7 @@
     <h2>User details</h2>
     <p><b>Username</b>: @user.username</p>
     <p><b>Location</b>: @user.location.getOrElse("Not provided")</p>
-    <p><b>Date joined</b>: @{new SimpleDateFormat("dd MMM yyyy").format(user.joined)}</p>
+    <p><b>Date joined</b>: @{user.joined.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p>
     <p><b>Last online</b>: @{user.last_online.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
     <br>
 

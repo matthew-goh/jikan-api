@@ -18,4 +18,4 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 # invalid routes
 GET     /*path     controllers.ApplicationController.invalidRoute(path: String)
 
-# localhost:9000/searchanime/shoshimin/1/&status=&min_score=&max_score=&order_by=&sort=
+# localhost:9000/searchanime/shoshimin/1/status=&min_score=&max_score=&order_by=&sort=
