@@ -23,6 +23,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     component // comes from BaseSpecWithApplication
   )
 
+  ///// METHODS REQUIRING CONNECTOR ONLY /////
   "ApplicationController .getAnimeResults()" should {
     "list the anime search results" in {
       (mockJikanService.getAnimeSearchResults(_: String, _: String, _: String, _: Option[String])(_: ExecutionContext))

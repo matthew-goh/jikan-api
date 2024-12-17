@@ -1,0 +1,72 @@
+@import helper._
+@import java.text.NumberFormat
+
+@*RequestHeader needed for form with CRSF*@
+@(animeList: Seq[SavedAnime])
+@main("Saved Anime"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Saved Anime</h2>
+@*    @form(action = routes.ApplicationController.searchAnime()) {*@
+@*      @CSRF.formField*@
+@*      <div class="form-div">*@
+@*        <h3>Modify Search: <input type="text" name="search" value="@search" placeholder="Enter search term" size="40" required>*@
+@*        <button type="submit">Search</button></h3>*@
+@*      </div>*@
+@*      <div class="form-div">*@
+@*        <select name="status">*@
+@*          <option value="" @(if(queryParams.status == "") "selected" else "")>Status</option>*@
+@*          <option value="airing" @(if(queryParams.status == "airing") "selected" else "")>Airing</option>*@
+@*          <option value="complete" @(if(queryParams.status == "complete") "selected" else "")>Complete</option>*@
+@*          <option value="upcoming" @(if(queryParams.status == "upcoming") "selected" else "")>Upcoming</option>*@
+@*        </select>*@
+@*        <input type="number" name="minScore" value="@queryParams.minScore" placeholder="Min score" min="0" max="10" step="0.01">*@
+@*        <input type="number" name="maxScore" value="@queryParams.maxScore" placeholder="Max score" min="0" max="10" step="0.01">*@
+@*        <select name="orderBy">*@
+@*          <option value="" @(if(queryParams.orderBy == "") "selected" else "")>Order by...</option>*@
+@*          <option value="title" @(if(queryParams.orderBy == "title") "selected" else "")>Title</option>*@
+@*          <option value="score" @(if(queryParams.orderBy == "score") "selected" else "")>Average score</option>*@
+@*          <option value="scored_by" @(if(queryParams.orderBy == "scored_by") "selected" else "")>No. of scores given</option>*@
+@*          <option value="episodes" @(if(queryParams.orderBy == "episodes") "selected" else "")>No. of episodes</option>*@
+@*          <option value="start_date" @(if(queryParams.orderBy == "start_date") "selected" else "")>Start date</option>*@
+@*          <option value="end_date" @(if(queryParams.orderBy == "end_date") "selected" else "")>End date</option>*@
+@*        </select>*@
+@*        <select name="sort">*@
+@*          <option value="" @(if(queryParams.sort == "") "selected" else "")>Sort order</option>*@
+@*          <option value="asc" @(if(queryParams.sort == "asc") "selected" else "")>Ascending</option>*@
+@*          <option value="desc" @(if(queryParams.sort == "desc") "selected" else "")>Descending</option>*@
+@*        </select>*@
+@*      </div>*@
+@*    }*@
+@*  </div>*@
+
+@*  <div class="container mb-5">*@
+    @if(animeList.isEmpty) {
+      <p>No saved anime.</p>
+    } else {
+      <ul>
+      @for(anime <- animeList) {
+        <li>
+          <p> <b>@anime.title</b>
+            @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
+          </p>
+          <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}</p>
+          @if(anime.watched){
+            <p>Marked as watched</p>
+          }
+          @if(anime.score.nonEmpty){
+            <p>My score: @anime.score</p>
+          }
+        </li>
+      }
+      </ul>
+    }
+  </div>
+}

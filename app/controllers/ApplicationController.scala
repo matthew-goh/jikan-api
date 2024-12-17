@@ -4,7 +4,7 @@ import models._
 import play.api.libs.json._
 import play.api.mvc._
 import play.filters.csrf.CSRF
-import services.JikanService
+import services.{AnimeRepositoryService, JikanService}
 
 import java.util.Base64
 import javax.inject._
@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
 @Singleton
-class ApplicationController @Inject()(service: JikanService, val controllerComponents: ControllerComponents)
+class ApplicationController @Inject()(repoService: AnimeRepositoryService, service: JikanService, val controllerComponents: ControllerComponents)
                                      (implicit ec: ExecutionContext) extends BaseController with play.api.i18n.I18nSupport {
 
   def accessToken()(implicit request: Request[_]): Option[CSRF.Token] = {
@@ -23,6 +23,7 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
     Future.successful(NotFound(views.html.pagenotfound(path)))
   }
 
+  ///// METHODS REQUIRING CONNECTOR ONLY /////
   def getAnimeResults(search: String, page: String, queryExt: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeSearchResults(search, page, queryExt).value.map{
       case Right(animeSearchResult) => {
@@ -111,6 +112,15 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
         val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
         Future.successful(Redirect(routes.ApplicationController.getUserFavourites(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
       }
+    }
+  }
+
+
+  ///// METHODS REQUIRING REPOSITORY /////
+  def listSavedAnime(): Action[AnyContent] = Action.async {implicit request =>
+    repoService.index().map{
+      case Right(animeList: Seq[SavedAnime]) => Ok(views.html.savedanime(animeList))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 }
