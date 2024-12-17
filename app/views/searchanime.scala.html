@@ -2,7 +2,7 @@
 @import java.text.NumberFormat
 
 @*RequestHeader needed for form with CRSF*@
-@(animeResults: Seq[AnimeModel], pagination: AnimeSearchPagination, search: String, queryExt: String, queryParams: AnimeSearchParams)(implicit request: RequestHeader)
+@(animeResults: Seq[AnimeData], pagination: AnimeSearchPagination, search: String, queryExt: String, queryParams: AnimeSearchParams)(implicit request: RequestHeader)
 @main("Search Anime"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -63,24 +63,24 @@
       <ul>
       @for(anime <- animeResults) {
         <li>
-          <p><a href="@routes.ApplicationController.getAnimeById(anime.MALId.toString)"> <b>@anime.title</b> </a>
-            @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
+          <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)"> <b>@anime.title</b> </a>
+            @if(anime.title_english.nonEmpty){ <br><i>@anime.title_english</i> }
           </p>
           <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}</p>
-          <p>@if(anime.numEpisodes.nonEmpty){
-            Episodes: @anime.numEpisodes
+          <p>@if(anime.episodes.nonEmpty){
+            Episodes: @anime.episodes
           } else {
             No. of episodes unknown
           }
           </p>
           <p>Status: @anime.status</p>
-          @if(anime.avgScore.nonEmpty){
-            <p>Average score: @anime.avgScore
-              @if(anime.scoredBy.nonEmpty) {
-                @if(anime.scoredBy.get == 1){
+          @if(anime.score.nonEmpty){
+            <p>Average score: @anime.score
+              @if(anime.scored_by.nonEmpty) {
+                @if(anime.scored_by.get == 1){
                   from 1 user
                 } else {
-                  from @NumberFormat.getInstance().format(anime.scoredBy.get) users
+                  from @NumberFormat.getInstance().format(anime.scored_by.get) users
                 }
               }
             </p>

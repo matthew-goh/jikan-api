@@ -7,7 +7,6 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatest.concurrent.ScalaFutures
 import play.api.test.FakeRequest
-import play.api.http.Status
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.test.Helpers._
@@ -31,43 +30,6 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         .returning(EitherT.rightT(JikanServiceSpec.testAnimeSearchResult))
         .once()
 
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData1)
-        .returning(JikanServiceSpec.kindaichiModel1)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData2)
-        .returning(JikanServiceSpec.kindaichiModel2)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData3)
-        .returning(JikanServiceSpec.kindaichiModel3)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData4)
-        .returning(JikanServiceSpec.kindaichiModel4)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData5)
-        .returning(JikanServiceSpec.kindaichiModel5)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData6)
-        .returning(JikanServiceSpec.kindaichiModel6)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData7)
-        .returning(JikanServiceSpec.kindaichiModel7)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData8)
-        .returning(JikanServiceSpec.kindaichiModel8)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData9)
-        .returning(JikanServiceSpec.kindaichiModel9)
-        .once()
-
       (mockJikanService.queryExtToAnimeSearchParams(_: String))
         .expects("status=&min_score=&max_score=&order_by=&sort=")
         .returning(AnimeSearchParams("","","","",""))
@@ -89,19 +51,6 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
           AnimeSearchResult(AnimeSearchPagination(1, 1, has_next_page = false, AnimeSearchPagItems(3, 3, 25)),
             Seq(JikanServiceSpec.kindaichiData1, JikanServiceSpec.kindaichiData2, JikanServiceSpec.kindaichiData4))
         ))
-        .once()
-
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData1)
-        .returning(JikanServiceSpec.kindaichiModel1)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData2)
-        .returning(JikanServiceSpec.kindaichiModel2)
-        .once()
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData4)
-        .returning(JikanServiceSpec.kindaichiModel4)
         .once()
 
       (mockJikanService.queryExtToAnimeSearchParams(_: String))
@@ -183,11 +132,6 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
         .expects("2076", *)
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
-        .once()
-
-      (mockJikanService.animeDataToModel(_: AnimeData))
-        .expects(JikanServiceSpec.kindaichiData1)
-        .returning(JikanServiceSpec.kindaichiModel1)
         .once()
 
       val searchResult: Future[Result] = TestApplicationController.getAnimeById("2076")(testRequest.fakeRequest)
@@ -283,6 +227,17 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
       contentAsString(searchResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < contentAsString(searchResult).indexOf("Tantei Gakuen Q")
       contentAsString(searchResult).indexOf("Tantei Gakuen Q") should be < contentAsString(searchResult).indexOf("Kindaichi Shounen no Jikenbo")
+    }
+
+    "show 'No favourites' if the user has no favourites" in {
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq()))))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No favourites")
     }
 
     "return a NotFound if the user is not found" in {

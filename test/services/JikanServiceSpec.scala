@@ -49,12 +49,12 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
     }
   }
 
-  "animeDataToModel()" should {
-    "return an AnimeModel with the correct field values" in {
-      testService.animeDataToModel(JikanServiceSpec.kindaichiData1) shouldBe JikanServiceSpec.kindaichiModel1
-      testService.animeDataToModel(JikanServiceSpec.kindaichiData9) shouldBe JikanServiceSpec.kindaichiModel9
-    }
-  }
+//  "animeDataToModel()" should {
+//    "return an AnimeModel with the correct field values" in {
+//      testService.animeDataToModel(JikanServiceSpec.kindaichiData1) shouldBe JikanServiceSpec.kindaichiModel1
+//      testService.animeDataToModel(JikanServiceSpec.kindaichiData9) shouldBe JikanServiceSpec.kindaichiModel9
+//    }
+//  }
 
   "getAnimeById()" should {
     "return an anime's details" in {

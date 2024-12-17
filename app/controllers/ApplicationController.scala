@@ -25,10 +25,9 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
 
   def getAnimeResults(search: String, page: String, queryExt: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeSearchResults(search, page, queryExt).value.map{
-      case Right(searchResult) => {
-        val animeResults: Seq[AnimeModel] = searchResult.data.map(service.animeDataToModel)
+      case Right(animeSearchResult) => {
         val queryParams: AnimeSearchParams = service.queryExtToAnimeSearchParams(queryExt)
-        Ok(views.html.searchanime(animeResults, searchResult.pagination, search, queryExt, queryParams))
+        Ok(views.html.searchanime(animeSearchResult.data, animeSearchResult.pagination, search, queryExt, queryParams))
       }
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
@@ -53,10 +52,7 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
 
   def getAnimeById(id: String): Action[AnyContent] = Action.async { _ =>
     service.getAnimeById(id).value.map{
-      case Right(animeResult) => {
-        val anime: AnimeModel = service.animeDataToModel(animeResult.data)
-        Ok(views.html.animedetails(anime))
-      }
+      case Right(animeResult) => Ok(views.html.animedetails(animeResult.data))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
