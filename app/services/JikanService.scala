@@ -50,4 +50,8 @@ class JikanService @Inject()(connector: JikanConnector) {
   def getUserProfile(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserProfileResult] = {
     connector.get[UserProfileResult](s"https://api.jikan.moe/v4/users/$username/full")
   }
+
+  def getUserFavourites(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserFavouritesResult] = {
+    connector.get[UserFavouritesResult](s"https://api.jikan.moe/v4/users/$username/favorites")
+  }
 }

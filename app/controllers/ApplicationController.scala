@@ -62,18 +62,24 @@ class ApplicationController @Inject()(service: JikanService, val controllerCompo
 
   def getUserProfile(username: String): Action[AnyContent] = Action.async { implicit request =>
     service.getUserProfile(username).value.map{
-      case Right(userResult) => Ok(views.html.userdetails(userResult.data))
+      case Right(userResult) => Ok(views.html.userdetails(userResult.data, username))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 
   def searchUser(): Action[AnyContent] = Action.async { implicit request =>
     accessToken()
-    println(request.body.asFormUrlEncoded)
     val usernameSubmitted: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("username").flatMap(_.headOption))
     usernameSubmitted match {
       case None | Some("") => Future.successful(BadRequest(views.html.unsuccessful("No username provided")))
       case Some(username) => Future.successful(Redirect(routes.ApplicationController.getUserProfile(username)))
+    }
+  }
+
+  def getUserFavourites(username: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserFavourites(username).value.map{
+      case Right(favesResult) => Ok(views.html.userfavourites(favesResult.data.anime, username))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 }

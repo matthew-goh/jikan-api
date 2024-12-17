@@ -8,6 +8,7 @@ GET     /anime/:id    controllers.ApplicationController.getAnimeById(id: String)
 
 GET     /users/:username    controllers.ApplicationController.getUserProfile(username: String)
 POST     /searchuser    controllers.ApplicationController.searchUser()
+GET     /users/:username/favourites    controllers.ApplicationController.getUserFavourites(username: String)
 
 
 # Map static resources from the /public folder to the /assets URL path
