@@ -1,5 +1,6 @@
 @import java.text.NumberFormat
-@import java.text.SimpleDateFormat
+@import java.time.format.DateTimeFormatter
+@import java.time.ZoneId
 
 @(anime: AnimeModel)
 @main("Anime Details"){
@@ -16,8 +17,8 @@
   <br>
   <p><b>No. of episodes:</b> @anime.numEpisodes.getOrElse("Not available")</p>
   <p><b>Status:</b> @anime.status</p>
-  @if(anime.startDate.nonEmpty) { <p><b>Start date:</b> @{new SimpleDateFormat("E, dd MMM yyyy").format(anime.startDate.get)}</p> }
-  @if(anime.endDate.nonEmpty) { <p><b>End date:</b> @{new SimpleDateFormat("E, dd MMM yyyy").format(anime.endDate.get)}</p> }
+  @if(anime.startDate.nonEmpty) { <p><b>Start date:</b> @{anime.startDate.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}</p> }
+  @if(anime.endDate.nonEmpty) { <p><b>End date:</b> @{anime.endDate.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}</p> }
   <br>
   <p><b>Average score:</b> @anime.avgScore.getOrElse("N/A")</p>
   @if(anime.scoredBy.nonEmpty) {
@@ -37,6 +38,9 @@
 @*      <button type="submit">Delete</button>*@
 @*    </form>*@
   <br>
-  <p><a href="@routes.HomeController.index()"> Back to Home </a></p>
+    <p><a class="image-text-link" href="@routes.HomeController.index">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
   </div>
 }

@@ -6,7 +6,10 @@
 @main("Search Anime"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
-    <p><a href="@routes.HomeController.index()"> Back </a></p>
+    <p><a class="image-text-link" href="@routes.HomeController.index">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
   </div>
 
   <div class="container mb-5">
@@ -57,7 +60,6 @@
         <p>Results @{(pagination.current_page-1) * pagination.items.per_page + 1}-@{(pagination.current_page-1) * pagination.items.per_page + pagination.items.count}
           of @pagination.items.total</p>
       </div>
-      <br>
       <ul>
       @for(anime <- animeResults) {
         <li>
