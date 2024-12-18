@@ -15,6 +15,7 @@ GET     /saved/:compStatus/:orderBy/:sortOrder     controllers.ApplicationContro
 POST     /sortsaved    controllers.ApplicationController.sortSavedList()
 GET     /saved/:id     controllers.ApplicationController.viewSavedAnime(id: String)
 POST     /saveanime     controllers.ApplicationController.saveAnime()
+POST     /refresh     controllers.ApplicationController.refreshSavedAnime()
 
 GET     /test-only/deleteall     controllers.ApplicationController.deleteAll()
 

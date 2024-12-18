@@ -59,7 +59,7 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
   def read(MALId: Int): Future[Either[APIError, SavedAnime]] = {
     collection.find(byID(MALId)).headOption.flatMap {
       case Some(data) => Future(Right(data))
-      case None => Future(Left(APIError.BadAPIResponse(404, "Anime not saved")))
+      case None => Future(Left(APIError.BadAPIResponse(404, "Anime not saved in database")))
     }.recover {
       case e: Exception => Left(APIError.BadAPIResponse(500, s"Unable to search for anime: ${e.getMessage}"))
     }
@@ -82,7 +82,7 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
         if (updateResult.wasAcknowledged) {
           updateResult.getMatchedCount match {
             case 1 => Right(updateResult)
-            case 0 => Left(APIError.BadAPIResponse(404, "Anime not saved"))
+            case 0 => Left(APIError.BadAPIResponse(404, "Anime not saved in database"))
             case _ => Left(APIError.BadAPIResponse(500, "Error: Multiple anime with same ID found"))
           }
         } else {
@@ -103,7 +103,7 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
       if (deleteResult.wasAcknowledged) {
         deleteResult.getDeletedCount match {
           case 1 => Right(deleteResult)
-          case 0 => Left(APIError.BadAPIResponse(404, "Anime not saved"))
+          case 0 => Left(APIError.BadAPIResponse(404, "Anime not saved in database"))
           case _ => Left(APIError.BadAPIResponse(500, "Error: Multiple anime removed"))
         }
       } else {

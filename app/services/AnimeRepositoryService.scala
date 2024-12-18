@@ -4,6 +4,7 @@ import models.{APIError, AnimeData, SavedAnime}
 import org.mongodb.scala.result
 import repositories.AnimeRepositoryTrait
 
+import java.time.Instant
 import javax.inject.Inject
 import scala.concurrent.Future
 import scala.util.Try
@@ -65,6 +66,29 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
 
   def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]] = {
     repositoryTrait.update(MALId, anime)
+  }
+
+  def refresh(reqBody: Option[Map[String, Seq[String]]], animeData: AnimeData): Future[Either[APIError, result.UpdateResult]] = {
+    val missingError = APIError.BadAPIResponse(400, "Missing required value")
+    val invalidTypeError = APIError.BadAPIResponse(400, "Invalid data type")
+
+    val reqBodyValuesEither: Either[APIError.BadAPIResponse, SavedAnime] = for {
+      // if any required value is missing, the result is Left(missingError)
+      savedAtStr <- reqBody.flatMap(_.get("savedAt").flatMap(_.headOption)).toRight(missingError)
+      epsWatchedStr <- reqBody.flatMap(_.get("epsWatched").flatMap(_.headOption)).toRight(missingError)
+      notes <- reqBody.flatMap(_.get("notes").flatMap(_.headOption)).toRight(missingError)
+      // if any data type is invalid, the result is Left(invalidTypeError)
+      savedAt <- Try(Instant.parse(savedAtStr)).toOption.toRight(invalidTypeError)
+      epsWatched <- Try(epsWatchedStr.toInt).toOption.toRight(invalidTypeError)
+        // after .toOption, the below will be Some(Some(x)) if a number, Some(None) if missing, or None if invalid
+      myScore <- Try(reqBody.flatMap(_.get("score").flatMap(_.headOption)).map(_.toInt)).toOption.toRight(invalidTypeError)
+    } yield SavedAnime(animeData.mal_id, animeData.title, animeData.title_english, animeData.`type`, animeData.episodes, animeData.year,
+      animeData.score, savedAt, epsWatched, myScore, notes)
+
+    reqBodyValuesEither match {
+      case Right(animeToSave) => repositoryTrait.update(animeData.mal_id, animeToSave)
+      case Left(error) => Future.successful(Left(error))
+    }
   }
 
   def delete(MALId: Int): Future[Either[APIError, result.DeleteResult]] = {
