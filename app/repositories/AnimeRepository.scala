@@ -61,7 +61,7 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
       case Some(data) => Future(Right(data))
       case None => Future(Left(APIError.BadAPIResponse(404, "Anime not saved")))
     }.recover {
-      case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to search for anime: ${e.getMessage}"))
+      case e: Exception => Left(APIError.BadAPIResponse(500, s"Unable to search for anime: ${e.getMessage}"))
     }
   }
 

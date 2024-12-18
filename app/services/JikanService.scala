@@ -26,23 +26,6 @@ class JikanService @Inject()(connector: JikanConnector) {
       queryParamMap.getOrElse("max_score", ""), queryParamMap.getOrElse("order_by", ""), queryParamMap.getOrElse("sort", ""))
   }
 
-//  def animeDataToModel(animeData: AnimeData): AnimeModel = {
-//    AnimeModel(MALId = animeData.mal_id,
-//      title = animeData.title,
-//      titleEnglish = animeData.title_english,
-//      `type` = animeData.`type`,
-//      numEpisodes = animeData.episodes,
-//      status = animeData.status,
-//      startDate = animeData.aired.from,
-//      endDate = animeData.aired.to,
-//      maturityRating = animeData.rating,
-//      avgScore = animeData.score,
-//      scoredBy = animeData.scored_by,
-//      synopsis = animeData.synopsis,
-//      genres = animeData.genres.map(genre => genre.name),
-//      year = animeData.year)
-//  }
-
   def getAnimeById(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeIdSearchResult] = {
     connector.get[AnimeIdSearchResult](s"https://api.jikan.moe/v4/anime/$id")
   }

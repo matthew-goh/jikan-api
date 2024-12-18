@@ -11,7 +11,14 @@ POST     /searchuser    controllers.ApplicationController.searchUser()
 GET     /users/:username/favourites/:orderBy/:sortOrder    controllers.ApplicationController.getUserFavourites(username: String, orderBy: String, sortOrder: String)
 POST     /sortfavourites    controllers.ApplicationController.sortFavourites()
 
-GET     /savedanime     controllers.ApplicationController.listSavedAnime()
+GET     /saved     controllers.ApplicationController.listSavedAnime()
+GET     /saved/:id     controllers.ApplicationController.viewSavedAnime(id: String)
+POST     /saveanime     controllers.ApplicationController.saveAnime()
+
+GET     /test-only/deleteall     controllers.ApplicationController.deleteAll()
+
+# non-frontend
+POST     /api/create     controllers.ApplicationController.create()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

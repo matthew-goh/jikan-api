@@ -51,7 +51,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def getAnimeById(id: String): Action[AnyContent] = Action.async { _ =>
+  def getAnimeById(id: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeById(id).value.map{
       case Right(animeResult) => Ok(views.html.animedetails(animeResult.data))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
@@ -117,10 +117,66 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
 
 
   ///// METHODS REQUIRING REPOSITORY /////
-  def listSavedAnime(): Action[AnyContent] = Action.async {implicit request =>
+  def listSavedAnime(): Action[AnyContent] = Action.async { implicit request =>
     repoService.index().map{
       case Right(animeList: Seq[SavedAnime]) => Ok(views.html.savedanime(animeList))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def viewSavedAnime(id: String): Action[AnyContent] = Action.async { implicit request =>
+    Try(id.toInt) match {
+      case Success(malId) => {
+        repoService.read(malId).map{
+          case Right(anime: SavedAnime) => Ok(views.html.savedanimedetails(anime))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      }
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
+    }
+
+  }
+
+  def saveAnime(): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    val sourceUrl: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("url").flatMap(_.headOption))
+    sourceUrl match {
+      case Some(url) => {
+        repoService.create(request.body.asFormUrlEncoded).map{
+          case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(url)))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      }
+      case None => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+    }
+  }
+
+  // test-only
+  def deleteAll(): Action[AnyContent] = Action.async { _ =>
+    repoService.deleteAll().map{
+      case Right(deleteResult) => deleteResult.getDeletedCount match {
+        case 0 => Ok(views.html.confirmation("No saved anime to delete."))
+        case _ => Ok(views.html.confirmation("All saved anime removed from database.")) }
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  ///// NON-FRONTEND METHODS, FOR TESTING /////
+  def index(): Action[AnyContent] = Action.async { _ =>
+    repoService.index().map{
+      case Right(animeList: Seq[SavedAnime]) => Ok {Json.toJson(animeList)}
+      case Left(error) => Status(error.httpResponseStatus)(error.reason)
+    }
+  }
+
+  def create(): Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[SavedAnime] match {
+      case JsSuccess(anime, _) =>
+        repoService.create(anime).map{
+          case Right(_) => Created {request.body}
+          case Left(error) => Status(error.httpResponseStatus)(error.reason)
+        }
+      case JsError(_) => Future.successful(BadRequest {"Invalid request body"})
     }
   }
 }

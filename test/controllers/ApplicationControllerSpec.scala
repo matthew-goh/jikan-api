@@ -18,10 +18,22 @@ import scala.concurrent.{ExecutionContext, Future}
 class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory {
   val mockJikanService: JikanService = mock[JikanService]
   val TestApplicationController = new ApplicationController(
-//    repoService,
+    repoService,
     mockJikanService,
     component // comes from BaseSpecWithApplication
   )
+
+  override def beforeEach(): Unit = await(repository.deleteAll())
+  override def afterEach(): Unit = await(repository.deleteAll())
+
+  private lazy val kindaichi: SavedAnime = SavedAnime(2076, "Kindaichi Shounen no Jikenbo", Some("The File of Young Kindaichi"), "TV", Some(148), Some(1997),
+    Some(7.94), Instant.parse("2024-12-18T10:01:49Z"), 148, Some(10), "Best mystery anime")
+
+  private lazy val kubikiri: SavedAnime = SavedAnime(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), None,
+    Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 0, None, "")
+
+  private lazy val detectiveSchoolQ: SavedAnime = SavedAnime(407, "Tantei Gakuen Q", Some("Detective School Q"), "TV", Some(45), Some(2003),
+    Some(7.73), Instant.parse("2024-12-18T10:01:49Z"), 21, Some(9), "")
 
   ///// METHODS REQUIRING CONNECTOR ONLY /////
   "ApplicationController .getAnimeResults()" should {
@@ -62,7 +74,6 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestApplicationController.getAnimeResults("kindaichi", "1", "status=complete&min_score=7.5&max_score=8&order_by=episodes&sort=desc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       contentAsString(searchResult) should include ("Results 1-3")
-//      contentAsString(searchResult) should include regex "The File of Young Kindaichi.*Kindaichi Shounen no Jikenbo Returns 2nd Season.*Kindaichi Shounen no Jikenbo Returns".r
       contentAsString(searchResult) should include ("The File of Young Kindaichi")
       contentAsString(searchResult).indexOf("The File of Young Kindaichi") should be < contentAsString(searchResult).indexOf("Average score: 7.54")
       contentAsString(searchResult).indexOf("Average score: 7.54") should be < contentAsString(searchResult).indexOf("Kindaichi Shounen no Jikenbo Returns 2nd Season")
@@ -289,6 +300,174 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val sortResult: Future[Result] = TestApplicationController.sortFavourites()(sortRequest)
       status(sortResult) shouldBe BAD_REQUEST
       contentAsString(sortResult) should include ("No username submitted")
+    }
+  }
+
+  ///// METHODS REQUIRING REPOSITORY /////
+  "ApplicationController .listSavedAnime()" should {
+    "list all saved anime" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+      val request2: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult2: Future[Result] = TestApplicationController.create()(request2)
+      status(createdResult2) shouldBe CREATED
+      val request3: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(detectiveSchoolQ))
+      val createdResult3: Future[Result] = TestApplicationController.create()(request3)
+      status(createdResult3) shouldBe CREATED
+
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnime()(FakeRequest())
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("Kindaichi Shounen no Jikenbo")
+      contentAsString(listingResult) should include ("Completed")
+      contentAsString(listingResult) should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      contentAsString(listingResult) should include ("Not started")
+      contentAsString(listingResult) should include ("Tantei Gakuen Q")
+      contentAsString(listingResult) should include ("Started watching")
+    }
+
+    "show 'No users found' if the database is empty" in {
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnime()(FakeRequest())
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("No saved anime.")
+    }
+  }
+
+  "ApplicationController .viewSavedAnime()" should {
+    "display the saved anime's details" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val viewResult: Future[Result] = TestApplicationController.viewSavedAnime("33263")(FakeRequest())
+      status(viewResult) shouldBe OK
+      contentAsString(viewResult) should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      contentAsString(viewResult) should include ("<b>Saved at:</b> 18 Dec 2024 10:01")
+      contentAsString(viewResult) should include ("Not scored")
+    }
+
+    "return a NotFound if the anime is not saved in the database" in {
+      val viewResult: Future[Result] = TestApplicationController.viewSavedAnime("2076")(FakeRequest())
+      status(viewResult) shouldBe NOT_FOUND
+      contentAsString(viewResult) should include ("Bad response from upstream: Anime not saved")
+    }
+
+    "return a BadRequest if the anime ID provided is not an integer" in {
+      val viewResult: Future[Result] = TestApplicationController.viewSavedAnime("abc")(FakeRequest())
+      status(viewResult) shouldBe BAD_REQUEST
+      contentAsString(viewResult) should include ("Anime ID must be an integer")
+    }
+  }
+
+  "ApplicationController .saveAnime()" should {
+    "save an anime to the database" in {
+      val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
+        "url" -> "anime/33263",
+        "id" -> "33263",
+        "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
+        "titleEnglish" -> "The Kubikiri Cycle",
+        "type" -> "OVA",
+        "numEpisodes" -> "8",
+        "MALScore" -> "7.75"
+      )
+      val saveResult: Future[Result] = TestApplicationController.saveAnime()(saveRequest)
+      status(saveResult) shouldBe OK
+      contentAsString(saveResult) should include ("Anime saved!")
+    }
+
+    "return an InternalServerError if the anime is already in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
+        "url" -> "anime/33263",
+        "id" -> "33263",
+        "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
+        "titleEnglish" -> "The Kubikiri Cycle",
+        "type" -> "OVA",
+        "numEpisodes" -> "8",
+        "MALScore" -> "7.75"
+      )
+      val saveResult: Future[Result] = TestApplicationController.saveAnime()(saveRequest)
+      status(saveResult) shouldBe INTERNAL_SERVER_ERROR
+      contentAsString(saveResult) should include ("Bad response from upstream: Anime has already been saved")
+    }
+
+    "return a BadRequest if posted source URL is missing" in {
+      val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
+        "id" -> "33263"
+      )
+      val saveResult: Future[Result] = TestApplicationController.saveAnime()(saveRequest)
+      status(saveResult) shouldBe BAD_REQUEST
+      contentAsString(saveResult) should include ("Failed to post source url")
+    }
+  }
+
+  "ApplicationController .deleteAll() (test-only method)" should {
+    "delete all anime in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Result = await(TestApplicationController.create()(request))
+      createdResult.header.status shouldBe CREATED
+
+      val request2: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult2: Result = await(TestApplicationController.create()(request2))
+      createdResult2.header.status shouldBe CREATED
+
+      val deleteResult: Future[Result] = TestApplicationController.deleteAll()(FakeRequest())
+      status(deleteResult) shouldBe OK
+      contentAsString(deleteResult) should include ("All saved anime removed from database.")
+
+      // check that database is now empty
+      val indexResult: Future[Result] = TestApplicationController.index()(FakeRequest())
+      status(indexResult) shouldBe OK
+      contentAsJson(indexResult).as[Seq[SavedAnime]] shouldBe Seq()
+    }
+
+    "return the correct message if there are no anime saved in the database" in {
+      val deleteResult: Future[Result] = TestApplicationController.deleteAll()(FakeRequest())
+      status(deleteResult) shouldBe OK
+      contentAsString(deleteResult) should include ("No saved anime to delete.")
+    }
+  }
+
+  ///// NON-FRONTEND METHODS, FOR TESTING /////
+  "ApplicationController .index()" should {
+    "list all anime in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Result = await(TestApplicationController.create()(request))
+      createdResult.header.status shouldBe CREATED
+
+      val indexResult: Future[Result] = TestApplicationController.index()(FakeRequest())
+      status(indexResult) shouldBe OK
+      contentAsJson(indexResult).as[Seq[SavedAnime]] shouldBe Seq(kindaichi)
+    }
+  }
+
+  "ApplicationController .create()" should {
+    "save an anime in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+      contentAsJson(createdResult).as[SavedAnime] shouldBe kindaichi
+    }
+
+    "return an InternalServerError if the anime is already in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val duplicateRequest: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val duplicateResult: Future[Result] = TestApplicationController.create()(duplicateRequest)
+      status(duplicateResult) shouldBe INTERNAL_SERVER_ERROR
+      contentAsString(duplicateResult) shouldBe "Bad response from upstream: Anime has already been saved"
+    }
+
+    "return a BadRequest if the request body could not be parsed into a SavedAnime" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson("abcd"))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe BAD_REQUEST
+      contentAsString(createdResult) shouldBe "Invalid request body"
     }
   }
 }

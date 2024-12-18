@@ -54,12 +54,18 @@
       <ul>
       @for(anime <- animeList) {
         <li>
-          <p> <b>@anime.title</b>
+          <p> <a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)">@anime.title</a>
             @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
           </p>
           <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}</p>
-          @if(anime.watched){
-            <p>Marked as watched</p>
+          @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
+            <p>Completed</p>
+          }
+          @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
+            <p>Started watching</p>
+          }
+          @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
+            <p>Not started</p>
           }
           @if(anime.score.nonEmpty){
             <p>My score: @anime.score</p>
