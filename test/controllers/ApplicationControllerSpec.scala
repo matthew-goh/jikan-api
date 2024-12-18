@@ -35,7 +35,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   private lazy val detectiveSchoolQ: SavedAnime = SavedAnime(407, "Tantei Gakuen Q", Some("Detective School Q"), "TV", Some(45), Some(2003),
     Some(7.73), Instant.parse("2024-12-18T10:01:49Z"), 21, Some(9), "")
 
-  ///// METHODS REQUIRING CONNECTOR ONLY /////
+  ///// METHODS FOCUSING ON CONNECTOR /////
   "ApplicationController .getAnimeResults()" should {
     "list the anime search results" in {
       (mockJikanService.getAnimeSearchResults(_: String, _: String, _: String, _: Option[String])(_: ExecutionContext))
@@ -303,9 +303,9 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  ///// METHODS REQUIRING REPOSITORY /////
+  ///// METHODS FOCUSING ON REPOSITORY /////
   "ApplicationController .listSavedAnime()" should {
-    "list all saved anime" in {
+    "list all saved anime in default order (ascending saved_at)" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestApplicationController.create()(request)
       status(createdResult) shouldBe CREATED
@@ -316,20 +316,73 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val createdResult3: Future[Result] = TestApplicationController.create()(request3)
       status(createdResult3) shouldBe CREATED
 
-      val listingResult: Future[Result] = TestApplicationController.listSavedAnime()(FakeRequest())
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnime("all", "saved_at", "none")(testRequest.fakeRequest)
       status(listingResult) shouldBe OK
       contentAsString(listingResult) should include ("Kindaichi Shounen no Jikenbo")
-      contentAsString(listingResult) should include ("Completed")
-      contentAsString(listingResult) should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
-      contentAsString(listingResult) should include ("Not started")
-      contentAsString(listingResult) should include ("Tantei Gakuen Q")
-      contentAsString(listingResult) should include ("Started watching")
+      contentAsString(listingResult).indexOf("Kindaichi Shounen no Jikenbo") should be < contentAsString(listingResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      contentAsString(listingResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < contentAsString(listingResult).indexOf("Tantei Gakuen Q")
     }
 
-    "show 'No users found' if the database is empty" in {
-      val listingResult: Future[Result] = TestApplicationController.listSavedAnime()(FakeRequest())
+    "list all saved anime sorted by the user's score in descending order" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+      val request2: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult2: Future[Result] = TestApplicationController.create()(request2)
+      status(createdResult2) shouldBe CREATED
+      val request3: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(detectiveSchoolQ))
+      val createdResult3: Future[Result] = TestApplicationController.create()(request3)
+      status(createdResult3) shouldBe CREATED
+
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnime("all", "score", "desc")(testRequest.fakeRequest)
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("Kindaichi Shounen no Jikenbo")
+      contentAsString(listingResult).indexOf("Kindaichi Shounen no Jikenbo") should be < contentAsString(listingResult).indexOf("Tantei Gakuen Q")
+      contentAsString(listingResult).indexOf("Tantei Gakuen Q") should be < contentAsString(listingResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+    }
+
+    "show 'No saved anime' if the database is empty" in {
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnime("all", "saved_at", "none")(testRequest.fakeRequest)
       status(listingResult) shouldBe OK
       contentAsString(listingResult) should include ("No saved anime.")
+    }
+
+    "show 'No saved anime' if no saved anime matches the selected completion status" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnime("not_started", "saved_at", "none")(testRequest.fakeRequest)
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("No saved anime.")
+    }
+
+    "return a BadRequest if the sort parameter values are invalid" in {
+      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("all", "?", "?")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Invalid sort parameter")
+    }
+  }
+
+  "ApplicationController .sortSavedList()" should {
+    "reload the saved anime page when sort parameters are submitted" in {
+      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortsaved").withFormUrlEncodedBody(
+        "completionStatus" -> "completed",
+        "orderBy" -> "score",
+        "sortOrder" -> "asc"
+      )
+      val sortResult: Future[Result] = TestApplicationController.sortSavedList()(sortRequest)
+      status(sortResult) shouldBe SEE_OTHER
+      redirectLocation(sortResult) shouldBe Some("/saved/completed/score/asc")
+    }
+
+    "set the sort parameters to default values if they are somehow missing from the request" in {
+      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortsaved").withFormUrlEncodedBody(
+        "sortOrder" -> "none"
+      )
+      val sortResult: Future[Result] = TestApplicationController.sortSavedList()(sortRequest)
+      status(sortResult) shouldBe SEE_OTHER
+      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/all/saved_at/none")
     }
   }
 

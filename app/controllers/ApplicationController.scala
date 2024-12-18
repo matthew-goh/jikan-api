@@ -23,7 +23,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     Future.successful(NotFound(views.html.pagenotfound(path)))
   }
 
-  ///// METHODS REQUIRING CONNECTOR ONLY /////
+  ///// METHODS FOCUSING ON CONNECTOR /////
   def getAnimeResults(search: String, page: String, queryExt: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeSearchResults(search, page, queryExt).value.map{
       case Right(animeSearchResult) => {
@@ -116,12 +116,55 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   }
 
 
-  ///// METHODS REQUIRING REPOSITORY /////
-  def listSavedAnime(): Action[AnyContent] = Action.async { implicit request =>
-    repoService.index().map{
-      case Right(animeList: Seq[SavedAnime]) => Ok(views.html.savedanime(animeList))
-      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+  ///// METHODS FOCUSING ON REPOSITORY /////
+  def listSavedAnime(compStatus: String, orderBy: String, sortOrder: String): Action[AnyContent] = Action.async { implicit request =>
+    val compStatusTry: Try[SavedAnimeStatus.Value] = Try(SavedAnimeStatus.withName(compStatus))
+    val orderByTry: Try[SavedAnimeOrders.Value] = Try(SavedAnimeOrders.withName(orderBy))
+    val sortOrderTry: Try[SortOrders.Value] = Try(SortOrders.withName(sortOrder))
+
+    (compStatusTry, orderByTry, sortOrderTry) match {
+      case (Success(compStatusValue), Success(orderByValue), Success(sortOrderValue)) => {
+        repoService.index().map{
+          case Right(animeList) => {
+            val animeListFiltered: Seq[SavedAnime] = compStatusValue match {
+              case SavedAnimeStatus.not_started => animeList.filter(anime => anime.numEpisodes.isEmpty || anime.episodesWatched == 0)
+              case SavedAnimeStatus.watching => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get)
+              case SavedAnimeStatus.completed => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get)
+              case _ => animeList
+            }
+            val animeListSorted = orderByValue match {
+              case SavedAnimeOrders.saved_at => sortOrderValue match {
+                case SortOrders.desc => animeListFiltered.sortBy(_.savedAt).reverse
+                case _ => animeListFiltered.sortBy(_.savedAt)
+              }
+              case SavedAnimeOrders.title => sortOrderValue match {
+                case SortOrders.desc => animeListFiltered.sortBy(_.title).reverse
+                case _ => animeListFiltered.sortBy(_.title)
+              }
+              case SavedAnimeOrders.year => sortOrderValue match {
+                case SortOrders.desc => animeListFiltered.sortBy(_.year).reverse
+                case _ => animeListFiltered.sortBy(_.year)
+              }
+              case SavedAnimeOrders.score => sortOrderValue match {
+                case SortOrders.desc => animeListFiltered.sortBy(_.score).reverse
+                case _ => animeListFiltered.sortBy(_.score)
+              }
+            }
+            Ok(views.html.savedanime(animeListSorted, compStatus, orderBy, sortOrder))
+          }
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      }
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Invalid sort parameter")))
     }
+  }
+
+  def sortSavedList(): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    val compStatus: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("completionStatus").flatMap(_.headOption))
+    val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
+    val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
+    Future.successful(Redirect(routes.ApplicationController.listSavedAnime(compStatus.getOrElse("all"), orderBy.getOrElse("saved_at"), sortOrder.getOrElse("none"))))
   }
 
   def viewSavedAnime(id: String): Action[AnyContent] = Action.async { implicit request =>

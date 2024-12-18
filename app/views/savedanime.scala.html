@@ -2,7 +2,7 @@
 @import java.text.NumberFormat
 
 @*RequestHeader needed for form with CRSF*@
-@(animeList: Seq[SavedAnime])
+@(animeList: Seq[SavedAnime], compStatus: String, orderBy: String, sortOrder: String)(implicit request: RequestHeader)
 @main("Saved Anime"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -14,62 +14,58 @@
 
   <div class="container mb-5">
     <h2>Saved Anime</h2>
-@*    @form(action = routes.ApplicationController.searchAnime()) {*@
-@*      @CSRF.formField*@
-@*      <div class="form-div">*@
-@*        <h3>Modify Search: <input type="text" name="search" value="@search" placeholder="Enter search term" size="40" required>*@
-@*        <button type="submit">Search</button></h3>*@
-@*      </div>*@
-@*      <div class="form-div">*@
-@*        <select name="status">*@
-@*          <option value="" @(if(queryParams.status == "") "selected" else "")>Status</option>*@
-@*          <option value="airing" @(if(queryParams.status == "airing") "selected" else "")>Airing</option>*@
-@*          <option value="complete" @(if(queryParams.status == "complete") "selected" else "")>Complete</option>*@
-@*          <option value="upcoming" @(if(queryParams.status == "upcoming") "selected" else "")>Upcoming</option>*@
-@*        </select>*@
-@*        <input type="number" name="minScore" value="@queryParams.minScore" placeholder="Min score" min="0" max="10" step="0.01">*@
-@*        <input type="number" name="maxScore" value="@queryParams.maxScore" placeholder="Max score" min="0" max="10" step="0.01">*@
-@*        <select name="orderBy">*@
-@*          <option value="" @(if(queryParams.orderBy == "") "selected" else "")>Order by...</option>*@
-@*          <option value="title" @(if(queryParams.orderBy == "title") "selected" else "")>Title</option>*@
-@*          <option value="score" @(if(queryParams.orderBy == "score") "selected" else "")>Average score</option>*@
-@*          <option value="scored_by" @(if(queryParams.orderBy == "scored_by") "selected" else "")>No. of scores given</option>*@
-@*          <option value="episodes" @(if(queryParams.orderBy == "episodes") "selected" else "")>No. of episodes</option>*@
-@*          <option value="start_date" @(if(queryParams.orderBy == "start_date") "selected" else "")>Start date</option>*@
-@*          <option value="end_date" @(if(queryParams.orderBy == "end_date") "selected" else "")>End date</option>*@
-@*        </select>*@
-@*        <select name="sort">*@
-@*          <option value="" @(if(queryParams.sort == "") "selected" else "")>Sort order</option>*@
-@*          <option value="asc" @(if(queryParams.sort == "asc") "selected" else "")>Ascending</option>*@
-@*          <option value="desc" @(if(queryParams.sort == "desc") "selected" else "")>Descending</option>*@
-@*        </select>*@
-@*      </div>*@
-@*    }*@
-@*  </div>*@
+    @form(action = routes.ApplicationController.sortSavedList()) {
+      @CSRF.formField
+      <div class="form-div">
+        Completion status:
+        <select name="completionStatus">
+          <option value="all" @(if(compStatus == "all") "selected" else "")>All</option>
+          <option value="completed" @(if(compStatus == "completed") "selected" else "")>Completed</option>
+          <option value="watching" @(if(compStatus == "watching") "selected" else "")>Started watching</option>
+          <option value="not_started" @(if(compStatus == "not_started") "selected" else "")>Not started</option>
+        </select>
+          &nbsp;&nbsp; Order by:
+        <select name="orderBy">
+          <option value="saved_at" @(if(orderBy == "saved_at") "selected" else "")>Date saved</option>
+          <option value="title" @(if(orderBy == "title") "selected" else "")>Title</option>
+          <option value="year" @(if(orderBy == "year") "selected" else "")>Year</option>
+          <option value="score" @(if(orderBy == "score") "selected" else "")>My score</option>
+        </select>
+          &nbsp;&nbsp; Sort order:
+        <select name="sortOrder">
+          <option value="none" @(if(sortOrder == "none") "selected" else "")>Select</option>
+          <option value="asc" @(if(sortOrder == "asc") "selected" else "")>Ascending</option>
+          <option value="desc" @(if(sortOrder == "desc") "selected" else "")>Descending</option>
+        </select>
+        <button type="submit">Sort</button>
+      </div>
+    }
 
-@*  <div class="container mb-5">*@
+    <br>
     @if(animeList.isEmpty) {
       <p>No saved anime.</p>
     } else {
       <ul>
       @for(anime <- animeList) {
         <li>
-          <p> <a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)">@anime.title</a>
+          <p><a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)"><b>@anime.title</b></a>
             @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
           </p>
-          <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}</p>
-          @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
-            <p>Completed</p>
-          }
-          @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
-            <p>Started watching</p>
-          }
-          @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
-            <p>Not started</p>
-          }
-          @if(anime.score.nonEmpty){
-            <p>My score: @anime.score</p>
-          }
+          <p>
+            @{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
+            @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
+              <br>Completed
+            }
+            @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
+              <br>Started watching
+            }
+            @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
+              <br>Not started
+            }
+            @if(anime.score.nonEmpty){
+              <br>My score: @anime.score
+            }
+          </p>
         </li>
       }
       </ul>
