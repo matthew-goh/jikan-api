@@ -27,14 +27,14 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
   replaceIndexes = false
 ) with AnimeRepositoryTrait {
 
-  def index(): Future[Either[APIError.BadAPIResponse, Seq[SavedAnime]]] = {
+  def index(): Future[Either[APIError, Seq[SavedAnime]]] = {
     collection.find().toFuture().map{ animeList: Seq[SavedAnime] => Right(animeList) }
       .recover{
         case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to search database collection: ${e.getMessage}"))
       }
   }
 
-  def create(anime: SavedAnime): Future[Either[APIError.BadAPIResponse, SavedAnime]] = {
+  def create(anime: SavedAnime): Future[Either[APIError, SavedAnime]] = {
     collection.insertOne(anime).toFuture().map { insertResult =>
       if (insertResult.wasAcknowledged) {
         Right(anime)
@@ -127,8 +127,8 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
 
 @ImplementedBy(classOf[AnimeRepository])
 trait AnimeRepositoryTrait {
-  def index(): Future[Either[APIError.BadAPIResponse, Seq[SavedAnime]]]
-  def create(anime: SavedAnime): Future[Either[APIError.BadAPIResponse, SavedAnime]]
+  def index(): Future[Either[APIError, Seq[SavedAnime]]]
+  def create(anime: SavedAnime): Future[Either[APIError, SavedAnime]]
   def read(MALId: Int): Future[Either[APIError, SavedAnime]]
   def titleSearch(search: String): Future[Either[APIError, Seq[SavedAnime]]]
   def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]]

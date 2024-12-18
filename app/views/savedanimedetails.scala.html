@@ -4,6 +4,7 @@
 @import java.time.format.DateTimeFormatter
 @import java.time.ZoneId
 
+@import play.twirl.api.HtmlFormat.raw
 @(anime: SavedAnime)(implicit request: RequestHeader)
 @main("Saved Anime Details"){
   <div class="container mb-5">
@@ -46,7 +47,13 @@
     <p><b>My score:</b> @anime.score.getOrElse("Not scored")</p>
     <p>
       <b>My notes:</b><br>
-      @anime.notes
+      @raw(anime.notes.replace("\n", "<br>"))
     </p>
+    <form action="@routes.ApplicationController.showUpdateForm(anime.MALId.toString)" method="GET" class="button-form">
+      <button type="submit">Update</button>
+    </form>
+    <form action="@routes.ApplicationController.unsaveAnime(anime.MALId.toString)" method="GET" class="button-form">
+      <button type="submit">Unsave</button>
+    </form>
   </div>
 }

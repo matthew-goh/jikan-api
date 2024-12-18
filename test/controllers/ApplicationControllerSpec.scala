@@ -38,8 +38,8 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   private lazy val kindaichiRefreshed: SavedAnime = SavedAnime(2076, "Kindaichi Shounen no Jikenbo", Some("The File of Young Kindaichi"), "TV", Some(148), Some(1997),
     Some(7.97), Instant.parse("2024-12-18T10:01:49Z"), 148, Some(10), "Best mystery anime")
 
-  private lazy val detectiveSchoolQUpdated: SavedAnime = SavedAnime(407, "Tantei Gakuen Q", Some("Detective School Q"), "TV", Some(45), Some(2003),
-    Some(7.73), Instant.parse("2024-12-18T10:01:49Z"), 45, Some(10), "By the author of Kindaichi")
+  private lazy val kubikiriUpdated: SavedAnime = SavedAnime(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), None,
+    Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 4, None, "Closed circle mystery on an island")
 
   ///// METHODS FOCUSING ON CONNECTOR /////
   "ApplicationController .getAnimeResults()" should {
@@ -421,7 +421,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   "ApplicationController .saveAnime()" should {
     "save an anime to the database" in {
       val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
-        "url" -> "anime/33263",
+        "url" -> "/anime/33263",
         "id" -> "33263",
         "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
         "titleEnglish" -> "The Kubikiri Cycle",
@@ -440,7 +440,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       status(createdResult) shouldBe CREATED
 
       val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
-        "url" -> "anime/33263",
+        "url" -> "/anime/33263",
         "id" -> "33263",
         "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
         "titleEnglish" -> "The Kubikiri Cycle",
@@ -469,18 +469,18 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
         "R - 17+ (violence & profanity)",Some(7.97),Some(8317),
         Some("""
-             |Hajime Kindaichi's unorganized appearance and lax nature may give the impression of an average high school student, but a book should never be judged by its cover. Hajime is the grandson of the man who was once Japan's greatest detective, and he is also a remarkable sleuth himself.
-             |
-             |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
-             |
-             |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997))
+         |Hajime Kindaichi's unorganized appearance and lax nature may give the impression of an average high school student, but a book should never be judged by its cover. Hajime is the grandson of the man who was once Japan's greatest detective, and he is also a remarkable sleuth himself.
+         |
+         |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
+         |
+         |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997))
 
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestApplicationController.create()(request)
       status(createdResult) shouldBe CREATED
 
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
-        "url" -> "saved/2076",
+        "url" -> "/saved/2076",
         "id" -> "2076",
         "savedAt" -> "2024-12-18T10:01:49Z",
         "epsWatched" -> "148",
@@ -504,7 +504,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "return a NotFound if the anime ID cannot be found in the database" in {
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
-        "url" -> "saved/2076",
+        "url" -> "/saved/2076",
         "id" -> "2076",
         "savedAt" -> "2024-12-18T10:01:49Z",
         "epsWatched" -> "148",
@@ -524,7 +524,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "return a NotFound if the anime ID does not exist on MAL" in {
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
-        "url" -> "saved/2076",
+        "url" -> "/saved/2076",
         "id" -> "2076",
       )
 
@@ -540,7 +540,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "return a BadRequest if posted anime ID is invalid" in {
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
-        "url" -> "anime/2076",
+        "url" -> "/anime/2076",
         "id" -> "abc"
       )
       val refreshResult: Future[Result] = TestApplicationController.refreshSavedAnime()(refreshRequest)
@@ -555,6 +555,102 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val refreshResult: Future[Result] = TestApplicationController.refreshSavedAnime()(refreshRequest)
       status(refreshResult) shouldBe BAD_REQUEST
       contentAsString(refreshResult) should include ("Failed to post source url")
+    }
+  }
+
+  "ApplicationController .showUpdateForm()" should {
+    "display the update form with existing data filled in" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val formResult: Future[Result] = TestApplicationController.showUpdateForm("2076")(testRequest.fakeRequest)
+      status(formResult) shouldBe OK
+      contentAsString(formResult) should include ("Kindaichi Shounen no Jikenbo")
+      contentAsString(formResult) should include ("No. of episodes: 148")
+      contentAsString(formResult) should include ("Best mystery anime")
+    }
+
+    "return a NotFound if the anime is not saved in the database" in {
+      val formResult: Future[Result] = TestApplicationController.showUpdateForm("2076")(testRequest.fakeRequest)
+      status(formResult) shouldBe NOT_FOUND
+      contentAsString(formResult) should include ("Bad response from upstream: Anime not saved in database")
+    }
+
+    "return a BadRequest if the anime ID provided is not an integer" in {
+      val formResult: Future[Result] = TestApplicationController.showUpdateForm("abc")(testRequest.fakeRequest)
+      status(formResult) shouldBe BAD_REQUEST
+      contentAsString(formResult) should include ("Anime ID must be an integer")
+    }
+  }
+
+  "ApplicationController .updateFormSubmit()" should {
+    "update anime details in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val updateRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/update/33263").withFormUrlEncodedBody(
+        "id" -> "33263",
+        "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
+        "titleEnglish" -> "The Kubikiri Cycle",
+        "type" -> "OVA",
+        "numEpisodes" -> "8",
+        "MALScore" -> "7.75",
+        "savedAt" -> "2024-12-18T10:01:49Z",
+        "epsWatched" -> "4",
+        "score" -> "",
+        "notes" -> "Closed circle mystery on an island"
+      )
+      val updateResult: Future[Result] = TestApplicationController.updateFormSubmit("33263")(updateRequest)
+      status(updateResult) shouldBe OK
+      contentAsString(updateResult) should include ("Anime details updated!")
+
+      val indexResult: Future[Result] = TestApplicationController.index()(FakeRequest())
+      status(indexResult) shouldBe OK
+      contentAsJson(indexResult).as[Seq[SavedAnime]] shouldBe Seq(kubikiriUpdated)
+    }
+
+    "return a NotFound if the anime is not in the database" in {
+      val updateRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/update/33263").withFormUrlEncodedBody(
+        "id" -> "33263",
+        "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
+        "titleEnglish" -> "The Kubikiri Cycle",
+        "type" -> "OVA",
+        "numEpisodes" -> "8",
+        "MALScore" -> "7.75",
+        "savedAt" -> "2024-12-18T10:01:49Z",
+        "epsWatched" -> "4",
+        "score" -> "",
+        "notes" -> "Closed circle mystery on an island"
+      )
+      val updateResult: Future[Result] = TestApplicationController.updateFormSubmit("33263")(updateRequest)
+      status(updateResult) shouldBe NOT_FOUND
+      contentAsString(updateResult) should include ("Bad response from upstream: Anime not saved in database")
+    }
+  }
+
+  "ApplicationController .unsaveAnime()" should {
+    "delete an anime from the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val deleteResult: Future[Result] = TestApplicationController.unsaveAnime("2076")(FakeRequest())
+      status(deleteResult) shouldBe OK
+      contentAsString(deleteResult) should include ("Anime removed from saved list")
+    }
+
+    "return a NotFound if the user could not be found" in {
+      val deleteResult: Future[Result] = TestApplicationController.unsaveAnime("2076")(FakeRequest())
+      status(deleteResult) shouldBe NOT_FOUND
+      contentAsString(deleteResult) should include ("Bad response from upstream: Anime not saved in database")
+    }
+
+    "return a BadRequest if the anime ID provided is not an integer" in {
+      val viewResult: Future[Result] = TestApplicationController.unsaveAnime("abc")(FakeRequest())
+      status(viewResult) shouldBe BAD_REQUEST
+      contentAsString(viewResult) should include ("Anime ID must be an integer")
     }
   }
 

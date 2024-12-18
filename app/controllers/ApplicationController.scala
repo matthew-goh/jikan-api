@@ -216,6 +216,41 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
+  def showUpdateForm(id: String): Action[AnyContent] = Action.async { implicit request =>
+    val idTry: Try[Int] = Try(id.toInt)
+    idTry match {
+      case Success(id) => {
+        repoService.read(id).map {
+          case Right(anime) => Ok(views.html.updatesavedanime(anime))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      }
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
+    }
+  }
+
+  def updateFormSubmit(id: String): Action[AnyContent] =  Action.async { implicit request =>
+    // accessed via a POST route, so not possible to call with an invalid ID via URL
+    accessToken()
+    repoService.update(request.body.asFormUrlEncoded).map{
+      case Right(_) => Ok(views.html.confirmation("Anime details updated!", Some(s"/saved/$id")))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def unsaveAnime(id: String): Action[AnyContent] = Action.async { implicit request =>
+    val idTry: Try[Int] = Try(id.toInt)
+    idTry match {
+      case Success(id) => {
+        repoService.delete(id).map{
+          case Right(_) => Ok(views.html.confirmation("Anime removed from saved list", Some("/saved/all/saved_at/none")))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      }
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
+    }
+  }
+
   // test-only
   def deleteAll(): Action[AnyContent] = Action.async { _ =>
     repoService.deleteAll().map{
