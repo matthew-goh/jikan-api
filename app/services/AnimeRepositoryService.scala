@@ -15,17 +15,6 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
     repositoryTrait.index()
   }
 
-//    def animeDataToSavedAnime(animeData: AnimeData): SavedAnime = {
-//      SavedAnime(MALId = animeData.mal_id,
-//        title = animeData.title,
-//        titleEnglish = animeData.title_english,
-//        `type` = animeData.`type`,
-//        numEpisodes = animeData.episodes,
-//        year = animeData.year,
-//        MALScore = animeData.score,
-//      )
-//    }
-
   def create(anime: SavedAnime): Future[Either[APIError, SavedAnime]] = {
     repositoryTrait.create(anime)
   }

@@ -167,6 +167,22 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     Future.successful(Redirect(routes.ApplicationController.listSavedAnime(compStatus.getOrElse("all"), orderBy.getOrElse("saved_at"), sortOrder.getOrElse("none"))))
   }
 
+  def listSavedAnimeFromTitleSearch(title: String): Action[AnyContent] = Action.async { implicit request =>
+    repoService.titleSearch(title).map{
+      case Right(animeList) => Ok(views.html.savedanimeTitleSearch(animeList.sortBy(_.title), title))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def searchSavedAnimeByTitle(): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    val searchedTitle: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("title").flatMap(_.headOption))
+    searchedTitle match {
+      case None | Some("") => Future.successful(BadRequest(views.html.unsuccessful("No search title submitted")))
+      case Some(title) => Future.successful(Redirect(routes.ApplicationController.listSavedAnimeFromTitleSearch(title)))
+    }
+  }
+
   def viewSavedAnime(id: String): Action[AnyContent] = Action.async { implicit request =>
     Try(id.toInt) match {
       case Success(malId) => {
@@ -243,7 +259,8 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     idTry match {
       case Success(id) => {
         repoService.delete(id).map{
-          case Right(_) => Ok(views.html.confirmation("Anime removed from saved list", Some("/saved/all/saved_at/none")))
+          case Right(_) =>
+            Ok(views.html.confirmation("Anime removed from saved list", Some("/saved/status=all/orderby=saved_at/order=none")))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
       }

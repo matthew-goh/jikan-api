@@ -62,5 +62,15 @@
     <p><a href="@routes.ApplicationController.listSavedAnime(compStatus = "all", orderBy = "saved_at", sortOrder = "none")">
       Show all saved anime
     </a></p>
+
+    @form(action = routes.ApplicationController.searchSavedAnimeByTitle()) {
+      @CSRF.formField
+      <div>
+        <b>Search saved anime by title:</b><br>
+        <input type="text" name="title" placeholder="Enter title" size="30" pattern=".*[a-zA-Z0-9].*" required>
+        <button type="submit">Search</button>
+        <br><small class="info">Input must contain a letter or number.</small>
+      </div>
+    }
   </div>
 }

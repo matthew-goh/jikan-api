@@ -288,7 +288,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/start_year/asc")
     }
 
-    "set the sort parameters to 'none' if they are somehow missing from the request" in {
+    "set the sort parameters to 'none' if they are missing from the request" in {
       val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody(
         "username" -> "Emotional-Yam8"
       )
@@ -382,13 +382,69 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       redirectLocation(sortResult) shouldBe Some("/saved/completed/score/asc")
     }
 
-    "set the sort parameters to default values if they are somehow missing from the request" in {
+    "set the sort parameters to default values if they are missing from the request" in {
       val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortsaved").withFormUrlEncodedBody(
         "sortOrder" -> "none"
       )
       val sortResult: Future[Result] = TestApplicationController.sortSavedList()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
       redirectLocation(sortResult) shouldBe Some("/saved/all/saved_at/none")
+    }
+  }
+
+  "ApplicationController .listSavedAnimeFromTitleSearch()" should {
+    "list saved anime whose title contains the searched title (in alphabetical order)" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+      val request2: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(detectiveSchoolQ))
+      val createdResult2: Future[Result] = TestApplicationController.create()(request2)
+      status(createdResult2) shouldBe CREATED
+      val request3: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
+      val createdResult3: Future[Result] = TestApplicationController.create()(request3)
+      status(createdResult3) shouldBe CREATED
+
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnimeFromTitleSearch("ku")(testRequest.fakeRequest)
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("2 matching saved anime")
+      contentAsString(listingResult) should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      contentAsString(listingResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < contentAsString(listingResult).indexOf("Tantei Gakuen Q")
+    }
+
+    "show 'No saved anime' if no saved anime matches the searched title" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
+      val listingResult: Future[Result] = TestApplicationController.listSavedAnimeFromTitleSearch("kubikiri")(testRequest.fakeRequest)
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("No saved anime matching the searched title.")
+    }
+
+    "return a BadRequest if the sort parameter values are invalid" in {
+      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("all", "?", "?")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Invalid sort parameter")
+    }
+  }
+
+  "ApplicationController .searchSavedAnimeByTitle()" should {
+    "redirect to saved anime title search page when a title is searched" in {
+      val searchRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saved/titlesearch").withFormUrlEncodedBody(
+        "title" -> "kindaichi"
+      )
+      val searchResult: Future[Result] = TestApplicationController.searchSavedAnimeByTitle()(searchRequest)
+      status(searchResult) shouldBe SEE_OTHER
+      redirectLocation(searchResult) shouldBe Some("/saved/titlesearch/kindaichi")
+    }
+
+    "return a BadRequest if searched title is blank" in {
+      val searchRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saved/titlesearch").withFormUrlEncodedBody(
+        "title" -> ""
+      )
+      val searchResult: Future[Result] = TestApplicationController.searchSavedAnimeByTitle()(searchRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("No search title submitted")
     }
   }
 

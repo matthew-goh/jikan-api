@@ -52,8 +52,9 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
       Filters.equal("MALId", id)
     )
   private def bySearchedTitle(search: String): Bson =
-    Filters.and(
-      Filters.regex("title", s".*${search}.*", "i")
+    Filters.or(
+      Filters.regex("title", s".*${search}.*", "i"),
+      Filters.regex("titleEnglish", s".*${search}.*", "i")
     )
 
   def read(MALId: Int): Future[Either[APIError, SavedAnime]] = {
