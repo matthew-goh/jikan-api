@@ -51,29 +51,29 @@ ul {
     padding-left: 20px;
 }
 
+.ul-with-boxes {
+    margin: 10px 0;
+    padding-left: 0;
+}
+
 li {
     margin-bottom: 10px;
 }
 
-.list {
-    list-style: none; /* Removes default bullets */
-    padding-top: 10px;
-    margin: 0;
+.li-with-box {
+    display: flex;
+    justify-content: flex-start;
+    /*align-items: center;*/
+    /*padding: 10px;*/
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
 }
 
-.list-item {
-    display: flex;       /* Makes the list item a Flexbox container */
-    align-items: center; /* Vertically aligns bullet, image, and text */
-    margin-bottom: 10px; /* Adds spacing between list items */
-}
-
-.bullet {
-    width: 6px;               /* Bullet size */
-    height: 6px;              /* Bullet size */
-    background-color: #333;  /* Bullet color */
-    border-radius: 50%;       /* Makes the bullet circular */
-    margin: 0 15px 8px 0;       /* top, right, bottom, left */
-    flex-shrink: 0;           /* Prevents shrinking if the list item is resized */
+.text-container {
+    width: 50%;
+    padding: 10px;
+    /*margin: 10px;*/
+    /*flex-direction: column;*/
 }
 
 /* Buttons */

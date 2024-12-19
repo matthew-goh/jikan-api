@@ -25,12 +25,16 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
 
   ///// METHODS FOCUSING ON CONNECTOR /////
   def getAnimeResults(search: String, page: String, queryExt: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getAnimeSearchResults(search, page, queryExt).value.map{
-      case Right(animeSearchResult) => {
-        val queryParams: AnimeSearchParams = service.queryExtToAnimeSearchParams(queryExt)
-        Ok(views.html.searchanime(animeSearchResult.data, animeSearchResult.pagination, search, queryExt, queryParams))
-      }
-      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    service.getAnimeSearchResults(search, page, queryExt).value.flatMap {
+      case Right(animeSearchResult) =>
+        repoService.index().map{
+          case Right(animeInDB) => {
+            val queryParams: AnimeSearchParams = service.queryExtToAnimeSearchParams(queryExt)
+            Ok(views.html.searchanime(animeSearchResult.data, animeSearchResult.pagination, search, queryExt, queryParams, animeInDB.map(_.MALId)))
+          }
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
 
@@ -264,15 +268,17 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   }
 
   def unsaveAnime(id: String): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
     val idTry: Try[Int] = Try(id.toInt)
+    val sourceUrl: String = request.body.asFormUrlEncoded.flatMap(_.get("url").flatMap(_.headOption))
+      .getOrElse("/saved/status=all/orderby=saved_at/order=none")
     idTry match {
-      case Success(id) => {
+      case Success(id) =>
         repoService.delete(id).map{
           case Right(_) =>
-            Ok(views.html.confirmation("Anime removed from saved list", Some("/saved/status=all/orderby=saved_at/order=none")))
+            Ok(views.html.confirmation("Anime removed from saved list", Some(sourceUrl)))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
-      }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
     }
   }

@@ -20,7 +20,7 @@ POST     /saveanime     controllers.ApplicationController.saveAnime()
 POST     /refresh     controllers.ApplicationController.refreshSavedAnime()
 GET     /update/:id     controllers.ApplicationController.showUpdateForm(id: String)
 POST     /update/:id     controllers.ApplicationController.updateFormSubmit(id: String)
-GET     /unsave/:id     controllers.ApplicationController.unsaveAnime(id: String)
+POST     /unsave/:id     controllers.ApplicationController.unsaveAnime(id: String)
 
 GET     /test-only/deleteall     controllers.ApplicationController.deleteAll()
 

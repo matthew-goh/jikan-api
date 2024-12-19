@@ -45,27 +45,36 @@
     @if(animeList.isEmpty) {
       <p>No saved anime.</p>
     } else {
-      <ul>
+      <ul class="ul-with-boxes">
       @for(anime <- animeList) {
-        <li>
-          <p><a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
-            @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
-          </p>
-          <p>
-            @{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
-            @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
-              <br>Completed
-            }
-            @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
-              <br>Started watching
-            }
-            @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
-              <br>Not started
-            }
-            @if(anime.score.nonEmpty){
-              <br>My score: @anime.score
-            }
-          </p>
+        <li class="li-with-box">
+          <div class="text-container">
+            <p><a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
+              @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
+            </p>
+            <form action="@routes.ApplicationController.unsaveAnime(anime.MALId.toString)" method="POST" class="button-form">
+              @CSRF.formField
+            <input type="hidden" name="url" value="@request.uri">
+            <button type="submit">Unsave</button>
+            </form>
+          </div>
+          <div class="text-container">
+            <span>
+              @{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
+              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
+                <br>Completed
+              }
+              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
+                <br>Started watching
+              }
+              @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
+                <br>Not started
+              }
+              @if(anime.score.nonEmpty){
+                <br>My score: @anime.score
+              }
+            </span>
+          </div>
         </li>
       }
       </ul>

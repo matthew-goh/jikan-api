@@ -52,7 +52,8 @@
     <form action="@routes.ApplicationController.showUpdateForm(anime.MALId.toString)" method="GET" class="button-form">
       <button type="submit">Update</button>
     </form>
-    <form action="@routes.ApplicationController.unsaveAnime(anime.MALId.toString)" method="GET" class="button-form">
+    <form action="@routes.ApplicationController.unsaveAnime(anime.MALId.toString)" method="POST" class="button-form">
+      @CSRF.formField
       <button type="submit">Unsave</button>
     </form>
   </div>

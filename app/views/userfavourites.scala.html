@@ -51,14 +51,6 @@
           <p>@{anime.`type`}, @anime.start_year</p>
 @*          @if(anime.start_year.nonEmpty){, @anime.year}*@
         </li>
-  @*      <form action="@routes.ApplicationController.addFromSearch()" method="POST" class="button-form">*@
-  @*        @CSRF.formField*@
-  @*      <input type="hidden" name="_id" value="@book._id" required>*@
-  @*      <input type="hidden" name="name" value="@book.name" required>*@
-  @*      <input type="hidden" name="description" value="@book.description">*@
-  @*      <input type="hidden" name="pageCount" value="@book.pageCount" required>*@
-  @*      <button type="submit">Add to database</button>*@
-  @*      </form>*@
       }
       </ul>
     }

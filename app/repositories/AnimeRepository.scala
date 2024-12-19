@@ -95,8 +95,6 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
   }
   // updateResult is e.g. AcknowledgedUpdateResult{matchedCount=1, modifiedCount=1, upsertedId=null}
 
-//  def updateWithValue(MALId: Int, field: CustomisableFields.Value, newValue: String): Future[Either[APIError, UpdateResult]] = ???
-
   def delete(MALId: Int): Future[Either[APIError, DeleteResult]] = {
     collection.deleteOne(
       filter = byID(MALId)
@@ -133,7 +131,6 @@ trait AnimeRepositoryTrait {
   def read(MALId: Int): Future[Either[APIError, SavedAnime]]
   def titleSearch(search: String): Future[Either[APIError, Seq[SavedAnime]]]
   def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]]
-//  def updateWithValue(MALId: Int, field: CustomisableFields.Value, newValue: String): Future[Either[APIError, result.UpdateResult]]
   def delete(MALId: Int): Future[Either[APIError, result.DeleteResult]]
   def deleteAll(): Future[Either[APIError, result.DeleteResult]]
 }

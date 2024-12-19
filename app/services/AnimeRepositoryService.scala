@@ -53,9 +53,9 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
     repositoryTrait.titleSearch(search)
   }
 
-  def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]] = {
-    repositoryTrait.update(MALId, anime)
-  }
+//  def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]] = {
+//    repositoryTrait.update(MALId, anime)
+//  }
   // version called by frontend
   def update(reqBody: Option[Map[String, Seq[String]]]): Future[Either[APIError, result.UpdateResult]] = {
     val missingError = APIError.BadAPIResponse(400, "Missing required value")

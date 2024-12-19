@@ -41,9 +41,16 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   private lazy val kubikiriUpdated: SavedAnime = SavedAnime(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), None,
     Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 4, None, "Closed circle mystery on an island")
 
+  def countOccurrences(fullContent: String, target: String): Int =
+    fullContent.sliding(target.length).count(window => window == target)
+
   ///// METHODS FOCUSING ON CONNECTOR /////
   "ApplicationController .getAnimeResults()" should {
     "list the anime search results" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+
       (mockJikanService.getAnimeSearchResults(_: String, _: String, _: String, _: Option[String])(_: ExecutionContext))
         .expects("kindaichi", "1", "status=&min_score=&max_score=&order_by=&sort=", None, *)
         .returning(EitherT.rightT(JikanServiceSpec.testAnimeSearchResult))
@@ -56,11 +63,15 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
       val searchResult: Future[Result] = TestApplicationController.getAnimeResults("kindaichi", "1", "status=&min_score=&max_score=&order_by=&sort=")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should (include ("Page 1 of 1") and include ("Results 1-9"))
-      contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo")
-      contentAsString(searchResult) should include ("Average score: 7.94")
-      contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken")
-      contentAsString(searchResult) should include ("from 606 users")
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should (include ("Page 1 of 1") and include ("Results 1-9"))
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should include ("Average score: 7.94")
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken")
+      searchResultContent should include ("from 606 users")
+
+      countOccurrences(searchResultContent, "Saved") shouldBe 1
+      countOccurrences(searchResultContent, "+ Save") shouldBe 8
     }
 
     "list the anime search results and retain the parameter values under 'Modify Search'" in {
@@ -79,12 +90,12 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
       val searchResult: Future[Result] = TestApplicationController.getAnimeResults("kindaichi", "1", "status=complete&min_score=7.5&max_score=8&order_by=episodes&sort=desc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should include ("Results 1-3")
-      contentAsString(searchResult) should include ("The File of Young Kindaichi")
-      contentAsString(searchResult).indexOf("The File of Young Kindaichi") should be < contentAsString(searchResult).indexOf("Average score: 7.54")
-      contentAsString(searchResult).indexOf("Average score: 7.54") should be < contentAsString(searchResult).indexOf("Kindaichi Shounen no Jikenbo Returns 2nd Season")
-
-      contentAsString(searchResult) should (include ("Complete") and include ("No. of episodes") and include ("Descending"))
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should (include ("Complete") and include ("No. of episodes") and include ("Descending"))
+      searchResultContent should include ("Results 1-3")
+      searchResultContent should include ("The File of Young Kindaichi")
+      searchResultContent.indexOf("The File of Young Kindaichi") should be < searchResultContent.indexOf("Average score: 7.54")
+      searchResultContent.indexOf("Average score: 7.54") should be < searchResultContent.indexOf("Kindaichi Shounen no Jikenbo Returns 2nd Season")
     }
 
     "show 'No search results' if there are no results" in {
@@ -127,7 +138,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val searchResult: Future[Result] = TestApplicationController.searchAnime()(searchRequest)
       status(searchResult) shouldBe SEE_OTHER
-      redirectLocation(searchResult) shouldBe Some("/searchanime/kindaichi/1/status=complete&min_score=&max_score=8.5&order_by=title&sort=")
+      redirectLocation(searchResult) shouldBe Some("/searchanime/kindaichi/page=1/status=complete&min_score=&max_score=8.5&order_by=title&sort=")
     }
 
     "return a BadRequest if search term is blank" in {
@@ -244,10 +255,11 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
       val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should (include ("Title") and include ("Ascending"))
-      contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo")
-      contentAsString(searchResult).indexOf("Kindaichi Shounen no Jikenbo") should be < contentAsString(searchResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
-      contentAsString(searchResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < contentAsString(searchResult).indexOf("Tantei Gakuen Q")
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should (include ("Title") and include ("Ascending"))
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent.indexOf("Kindaichi Shounen no Jikenbo") should be < searchResultContent.indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      searchResultContent.indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < searchResultContent.indexOf("Tantei Gakuen Q")
     }
 
     "list the user's favourites sorted by start year in descending order" in {
@@ -258,10 +270,11 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
       val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "start_year", "desc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should (include ("Start year") and include ("Descending"))
-      contentAsString(searchResult) should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
-      contentAsString(searchResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < contentAsString(searchResult).indexOf("Tantei Gakuen Q")
-      contentAsString(searchResult).indexOf("Tantei Gakuen Q") should be < contentAsString(searchResult).indexOf("Kindaichi Shounen no Jikenbo")
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should (include ("Start year") and include ("Descending"))
+      searchResultContent should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      searchResultContent.indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < searchResultContent.indexOf("Tantei Gakuen Q")
+      searchResultContent.indexOf("Tantei Gakuen Q") should be < searchResultContent.indexOf("Kindaichi Shounen no Jikenbo")
     }
 
     "show 'No favourites' if the user has no favourites" in {
@@ -302,7 +315,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val sortResult: Future[Result] = TestApplicationController.sortFavourites()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
-      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/start_year/asc")
+      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/orderby=start_year/order=asc")
     }
 
     "set the sort parameters to 'none' if they are missing from the request" in {
@@ -311,7 +324,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val sortResult: Future[Result] = TestApplicationController.sortFavourites()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
-      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/none/none")
+      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/orderby=none/order=none")
     }
 
     "return a BadRequest if username (hidden field) is blank" in {
@@ -344,6 +357,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(listingResult) should include ("Kindaichi Shounen no Jikenbo")
       contentAsString(listingResult).indexOf("Kindaichi Shounen no Jikenbo") should be < contentAsString(listingResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
       contentAsString(listingResult).indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < contentAsString(listingResult).indexOf("Tantei Gakuen Q")
+      countOccurrences(contentAsString(listingResult), "Unsave") shouldBe 3
     }
 
     "list all saved anime sorted by the user's score in descending order" in {
@@ -396,7 +410,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val sortResult: Future[Result] = TestApplicationController.sortSavedList()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
-      redirectLocation(sortResult) shouldBe Some("/saved/completed/score/asc")
+      redirectLocation(sortResult) shouldBe Some("/saved/status=completed/orderby=score/order=asc")
     }
 
     "set the sort parameters to default values if they are missing from the request" in {
@@ -405,7 +419,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val sortResult: Future[Result] = TestApplicationController.sortSavedList()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
-      redirectLocation(sortResult) shouldBe Some("/saved/all/saved_at/none")
+      redirectLocation(sortResult) shouldBe Some("/saved/status=all/orderby=saved_at/order=none")
     }
   }
 
@@ -714,7 +728,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(deleteResult) should include ("Anime removed from saved list")
     }
 
-    "return a NotFound if the user could not be found" in {
+    "return a NotFound if the anime is not in the database" in {
       val deleteResult: Future[Result] = TestApplicationController.unsaveAnime("2076")(FakeRequest())
       status(deleteResult) shouldBe NOT_FOUND
       contentAsString(deleteResult) should include ("Bad response from upstream: Anime not saved in database")

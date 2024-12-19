@@ -2,7 +2,8 @@
 @import java.text.NumberFormat
 
 @*RequestHeader needed for form with CRSF*@
-@(animeResults: Seq[AnimeData], pagination: AnimeSearchPagination, search: String, queryExt: String, queryParams: AnimeSearchParams)(implicit request: RequestHeader)
+@(animeResults: Seq[AnimeData], pagination: AnimeSearchPagination, search: String, queryExt: String,
+        queryParams: AnimeSearchParams, idsInDatabase: Seq[Int])(implicit request: RequestHeader)
 @main("Search Anime"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -60,40 +61,53 @@
         <p>Results @{(pagination.current_page-1) * pagination.items.per_page + 1}-@{(pagination.current_page-1) * pagination.items.per_page + pagination.items.count}
           of @pagination.items.total</p>
       </div>
-      <ul>
+      <ul class="ul-with-boxes">
       @for(anime <- animeResults) {
-        <li>
-          <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)" target="_blank"> <b>@anime.title</b> </a>
-            @if(anime.title_english.nonEmpty){ <br><i>@anime.title_english</i> }
-          </p>
-          <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}</p>
-          <p>@if(anime.episodes.nonEmpty){
-            Episodes: @anime.episodes
-          } else {
-            No. of episodes unknown
-          }
-          </p>
-          <p>Status: @anime.status</p>
-          @if(anime.score.nonEmpty){
-            <p>Average score: @anime.score
-              @if(anime.scored_by.nonEmpty) {
-                @if(anime.scored_by.get == 1){
-                  from 1 user
-                } else {
-                  from @NumberFormat.getInstance().format(anime.scored_by.get) users
-                }
+        <li class="li-with-box">
+          <div class="text-container">
+            <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)" target="_blank"> <b>@anime.title</b> </a>
+              @if(anime.title_english.nonEmpty){ <br><i>@anime.title_english</i> }
+            </p>
+            @if(idsInDatabase.contains(anime.mal_id)){
+              <p class="button-box"> Saved </p>
+            } else {
+              <form action="@routes.ApplicationController.saveAnime()" method="POST" class="button-form">
+                @CSRF.formField
+                <input type="hidden" name="url" value="@request.uri">
+                <input type="hidden" name="id" value="@anime.mal_id">
+                <input type="hidden" name="title" value="@anime.title">
+                @if(anime.title_english.nonEmpty) { <input type="hidden" name="titleEnglish" value="@anime.title_english"> }
+                <input type="hidden" name="type" value="@{anime.`type`}">
+                @if(anime.episodes.nonEmpty) { <input type="hidden" name="numEpisodes" value="@anime.episodes"> }
+                @if(anime.year.nonEmpty) { <input type="hidden" name="year" value="@anime.year"> }
+                @if(anime.score.nonEmpty) { <input type="hidden" name="MALScore" value="@anime.score"> }
+                <button type="submit">+ Save</button>
+              </form>
+            }
+          </div>
+          <div class="text-container">
+            <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
+            <br>@anime.status</p>
+            <p>
+              @if(anime.episodes.nonEmpty){
+                Episodes: @anime.episodes
+              } else {
+                No. of episodes unknown
               }
             </p>
-          }
+            @if(anime.score.nonEmpty){
+              <span>Average score: @anime.score
+                @if(anime.scored_by.nonEmpty) {
+                  @if(anime.scored_by.get == 1){
+                    from 1 user
+                  } else {
+                    from @NumberFormat.getInstance().format(anime.scored_by.get) users
+                  }
+                }
+              </span>
+            }
+          </div>
         </li>
-  @*      <form action="@routes.ApplicationController.addFromSearch()" method="POST" class="button-form">*@
-  @*        @CSRF.formField*@
-  @*      <input type="hidden" name="_id" value="@book._id" required>*@
-  @*      <input type="hidden" name="name" value="@book.name" required>*@
-  @*      <input type="hidden" name="description" value="@book.description">*@
-  @*      <input type="hidden" name="pageCount" value="@book.pageCount" required>*@
-  @*      <button type="submit">Add to database</button>*@
-  @*      </form>*@
       }
       </ul>
       <br>
