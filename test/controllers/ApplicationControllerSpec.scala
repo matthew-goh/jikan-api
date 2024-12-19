@@ -146,7 +146,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   }
 
   "ApplicationController .getAnimeById()" should {
-    "display the anime's details" in {
+    "display the anime's details when it is not saved in the database" in {
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
         .expects("2076", *)
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
@@ -157,6 +157,23 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
       contentAsString(searchResult) should include ("Mon, 11 Sep 2000")
       contentAsString(searchResult) should include ("Scored by 8,317 users")
+      contentAsString(searchResult) should include ("+ Save")
+    }
+
+    "display the anime's details when it is already saved in the database" in {
+      val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
+      val createdResult: Future[Result] = TestApplicationController.create()(request)
+      status(createdResult) shouldBe CREATED
+      
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeById("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
+      contentAsString(searchResult) should include ("Saved")
     }
 
     "return a NotFound if the anime is not found" in {

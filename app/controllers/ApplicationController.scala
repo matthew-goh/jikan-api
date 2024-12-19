@@ -52,9 +52,18 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   }
 
   def getAnimeById(id: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getAnimeById(id).value.map{
-      case Right(animeResult) => Ok(views.html.animedetails(animeResult.data))
-      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    service.getAnimeById(id).value.flatMap{
+      case Right(animeResult) => {
+        // check if the anime has already been saved
+        repoService.read(animeResult.data.mal_id).map{
+          case Right(_) => Ok(views.html.animedetails(animeResult.data, inDatabase = true))
+          case Left(e) => e.httpResponseStatus match {
+            case 404 => Ok(views.html.animedetails(animeResult.data, inDatabase = false))
+            case _ => Status(e.httpResponseStatus)(views.html.unsuccessful(e.reason))
+          }
+        }
+      }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
 

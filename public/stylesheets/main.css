@@ -116,6 +116,20 @@ button:hover {
     text-decoration: none;
 }
 
+.button-box {
+    display: inline-block;       /* Makes the <a> behave like a block-level element for padding/margins */
+    padding: 8px 15px;          /* Adds space inside the button */
+    font-size: 16px;             /* Sets the font size */
+    color: white;                /* Sets the text color */
+    background-color: grey;  /* Button background color */
+    border: none;                /* Removes border */
+    border-radius: 5px;          /* Rounds the corners */
+    text-decoration: none;       /* Removes underline */
+    text-align: center;          /* Centers text */
+    /*cursor: pointer;             !* Changes the cursor to pointer on hover *!*/
+    /*margin-left: 15px;*/
+}
+
 /* Images */
 img {
     max-width: 100%;

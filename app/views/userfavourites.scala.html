@@ -6,7 +6,7 @@
 @main("User Favourites"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
-    <p><a class="image-text-link" href="@routes.HomeController.index">
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
       <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
       Back to Home
     </a></p>
@@ -47,7 +47,7 @@
       <ul>
       @for(anime <- animeFaves) {
         <li>
-          <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)"> <b>@anime.title</b> </a></p>
+          <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)" target="_blank"> <b>@anime.title</b> </a></p>
           <p>@{anime.`type`}, @anime.start_year</p>
 @*          @if(anime.start_year.nonEmpty){, @anime.year}*@
         </li>
