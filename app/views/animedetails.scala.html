@@ -15,7 +15,7 @@
     @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
     <br>
     <p><b>Type:</b> @{anime.`type`}</p>
-    <p><b>Maturity rating:</b> @anime.rating</p>
+    <p><b>Maturity rating:</b> @anime.rating.getOrElse("N/A")</p>
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ") </p>
     <br>
     <p>
