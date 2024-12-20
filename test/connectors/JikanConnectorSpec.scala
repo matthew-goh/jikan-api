@@ -5,7 +5,6 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import models.{APIError, AnimeSearchResult}
-import org.scalatest.BeforeAndAfterAll
 import services.JikanServiceSpec
 
 class JikanConnectorSpec extends BaseSpecWithApplication {

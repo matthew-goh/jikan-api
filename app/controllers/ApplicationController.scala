@@ -24,6 +24,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   }
 
   ///// METHODS FOCUSING ON CONNECTOR /////
+  /// 1. Anime search ///
   def getAnimeResults(search: String, page: String, queryExt: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeSearchResults(search, page, queryExt).value.flatMap {
       case Right(animeSearchResult) =>
@@ -71,6 +72,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
+  /// 2. User profiles ///
   def getUserProfile(username: String): Action[AnyContent] = Action.async { implicit request =>
     service.getUserProfile(username).value.map{
       case Right(userResult) => Ok(views.html.userdetails(userResult.data, username))
@@ -125,6 +127,23 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
         val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
         Future.successful(Redirect(routes.ApplicationController.getUserFavourites(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
       }
+    }
+  }
+
+  /// 3. Anime episodes ///
+  def getEpisodeList(animeId: String, page: String): Action[AnyContent] = Action.async { implicit request =>
+    // first get anime details (title, total episodes needed), then get episodes
+    service.getAnimeById(animeId).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeEpisodes(animeId, page).value.map{
+          case Right(episodeResult) =>
+            Try(page.toInt) match {
+              case Success(pg) => Ok(views.html.episodelist(animeResult.data, pg, episodeResult.data, episodeResult.pagination))
+              case _ => BadRequest(views.html.unsuccessful("API result obtained but page number is not an integer"))
+            }
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
 

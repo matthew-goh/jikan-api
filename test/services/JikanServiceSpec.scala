@@ -120,6 +120,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getAnimeEpisodes()" should {
+    "return anime episodes" in {
+      (mockConnector.get[EpisodeSearchResult](_: String)(_: OFormat[EpisodeSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes?page=1", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testEpisodeSearchJson.as[EpisodeSearchResult]))
+        .once()
+
+      whenReady(testService.getAnimeEpisodes("33263", "1").value) { result =>
+        result shouldBe Right(JikanServiceSpec.testEpisodeSearchResult)
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[EpisodeSearchResult](_: String)(_: OFormat[EpisodeSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes?page=-1", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The page must be at least 1.")))
+        .once()
+
+      whenReady(testService.getAnimeEpisodes("33263", "-1").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The page must be at least 1."))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -203,6 +227,19 @@ object JikanServiceSpec {
     AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997),
     AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003)
   )
+
+  val testEpisodePagination: EpisodePagination = EpisodePagination(1, has_next_page = false)
+  val testEpisodeList: Seq[AnimeEpisode] = Seq(
+    AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
+    AnimeEpisode(2, "Day 3 (2) Assembly and Arithmetic", Some(OffsetDateTime.parse("2016-11-30T00:00:00+00:00").toInstant), Some(4.42)),
+    AnimeEpisode(3, "Day 4 (1) Beheading 1", Some(OffsetDateTime.parse("2017-01-25T00:00:00+00:00").toInstant), Some(4.44)),
+    AnimeEpisode(4, "Day 4 (2) The 0.14 Tragedy", Some(OffsetDateTime.parse("2017-02-22T00:00:00+00:00").toInstant), Some(4.51)),
+    AnimeEpisode(5, "Day 5 (1) Beheading 2", Some(OffsetDateTime.parse("2017-03-29T00:00:00+00:00").toInstant), Some(4.49)),
+    AnimeEpisode(6, "Day 5 (2) Lies", Some(OffsetDateTime.parse("2017-05-31T00:00:00+00:00").toInstant), Some(4.59)),
+    AnimeEpisode(7, "Episode 7", Some(OffsetDateTime.parse("2017-08-30T00:00:00+00:00").toInstant), Some(4.47)),
+    AnimeEpisode(8, "Episode 8", Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant), Some(4.38))
+  )
+  val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testEpisodePagination, testEpisodeList)
 
   val testAnimeSearchJsonStr: String =
     """
@@ -1833,4 +1870,111 @@ object JikanServiceSpec {
       |  }
       |}
       |""".stripMargin)
+
+  val testEpisodeSearchJson: JsValue = Json.parse(
+    """{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": false
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": 1,
+      |      "url": null,
+      |      "title": "Day 3 (1) The Savant Gathering",
+      |      "title_japanese": "1) サヴァンの群青",
+      |      "title_romanji": "Mikkame (1) Savant no Gunjou (三日目",
+      |      "aired": "2016-10-26T00:00:00+00:00",
+      |      "score": 4.17,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1563915"
+      |    },
+      |    {
+      |      "mal_id": 2,
+      |      "url": null,
+      |      "title": "Day 3 (2) Assembly and Arithmetic",
+      |      "title_japanese": "2) 集合と算数",
+      |      "title_romanji": "Mikkame (2) Shuugou to Sansuu (三日目",
+      |      "aired": "2016-11-30T00:00:00+00:00",
+      |      "score": 4.42,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1572927"
+      |    },
+      |    {
+      |      "mal_id": 3,
+      |      "url": null,
+      |      "title": "Day 4 (1) Beheading 1",
+      |      "title_japanese": "1) 首斬り一つ",
+      |      "title_romanji": "Yokkame (1) Kubikiri Hitotsu (四日目",
+      |      "aired": "2017-01-25T00:00:00+00:00",
+      |      "score": 4.44,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1587100"
+      |    },
+      |    {
+      |      "mal_id": 4,
+      |      "url": null,
+      |      "title": "Day 4 (2) The 0.14 Tragedy",
+      |      "title_japanese": "2) 0.14の悲劇",
+      |      "title_romanji": "Yokkame (2) 0.14 no Higeki (四日目",
+      |      "aired": "2017-02-22T00:00:00+00:00",
+      |      "score": 4.51,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1593945"
+      |    },
+      |    {
+      |      "mal_id": 5,
+      |      "url": null,
+      |      "title": "Day 5 (1) Beheading 2",
+      |      "title_japanese": "1) 首斬り二つ",
+      |      "title_romanji": "Itsukame (1) Kubikiri Futatsu (五日目",
+      |      "aired": "2017-03-29T00:00:00+00:00",
+      |      "score": 4.49,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1602568"
+      |    },
+      |    {
+      |      "mal_id": 6,
+      |      "url": null,
+      |      "title": "Day 5 (2) Lies",
+      |      "title_japanese": "2) 嘘",
+      |      "title_romanji": "Itsukame (2) Uso (五日目",
+      |      "aired": "2017-05-31T00:00:00+00:00",
+      |      "score": 4.59,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1620331"
+      |    },
+      |    {
+      |      "mal_id": 7,
+      |      "url": null,
+      |      "title": "Episode 7",
+      |      "title_japanese": "3) 鴉の濡れ羽",
+      |      "title_romanji": "Itsukame (3) Karasu no Nureba (五日目",
+      |      "aired": "2017-08-30T00:00:00+00:00",
+      |      "score": 4.47,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1657490"
+      |    },
+      |    {
+      |      "mal_id": 8,
+      |      "url": null,
+      |      "title": "Episode 8",
+      |      "title_japanese": null,
+      |      "title_romanji": null,
+      |      "aired": "2017-09-27T00:00:00+00:00",
+      |      "score": 4.38,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1668602"
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
 }
