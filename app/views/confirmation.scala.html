@@ -1,0 +1,18 @@
+@(confirmationText: String, prevUrl: Option[String] = None)
+
+@main("Confirmation"){
+  <div class="container mb-5">
+    <h3>@confirmationText</h3>
+    <br>
+    @if(prevUrl.nonEmpty){
+      <p><a class="image-text-link" href="@prevUrl">
+        <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+        Back to Previous Page
+      </a></p>
+    }
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+}

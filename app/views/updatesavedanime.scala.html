@@ -1,0 +1,53 @@
+@import helper._
+
+@*RequestHeader needed for form with CRSF, messages needed for specific form defined for a model*@
+@(anime: SavedAnime)(implicit request: RequestHeader)
+
+@main("Update Saved Anime"){
+    <div class="container mb-5">
+        <h2>Update saved anime:</h2>
+        <h3>@anime.title</h3>
+
+        @form(action = routes.ApplicationController.updateFormSubmit(anime.MALId.toString)) {
+            @CSRF.formField
+            <input type="hidden" name="id" value="@anime.MALId">
+            <input type="hidden" name="title" value="@anime.title">
+            @if(anime.titleEnglish.nonEmpty) { <input type="hidden" name="titleEnglish" value="@anime.titleEnglish"> }
+            <input type="hidden" name="type" value="@{anime.`type`}">
+            @if(anime.numEpisodes.nonEmpty) {
+                <p>No. of episodes: @anime.numEpisodes</p>
+                <input type="hidden" name="numEpisodes" value="@anime.numEpisodes">
+            }
+            @if(anime.year.nonEmpty) { <input type="hidden" name="year" value="@anime.year"> }
+            @if(anime.MALScore.nonEmpty) { <input type="hidden" name="MALScore" value="@anime.MALScore"> }
+            <input type="hidden" name="savedAt" value="@anime.savedAt">
+            @if(anime.numEpisodes.nonEmpty){
+                <div class="form-div">
+                    Episodes watched:
+                    <input type="number" name="epsWatched" value="@anime.episodesWatched" placeholder="Enter"
+                    min="0" max="@anime.numEpisodes.get" step="1" required>
+                </div>
+            } else {
+                <input type="hidden" name="episodesWatched" value="@anime.episodesWatched">
+            }
+            <div class="form-div">
+                My score (optional): <input type="number" name="score" value="@anime.score" placeholder="Enter" min="1" max="10" step="1">
+            </div>
+            <div class="form-div">
+                Notes (optional):<br> <textarea name="notes" rows="5" cols="50" placeholder="Enter notes...">@anime.notes</textarea>
+            </div>
+            <div class="form-div">
+                <button type="submit">Submit</button>
+            </div>
+        }
+        <br>
+        <p><a class="image-text-link" href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)">
+            <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+            Back to Anime Details
+        </a></p>
+        <p><a class="image-text-link" href="@routes.HomeController.index()">
+            <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+            Back to Home
+        </a></p>
+    </div>
+}

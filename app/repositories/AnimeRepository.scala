@@ -25,30 +25,116 @@ class AnimeRepository @Inject()(mongoComponent: MongoComponent)
     IndexOptions().unique(true)  // Ensures the index is unique
   )),
   replaceIndexes = false
-) with DataRepositoryTrait {
+) with AnimeRepositoryTrait {
 
-  def index(): Future[Either[APIError.BadAPIResponse, Seq[SavedAnime]]] = ???
+  def index(): Future[Either[APIError, Seq[SavedAnime]]] = {
+    collection.find().toFuture().map{ animeList: Seq[SavedAnime] => Right(animeList) }
+      .recover{
+        case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to search database collection: ${e.getMessage}"))
+      }
+  }
 
-  def create(anime: SavedAnime): Future[Either[APIError.BadAPIResponse, SavedAnime]] = ???
+  def create(anime: SavedAnime): Future[Either[APIError, SavedAnime]] = {
+    collection.insertOne(anime).toFuture().map { insertResult =>
+      if (insertResult.wasAcknowledged) {
+        Right(anime)
+      } else {
+        Left(APIError.BadAPIResponse(500, "Error: Insertion not acknowledged"))
+      }
+    }.recover {
+      case e: MongoWriteException => Left(APIError.BadAPIResponse(500, "Anime has already been saved"))
+      case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to save anime: ${e.getMessage}"))
+    }
+  }
 
-  def read(MALId: Int): Future[Either[APIError, SavedAnime]] = ???
+  private def byID(id: Int): Bson =
+    Filters.and(
+      Filters.equal("MALId", id)
+    )
+  private def bySearchedTitle(search: String): Bson =
+    Filters.or(
+      Filters.regex("title", s".*${search}.*", "i"),
+      Filters.regex("titleEnglish", s".*${search}.*", "i")
+    )
 
-  def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, UpdateResult]] = ???
+  def read(MALId: Int): Future[Either[APIError, SavedAnime]] = {
+    collection.find(byID(MALId)).headOption.flatMap {
+      case Some(data) => Future(Right(data))
+      case None => Future(Left(APIError.BadAPIResponse(404, "Anime not saved in database")))
+    }.recover {
+      case e: Exception => Left(APIError.BadAPIResponse(500, s"Unable to search for anime: ${e.getMessage}"))
+    }
+  }
 
-  def updateWithValue(MALId: Int, field: Any, newValue: String): Future[Either[APIError, UpdateResult]] = ???
+  def titleSearch(search: String): Future[Either[APIError, Seq[SavedAnime]]] = {
+    collection.find(bySearchedTitle(search)).toFuture().map(animeList => Right(animeList))
+      .recover {
+        case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to search for anime: ${e.getMessage}"))
+      }
+  }
 
-  def delete(MALId: Int): Future[Either[APIError, DeleteResult]] = ???
+  def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, UpdateResult]] = {
+    collection.replaceOne(
+      filter = byID(MALId),
+      replacement = anime,
+      options = new ReplaceOptions().upsert(false) // don't add to database if not already there
+    ).toFuture().map {
+      updateResult =>
+        if (updateResult.wasAcknowledged) {
+          updateResult.getMatchedCount match {
+            case 1 => Right(updateResult)
+            case 0 => Left(APIError.BadAPIResponse(404, "Anime not saved in database"))
+            case _ => Left(APIError.BadAPIResponse(500, "Error: Multiple anime with same ID found"))
+          }
+        } else {
+          Left(APIError.BadAPIResponse(500, "Error: Update not acknowledged"))
+        }
+    }.recover {
+      case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to update anime details: ${e.getMessage}"))
+    }
+  }
+  // updateResult is e.g. AcknowledgedUpdateResult{matchedCount=1, modifiedCount=1, upsertedId=null}
 
-  def deleteAll(): Future[Either[APIError, DeleteResult]] = ???
+  def delete(MALId: Int): Future[Either[APIError, DeleteResult]] = {
+    collection.deleteOne(
+      filter = byID(MALId)
+    ).toFuture().map { deleteResult =>
+      if (deleteResult.wasAcknowledged) {
+        deleteResult.getDeletedCount match {
+          case 1 => Right(deleteResult)
+          case 0 => Left(APIError.BadAPIResponse(404, "Anime not saved in database"))
+          case _ => Left(APIError.BadAPIResponse(500, "Error: Multiple anime removed"))
+        }
+      } else {
+        Left(APIError.BadAPIResponse(500, "Error: Delete not acknowledged"))
+      }
+    }.recover {
+      case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to remove anime: ${e.getMessage}"))
+    }
+  }
+
+  // test-only
+  def deleteAll(): Future[Either[APIError, DeleteResult]] = {
+    collection.deleteMany(empty()).toFuture().map{ deleteResult =>
+      if (deleteResult.wasAcknowledged) Right(deleteResult)
+      else Left(APIError.BadAPIResponse(500, "Error: Delete not acknowledged"))
+    }.recover {
+      case e: Throwable => Left(APIError.BadAPIResponse(500, s"Unable to remove all anime: ${e.getMessage}"))
+    }
+  }
 }
 
 @ImplementedBy(classOf[AnimeRepository])
-trait DataRepositoryTrait {
-  def index(): Future[Either[APIError.BadAPIResponse, Seq[SavedAnime]]]
-  def create(anime: SavedAnime): Future[Either[APIError.BadAPIResponse, SavedAnime]]
+trait AnimeRepositoryTrait {
+  def index(): Future[Either[APIError, Seq[SavedAnime]]]
+  def create(anime: SavedAnime): Future[Either[APIError, SavedAnime]]
   def read(MALId: Int): Future[Either[APIError, SavedAnime]]
+  def titleSearch(search: String): Future[Either[APIError, Seq[SavedAnime]]]
   def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]]
-//  def updateWithValue(MALId: Int, field: UserModelFields.Value, newValue: String): Future[Either[APIError, result.UpdateResult]]
   def delete(MALId: Int): Future[Either[APIError, result.DeleteResult]]
   def deleteAll(): Future[Either[APIError, result.DeleteResult]]
 }
+
+//object CustomisableFields extends Enumeration {
+//  val watched, score, notes = Value
+//}

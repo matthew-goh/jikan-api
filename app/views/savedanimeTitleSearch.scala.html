@@ -1,0 +1,62 @@
+@import helper._
+@import java.text.NumberFormat
+
+@*RequestHeader needed for form with CRSF*@
+@(animeList: Seq[SavedAnime], search: String)(implicit request: RequestHeader)
+@main("Saved Anime: Title Search"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Saved Anime: Search by Title</h2>
+    @form(action = routes.ApplicationController.searchSavedAnimeByTitle()) {
+      @CSRF.formField
+      <div class="form-div">
+        <h3>Modify Search:
+        <input type="text" name="title" value="@search" placeholder="Enter title" size="40" required>
+        <button type="submit">Search</button></h3>
+        <small class="info">Input must contain a letter or number.</small>
+      </div>
+    }
+
+    <br>
+    @if(animeList.isEmpty) {
+      <p>No saved anime matching the searched title.</p>
+    } else {
+      <p>@animeList.length matching saved anime:</p>
+      <ul class="ul-with-boxes">
+      @for(anime <- animeList) {
+        <li class="li-with-box">
+          <div class="text-container">
+            <p><a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
+              @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
+            </p>
+          </div>
+          <div class="text-container">
+            <span>
+              @{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
+              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
+                <br>Completed
+              }
+              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
+                <br>Started watching
+              }
+              @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
+                <br>Not started
+              }
+              @if(anime.score.nonEmpty){
+                <br>My score: @anime.score
+              }
+            </span>
+          </div>
+        </li>
+      }
+      </ul>
+    }
+  </div>
+}

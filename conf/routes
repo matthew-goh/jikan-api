@@ -2,15 +2,30 @@
 # This file defines all application routes (Higher priority routes first)
 GET     /                           controllers.HomeController.index()
 
-GET     /searchanime/:search/:page/*queryExt    controllers.ApplicationController.getAnimeResults(search: String, page: String, queryExt: String)
+GET     /searchanime/:search/page=:page/*queryExt    controllers.ApplicationController.getAnimeResults(search: String, page: String, queryExt: String)
 POST     /searchanime    controllers.ApplicationController.searchAnime()
 GET     /anime/:id    controllers.ApplicationController.getAnimeById(id: String)
 
 GET     /users/:username    controllers.ApplicationController.getUserProfile(username: String)
 POST     /searchuser    controllers.ApplicationController.searchUser()
-GET     /users/:username/favourites/:orderBy/:sortOrder    controllers.ApplicationController.getUserFavourites(username: String, orderBy: String, sortOrder: String)
+GET     /users/:username/favourites/orderby=:orderBy/order=:sortOrder    controllers.ApplicationController.getUserFavourites(username: String, orderBy: String, sortOrder: String)
 POST     /sortfavourites    controllers.ApplicationController.sortFavourites()
 
+GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.ApplicationController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
+POST     /sortsaved    controllers.ApplicationController.sortSavedList()
+GET     /saved/titlesearch/:title     controllers.ApplicationController.listSavedAnimeFromTitleSearch(title: String)
+POST     /saved/titlesearch    controllers.ApplicationController.searchSavedAnimeByTitle()
+GET     /saved/:id     controllers.ApplicationController.viewSavedAnime(id: String)
+POST     /saveanime     controllers.ApplicationController.saveAnime()
+POST     /refresh     controllers.ApplicationController.refreshSavedAnime()
+GET     /update/:id     controllers.ApplicationController.showUpdateForm(id: String)
+POST     /update/:id     controllers.ApplicationController.updateFormSubmit(id: String)
+POST     /unsave/:id     controllers.ApplicationController.unsaveAnime(id: String)
+
+GET     /test-only/deleteall     controllers.ApplicationController.deleteAll()
+
+# non-frontend
+POST     /api/create     controllers.ApplicationController.create()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
@@ -18,4 +33,4 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 # invalid routes
 GET     /*path     controllers.ApplicationController.invalidRoute(path: String)
 
-# localhost:9000/searchanime/shoshimin/1/status=&min_score=&max_score=&order_by=&sort=
+# localhost:9000/searchanime/shoshimin/page=1/status=&min_score=&max_score=&order_by=&sort=

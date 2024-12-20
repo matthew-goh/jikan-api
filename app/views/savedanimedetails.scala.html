@@ -1,0 +1,60 @@
+@import helper._
+
+@import java.text.NumberFormat
+@import java.time.format.DateTimeFormatter
+@import java.time.ZoneId
+
+@import play.twirl.api.HtmlFormat.raw
+@(anime: SavedAnime)(implicit request: RequestHeader)
+@main("Saved Anime Details"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.ApplicationController.listSavedAnime("all", "saved_at", "none")">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Saved Anime
+    </a></p>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Saved Anime</h2>
+    <h4>@anime.title <br>
+      @if(anime.titleEnglish.nonEmpty) { <i>@anime.titleEnglish</i> }
+    </h4>
+    <p><b>Type:</b> @{anime.`type`}</p>
+    <p><b>No. of episodes:</b> @anime.numEpisodes.getOrElse("Not available")</p>
+    <p><b>MAL average score:</b> @anime.MALScore.getOrElse("N/A")</p>
+    <p><a href="@routes.ApplicationController.getAnimeById(anime.MALId.toString)">View full MAL profile</a></p>
+    <form action="@routes.ApplicationController.refreshSavedAnime()" method="POST" class="button-form">
+      @CSRF.formField
+      <input type="hidden" name="url" value="@request.uri">
+      <input type="hidden" name="id" value="@anime.MALId">
+      <input type="hidden" name="savedAt" value="@anime.savedAt">
+      <input type="hidden" name="epsWatched" value="@anime.episodesWatched">
+      @if(anime.score.nonEmpty) { <input type="hidden" name="score" value="@anime.score"> }
+      <input type="hidden" name="notes" value="@anime.notes">
+      <button type="submit">Refresh details</button>
+    </form>
+  </div>
+
+  <div class="container mb-5">
+    <h3>My saved details</h3>
+    <p><b>Saved at:</b> @{anime.savedAt.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
+    <p><b>Episodes watched:</b> @anime.episodesWatched / @anime.numEpisodes.getOrElse("TBC")</p>
+    <p><b>My score:</b> @anime.score.getOrElse("Not scored")</p>
+    <p>
+      <b>My notes:</b><br>
+      @raw(anime.notes.replace("\n", "<br>"))
+    </p>
+    <form action="@routes.ApplicationController.showUpdateForm(anime.MALId.toString)" method="GET" class="button-form">
+      <button type="submit">Update</button>
+    </form>
+    <form action="@routes.ApplicationController.unsaveAnime(anime.MALId.toString)" method="POST" class="button-form">
+      @CSRF.formField
+      <button type="submit">Unsave</button>
+    </form>
+  </div>
+}

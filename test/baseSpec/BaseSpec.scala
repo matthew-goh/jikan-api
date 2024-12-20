@@ -2,7 +2,7 @@ package baseSpec
 
 import akka.stream.Materializer
 import connectors.JikanConnector
-import services.JikanService
+import services.{AnimeRepositoryService, JikanService}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -14,6 +14,7 @@ import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
 import play.api.mvc.{AnyContentAsEmpty, MessagesControllerComponents}
+import repositories.AnimeRepository
 
 import scala.concurrent.ExecutionContext
 
@@ -27,8 +28,8 @@ trait BaseSpecWithApplication extends BaseSpec with GuiceOneServerPerSuite with 
 
   // created instances of the controller components and data repository - new instances will be made for each suite run
   lazy val component: MessagesControllerComponents = injector.instanceOf[MessagesControllerComponents]
-//  lazy val repoService: RepositoryService = injector.instanceOf[RepositoryService]
-//  lazy val repository: DataRepository = injector.instanceOf[DataRepository]
+  lazy val repoService: AnimeRepositoryService = injector.instanceOf[AnimeRepositoryService]
+  lazy val repository: AnimeRepository = injector.instanceOf[AnimeRepository]
   lazy val service: JikanService = injector.instanceOf[JikanService]
   lazy val connector: JikanConnector = injector.instanceOf[JikanConnector]
 
@@ -39,7 +40,7 @@ trait BaseSpecWithApplication extends BaseSpec with GuiceOneServerPerSuite with 
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .configure(Map(
-        "mongodb.uri" -> "mongodb://localhost:27017/githubTutorialTest"
+        "mongodb.uri" -> "mongodb://localhost:27017/jikan-api-test"
       ))
       .build()
 
