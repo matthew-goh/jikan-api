@@ -38,7 +38,9 @@
       @for(episode <- episodeList) {
         <li class="li-with-box">
           <div class="text-container">
-            <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)"> <b>Episode @episode.mal_id</b> </a>
+            <p>
+              <a href="@routes.ApplicationController.getSingleEpisodeDetails(anime.mal_id.toString, episode.mal_id.toString)">
+                <b>Episode @episode.mal_id</b> </a>
               <br><i>@episode.title</i>
             </p>
           </div>

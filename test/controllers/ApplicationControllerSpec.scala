@@ -437,6 +437,75 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
+  "ApplicationController .getSingleEpisodeDetails()" should {
+    "display the episode's details" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodeDetails(_: String, _: String)(_: ExecutionContext))
+        .expects("2076", "143", *)
+        .returning(EitherT.rightT(SingleEpisodeResult(JikanServiceSpec.testEpisodeDetails)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getSingleEpisodeDetails("2076", "143")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should include ("Episode 143")
+      searchResultContent should include ("This is neither a filler nor a recap episode.")
+      searchResultContent should include ("24:00")
+      searchResultContent should include ("Sun, 06 Aug 2000")
+    }
+
+    "show 'No episode data available' if the result contains no data (e.g. if episode does not exist)" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodeDetails(_: String, _: String)(_: ExecutionContext))
+        .expects("2076", "150", *)
+        .returning(EitherT.rightT(SingleEpisodeResult(
+          EpisodeFullDetails(150, "", None, None, filler = false, recap = false, None))
+        ))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getSingleEpisodeDetails("2076", "150")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No episode data available")
+      contentAsString(searchResult) should include ("This anime only has 148 episodes")
+    }
+
+    "return a BadRequest if the episode ID is invalid" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodeDetails(_: String, _: String)(_: ExecutionContext))
+        .expects("2076", "0", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The episode id must be at least 1.")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getSingleEpisodeDetails("2076", "0")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The episode id must be at least 1.")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("abc", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
   ///// METHODS FOCUSING ON REPOSITORY /////
   "ApplicationController .listSavedAnime()" should {
     "list all saved anime in default order (ascending saved_at)" in {

@@ -144,6 +144,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getAnimeEpisodeDetails()" should {
+    "return an episode's details" in {
+      (mockConnector.get[SingleEpisodeResult](_: String)(_: OFormat[SingleEpisodeResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes/143", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testEpisodeDetailsJson.as[SingleEpisodeResult]))
+        .once()
+
+      whenReady(testService.getAnimeEpisodeDetails("33263", "143").value) { result =>
+        result shouldBe Right(SingleEpisodeResult(JikanServiceSpec.testEpisodeDetails))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[SingleEpisodeResult](_: String)(_: OFormat[SingleEpisodeResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes/0", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The episode id must be at least 1.")))
+        .once()
+
+      whenReady(testService.getAnimeEpisodeDetails("33263", "0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The episode id must be at least 1."))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -240,6 +264,10 @@ object JikanServiceSpec {
     AnimeEpisode(8, "Episode 8", Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant), Some(4.38))
   )
   val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testEpisodePagination, testEpisodeList)
+
+  val testEpisodeDetails: EpisodeFullDetails = EpisodeFullDetails(143, "Russian Dolls Murder Case File 5", Some(1440),
+    Some(OffsetDateTime.parse("2000-08-07T00:00:00+09:00").toInstant), filler = false, recap = false,
+    Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
 
   val testAnimeSearchJsonStr: String =
     """
@@ -1975,6 +2003,23 @@ object JikanServiceSpec {
       |      "forum_url": "https://myanimelist.net/forum/?topicid=1668602"
       |    }
       |  ]
+      |}""".stripMargin
+  )
+
+  val testEpisodeDetailsJson: JsValue = Json.parse(
+    """{
+      |  "data": {
+      |    "mal_id": 143,
+      |    "url": "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo/episode/143",
+      |    "title": "Russian Dolls Murder Case File 5",
+      |    "title_japanese": "「露西亜人形殺人事件」ファイル5",
+      |    "title_romanji": "Russia Ningyou Satsujin Jiken File 5",
+      |    "duration": 1440,
+      |    "aired": "2000-08-07T00:00:00+09:00",
+      |    "filler": false,
+      |    "recap": false,
+      |    "synopsis": "The real identity of the \"Conductor\" is revealed. (Source: Wikipedia)"
+      |  }
       |}""".stripMargin
   )
 }
