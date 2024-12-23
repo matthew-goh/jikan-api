@@ -3,7 +3,7 @@
 @import java.time.format.DateTimeFormatter
 
 @*RequestHeader needed for form with CRSF*@
-@(anime: AnimeData, page: Int, episodeList: Seq[AnimeEpisode], pagination: EpisodePagination)(implicit request: RequestHeader)
+@(anime: AnimeData, page: Int, episodeList: Seq[AnimeEpisode], pagination: SimplePagination)(implicit request: RequestHeader)
 @main("Anime Episodes"){
   <div class="container mb-5">
     <h1>Jikan API</h1>

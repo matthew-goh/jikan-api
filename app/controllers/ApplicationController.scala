@@ -184,6 +184,38 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
+  def getAnimeReviews(id: String, page: String, prelim: String, spoilers: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(id).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeReviews(id, page, prelim, spoilers).value.map{
+          case Right(reviewsResult) => {
+            (Try(page.toInt), Try(prelim.toBoolean), Try(spoilers.toBoolean)) match {
+              case (Success(pg), Success(prelimBool), Success(spoilersBool)) =>
+                Ok(views.html.reviews(animeResult.data, pg, reviewsResult.data, reviewsResult.pagination, prelimBool, spoilersBool))
+              case _ => BadRequest(views.html.unsuccessful("API result obtained but a query parameter is invalid"))
+            }
+          }
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def filterReviews(id: String): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    val preliminary: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("preliminary").flatMap(_.headOption))
+    val spoilers: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("spoilers").flatMap(_.headOption))
+
+    preliminary match {
+      case None | Some("true") => spoilers match {
+        case None | Some("true") =>
+          Future.successful(Redirect(routes.ApplicationController.getAnimeReviews(id, "1", preliminary.getOrElse("false"), spoilers.getOrElse("false"))))
+        case Some(_) => Future.successful(BadRequest(views.html.unsuccessful("Invalid value submitted for spoilers")))
+      }
+      case Some(_) => Future.successful(BadRequest(views.html.unsuccessful("Invalid value submitted for preliminary")))
+    }
+  }
+
 
   ///// METHODS FOCUSING ON REPOSITORY /////
   def listSavedAnime(compStatus: String, orderBy: String, sortOrder: String): Action[AnyContent] = Action.async { implicit request =>

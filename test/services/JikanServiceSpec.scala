@@ -5,6 +5,7 @@ import cats.data.EitherT
 import connectors.JikanConnector
 import models._
 import models.characters._
+import models.reviews._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -217,6 +218,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getAnimeReviews()" should {
+    "return a character profile" in {
+      (mockConnector.get[ReviewsResult](_: String)(_: OFormat[ReviewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/reviews?page=1&preliminary=true&spoilers=true", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testReviewsJson.as[ReviewsResult]))
+        .once()
+
+      whenReady(testService.getAnimeReviews("2076", "1", "true", "true").value) { result =>
+        result shouldBe Right(JikanServiceSpec.testReviewsResult)
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[ReviewsResult](_: String)(_: OFormat[ReviewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/reviews?page=1&preliminary=ff&spoilers=true", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The preliminary field must be true or false.")))
+        .once()
+
+      whenReady(testService.getAnimeReviews("2076", "1", "ff", "true").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The preliminary field must be true or false."))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -305,7 +330,7 @@ object JikanServiceSpec {
     CharacterFavourite(192285, "Isshiki, Totomaru", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
   )
 
-  val testEpisodePagination: EpisodePagination = EpisodePagination(1, has_next_page = false)
+  val testSimplePagination: SimplePagination = SimplePagination(1, has_next_page = false)
   val testEpisodeList: Seq[AnimeEpisode] = Seq(
     AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
     AnimeEpisode(2, "Day 3 (2) Assembly and Arithmetic", Some(OffsetDateTime.parse("2016-11-30T00:00:00+00:00").toInstant), Some(4.42)),
@@ -316,7 +341,7 @@ object JikanServiceSpec {
     AnimeEpisode(7, "Episode 7", Some(OffsetDateTime.parse("2017-08-30T00:00:00+00:00").toInstant), Some(4.47)),
     AnimeEpisode(8, "Episode 8", Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant), Some(4.38))
   )
-  val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testEpisodePagination, testEpisodeList)
+  val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testSimplePagination, testEpisodeList)
 
   val testEpisodeDetails: EpisodeFullDetails = EpisodeFullDetails(143, "Russian Dolls Murder Case File 5", Some(1440),
     Some(OffsetDateTime.parse("2000-08-07T00:00:00+09:00").toInstant), filler = false, recap = false,
@@ -337,6 +362,17 @@ object JikanServiceSpec {
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
     Seq(AnimeAppearance("Main", AnimeAppearanceNested(53879, "Kamonohashi Ron no Kindan Suiri")), AnimeAppearance("Main", AnimeAppearanceNested(57635, "Kamonohashi Ron no Kindan Suiri 2nd Season")))
   )
+
+  val testReview1: AnimeReview = AnimeReview(Reviewer("MasterGhost"), OffsetDateTime.parse("2014-08-16T08:21:00+00:00").toInstant,
+    """Story: 9
+      |
+      |The anime series of Kindaichi does not have an actual continuous story unlike Detective Conan.""".stripMargin,
+    9, Seq("Recommended"), is_spoiler = false, is_preliminary = false)
+  val testReview2: AnimeReview = AnimeReview(Reviewer("Welkin96"), OffsetDateTime.parse("2019-03-04T03:21:00+00:00").toInstant,
+    "Test spoiler review", 10, Seq("Recommended", "Spoiler"), is_spoiler = true, is_preliminary = false)
+  val testReview3: AnimeReview = AnimeReview(Reviewer("bushman66"), OffsetDateTime.parse("2022-04-09T19:37:00+00:00").toInstant,
+    "Test preliminary and spoiler review", 9, Seq("Recommended", "Preliminary", "Spoiler"), is_spoiler = true, is_preliminary = true)
+  val testReviewsResult: ReviewsResult = ReviewsResult(Seq(testReview1, testReview2, testReview3), testSimplePagination)
 
   val testAnimeSearchJsonStr: String =
     """
@@ -2362,6 +2398,126 @@ object JikanServiceSpec {
       |      }
       |    ]
       |  }
+      |}
+      |""".stripMargin)
+
+  val testReviewsJson: JsValue = Json.parse(
+    """
+      |{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": false
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": 156761,
+      |      "url": "https://myanimelist.net/reviews.php?id=156761",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 77,
+      |        "nice": 74,
+      |        "love_it": 1,
+      |        "funny": 0,
+      |        "confusing": 0,
+      |        "informative": 2,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2014-08-16T08:21:00+00:00",
+      |      "review": "Story: 9\n\nThe anime series of Kindaichi does not have an actual continuous story unlike Detective Conan.",
+      |      "score": 9,
+      |      "tags": [
+      |        "Recommended"
+      |      ],
+      |      "is_spoiler": false,
+      |      "is_preliminary": false,
+      |      "episodes_watched": null,
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/MasterGhost",
+      |        "username": "MasterGhost",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/d39f7d9d-d9b7-4855-aeb2-f035a891ba26_225w?s=c8f7183aa9ad5fde6e89f493c54b15ae"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/d39f7d9d-d9b7-4855-aeb2-f035a891ba26_225w?s=c8f7183aa9ad5fde6e89f493c54b15ae"
+      |          }
+      |        }
+      |      }
+      |    },
+      |    {
+      |      "mal_id": 302878,
+      |      "url": "https://myanimelist.net/reviews.php?id=302878",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 25,
+      |        "nice": 25,
+      |        "love_it": 0,
+      |        "funny": 0,
+      |        "confusing": 0,
+      |        "informative": 0,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2019-03-04T03:21:00+00:00",
+      |      "review": "Test spoiler review",
+      |      "score": 10,
+      |      "tags": [
+      |        "Recommended", "Spoiler"
+      |      ],
+      |      "is_spoiler": true,
+      |      "is_preliminary": false,
+      |      "episodes_watched": null,
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/Welkin96",
+      |        "username": "Welkin96",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/3c9b8b8f-59f8-4dd1-a58f-2704b9d957b6_225w?s=ea212f03a5bda244f774d5429bbb6c97"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/3c9b8b8f-59f8-4dd1-a58f-2704b9d957b6_225w?s=ea212f03a5bda244f774d5429bbb6c97"
+      |          }
+      |        }
+      |      }
+      |    },
+      |    {
+      |      "mal_id": 441056,
+      |      "url": "https://myanimelist.net/reviews.php?id=441056",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 9,
+      |        "nice": 4,
+      |        "love_it": 0,
+      |        "funny": 5,
+      |        "confusing": 0,
+      |        "informative": 0,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2022-04-09T19:37:00+00:00",
+      |      "review": "Test preliminary and spoiler review",
+      |      "score": 9,
+      |      "tags": [
+      |        "Recommended", "Preliminary", "Spoiler"
+      |      ],
+      |      "is_spoiler": true,
+      |      "is_preliminary": true,
+      |      "episodes_watched": null,
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/bushman66",
+      |        "username": "bushman66",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/63f75198-d1ec-4630-9ffb-acb3e376bd7d_42x62_i?s=f8b1a1342ad2943a45c51a1ad4f89ce1"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/63f75198-d1ec-4630-9ffb-acb3e376bd7d_42x62_i?s=f8b1a1342ad2943a45c51a1ad4f89ce1"
+      |          }
+      |        }
+      |      }
+      |    }
+      |  ]
       |}
       |""".stripMargin)
 }

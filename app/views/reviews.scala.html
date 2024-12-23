@@ -1,0 +1,78 @@
+@import helper._
+@import models.reviews.AnimeReview
+
+@import java.time.ZoneId
+@import java.time.format.DateTimeFormatter
+
+@import play.twirl.api.HtmlFormat.raw
+
+@*RequestHeader needed for form with CRSF*@
+@(anime: AnimeData, page: Int, reviews: Seq[AnimeReview], pagination: SimplePagination, preliminary: Boolean, spoilers: Boolean)(implicit request: RequestHeader)
+@main("Anime Reviews"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Anime Details
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Reviews</h2>
+    <h3>@anime.title
+      @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
+
+    <b>Include preliminary and spoiler reviews?</b>
+    @form(action = routes.ApplicationController.filterReviews(anime.mal_id.toString)) {
+      @CSRF.formField
+      <input type="checkbox" name="preliminary" value="true" @{if(preliminary) "checked"}> Show preliminary &nbsp;&nbsp;
+      <input type="checkbox" name="spoilers" value="true" @{if(spoilers) "checked"}> Show spoilers &nbsp;&nbsp;
+      <button type="submit">Refresh</button>
+    }
+
+    <br>
+    @if(reviews.isEmpty) {
+      <p>No reviews available.</p>
+    } else {
+      <div>
+        <p>
+          @if(page > 1){ <a href="@routes.ApplicationController.getAnimeReviews(anime.mal_id.toString, (page - 1).toString, preliminary.toString, spoilers.toString)"> Previous </a> - }
+          @* last_visible_page is not accurate when preliminary/spoiler reviews are included! *@
+          @*          <b>Page @page of @pagination.last_visible_page</b>*@
+          <b>Page @page</b>
+          @if(pagination.has_next_page){ - <a href="@routes.ApplicationController.getAnimeReviews(anime.mal_id.toString, (page + 1).toString, preliminary.toString, spoilers.toString)"> Next </a> }
+        </p>
+      </div>
+      <ul class="ul-with-boxes">
+      @for(review <- reviews) {
+        <li class="li-with-box">
+          <div class="text-container-full">
+            <p>
+              <b>Review by:</b> @review.user.username on
+                @{review.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}
+              <br><b>Tags:</b> @{if(review.tags.nonEmpty) review.tags.mkString(", ") else "None"}
+              @if(review.is_preliminary){ <br><span class="info">This review is preliminary.</span> }
+              @if(review.is_spoiler){ <br><span class="error">Warning! This review contains spoilers.</span> }
+            </p>
+            <p><b>Score:</b> @review.score</p>
+            <p class="smaller-text">@raw(review.review.replace("\n", "<br>"))</p>
+          </div>
+        </li>
+      }
+      </ul>
+      <br>
+      <div>
+        <p>
+          @if(page > 1){ <a href="@routes.ApplicationController.getAnimeReviews(anime.mal_id.toString, (page - 1).toString, preliminary.toString, spoilers.toString)"> Previous </a> - }
+@*          <b>Page @page of @pagination.last_visible_page</b>*@
+          <b>Page @page</b>
+          @if(pagination.has_next_page){ - <a href="@routes.ApplicationController.getAnimeReviews(anime.mal_id.toString, (page + 1).toString, preliminary.toString, spoilers.toString)"> Next </a> }
+        </p>
+      </div>
+    }
+  </div>
+}

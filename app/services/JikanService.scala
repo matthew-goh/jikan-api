@@ -4,6 +4,7 @@ import cats.data.EitherT
 import connectors.JikanConnector
 import models._
 import models.characters._
+import models.reviews.ReviewsResult
 import play.api.libs.json._
 
 import java.util.Base64
@@ -53,5 +54,9 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getCharacterProfile(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, CharacterProfileResult] = {
     connector.get[CharacterProfileResult](s"https://api.jikan.moe/v4/characters/$id/full")
+  }
+
+  def getAnimeReviews(id: String, page: String, prelim: String, spoilers: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, ReviewsResult] = {
+    connector.get[ReviewsResult](s"https://api.jikan.moe/v4/anime/$id/reviews?page=$page&preliminary=$prelim&spoilers=$spoilers")
   }
 }

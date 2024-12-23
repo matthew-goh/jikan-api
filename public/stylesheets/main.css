@@ -69,11 +69,17 @@ li {
     margin-bottom: 10px;
 }
 
+.text-container-full {
+    padding: 10px;
+}
 .text-container {
     width: 50%;
     padding: 10px;
     /*margin: 10px;*/
     /*flex-direction: column;*/
+}
+.smaller-text {
+    font-size: 0.9em;
 }
 
 /* Buttons */

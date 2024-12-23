@@ -4,6 +4,7 @@ import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
 import models._
 import models.characters._
+import models.reviews.ReviewsResult
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
 import play.api.libs.json._
@@ -421,7 +422,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       (mockJikanService.getAnimeEpisodes(_: String, _: String)(_: ExecutionContext))
         .expects("33263", "2", *)
         .returning(EitherT.rightT(EpisodeSearchResult(
-          EpisodePagination(1, has_next_page = false),
+          SimplePagination(1, has_next_page = false),
           Seq()
         )))
         .once()
@@ -639,6 +640,132 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
   }
+
+  "ApplicationController .getAnimeReviews()" should {
+    "display anime reviews, including preliminary and spoiler reviews" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "true", "true", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testReviewsResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "true", "true")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should (include ("MasterGhost") and include ("04 Mar 2019 03:21") and include("Recommended, Preliminary, Spoiler"))
+
+      countOccurrences(searchResultContent, "This review is preliminary.") shouldBe 1
+      countOccurrences(searchResultContent, "Warning! This review contains spoilers.") shouldBe 2
+      countOccurrences(searchResultContent, "checked") shouldBe 2  // checkboxes
+    }
+
+    "display anime reviews, including spoiler reviews but not preliminary reviews" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "false", "true", *)
+        .returning(EitherT.rightT(ReviewsResult(Seq(JikanServiceSpec.testReview1, JikanServiceSpec.testReview2), SimplePagination(1, has_next_page = false))))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "false", "true")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should (include ("MasterGhost") and include("Recommended, Spoiler"))
+      searchResultContent shouldNot include ("This review is preliminary.")
+
+      countOccurrences(searchResultContent, "Warning! This review contains spoilers.") shouldBe 1
+      countOccurrences(searchResultContent, "checked") shouldBe 1  // checkboxes
+    }
+
+    "show 'No reviews available' if there are no reviews" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "true", "true", *)
+        .returning(EitherT.rightT(ReviewsResult(Seq(), SimplePagination(1, has_next_page = false))))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "true", "true")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No reviews available")
+    }
+
+    "return a BadRequest if the API returned a result but a query parameter is invalid" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "ff", "ff", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testReviewsResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "ff", "ff")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("API result obtained but a query parameter is invalid")
+    }
+
+    "return a BadRequest if the API detects an invalid query parameter" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "false", "f", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The spoilers field must be true or false.")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "false", "f")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The spoilers field must be true or false.")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("abc", "1", "false", "false")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .filterReviews()" should {
+    "reload the anime reviews page with the correct parameters (where missing means false)" in {
+      val filterRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/filterreviews/2076").withFormUrlEncodedBody(
+        "preliminary" -> "true"
+      )
+      val filterResult: Future[Result] = TestApplicationController.filterReviews("2076")(filterRequest)
+      status(filterResult) shouldBe SEE_OTHER
+      redirectLocation(filterResult) shouldBe Some("/anime/2076/reviews/page=1/preliminary=true/spoilers=false")
+    }
+
+    "return a BadRequest if an invalid parameter value was submitted" in {
+      val filterRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/filterreviews/2076").withFormUrlEncodedBody(
+        "preliminary" -> "true",
+        "spoilers" -> "ff"
+      )
+      val filterResult: Future[Result] = TestApplicationController.filterReviews("2076")(filterRequest)
+      status(filterResult) shouldBe BAD_REQUEST
+      contentAsString(filterResult) should include ("Invalid value submitted for spoilers")
+    }
+  }
+
 
   ///// METHODS FOCUSING ON REPOSITORY /////
   "ApplicationController .listSavedAnime()" should {
