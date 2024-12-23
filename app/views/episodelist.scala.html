@@ -1,9 +1,8 @@
 @import helper._
-@import java.text.NumberFormat
-
-@*RequestHeader needed for form with CRSF*@
 @import java.time.ZoneId
 @import java.time.format.DateTimeFormatter
+
+@*RequestHeader needed for form with CRSF*@
 @(anime: AnimeData, page: Int, episodeList: Seq[AnimeEpisode], pagination: EpisodePagination)(implicit request: RequestHeader)
 @main("Anime Episodes"){
   <div class="container mb-5">

@@ -3,6 +3,7 @@ package services
 import cats.data.EitherT
 import connectors.JikanConnector
 import models._
+import models.characters._
 import play.api.libs.json._
 
 import java.util.Base64
@@ -44,5 +45,9 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getAnimeEpisodeDetails(animeId: String, episodeId: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, SingleEpisodeResult] = {
     connector.get[SingleEpisodeResult](s"https://api.jikan.moe/v4/anime/$animeId/episodes/$episodeId")
+  }
+
+  def getAnimeCharacters(animeId: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, CharacterSearchResult] = {
+    connector.get[CharacterSearchResult](s"https://api.jikan.moe/v4/anime/$animeId/characters")
   }
 }

@@ -456,7 +456,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent should include ("Episode 143")
       searchResultContent should include ("This is neither a filler nor a recap episode.")
       searchResultContent should include ("24:00")
-      searchResultContent should include ("Sun, 06 Aug 2000")
+      searchResultContent should include ("Mon, 07 Aug 2000")
     }
 
     "show 'No episode data available' if the result contains no data (e.g. if episode does not exist)" in {

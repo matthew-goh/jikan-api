@@ -220,3 +220,29 @@ label {
 .error {
     color: red;
 }
+
+/* Characters */
+.char-img-container {
+    width: 20%;
+    padding: 10px;
+}
+.char-info-container {
+    width: 80%;
+    padding: 10px;
+}
+.char-img {
+    max-height: 150px;
+}
+.ul-for-chars {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two equal-width columns */
+    padding-left: 0;
+    gap: 10px; /* Space between columns */
+}
+.li-for-char {
+    display: flex;
+    justify-content: flex-start;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    width: 100%;
+}

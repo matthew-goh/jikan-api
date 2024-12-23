@@ -1,6 +1,7 @@
 package controllers
 
 import models._
+import models.characters._
 import play.api.libs.json._
 import play.api.mvc._
 import play.filters.csrf.CSRF
@@ -130,7 +131,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  /// 3. Anime episodes ///
+  /// 3. Anime extra info ///
   def getEpisodeList(animeId: String, page: String): Action[AnyContent] = Action.async { implicit request =>
     // first get anime details (title, total episodes needed), then get episodes
     service.getAnimeById(animeId).value.flatMap{
@@ -152,6 +153,17 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
       case Right(animeResult) =>
         service.getAnimeEpisodeDetails(animeId, episodeId).value.map{
           case Right(episodeResult) => Ok(views.html.episodedetails(animeResult.data, episodeResult.data))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def getAnimeCharacters(animeId: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(animeId).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeCharacters(animeId).value.map{
+          case Right(charResult) => Ok(views.html.characters(animeResult.data, charResult.data))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
