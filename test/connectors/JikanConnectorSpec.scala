@@ -5,7 +5,6 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import models.{APIError, AnimeSearchResult}
-import org.scalatest.BeforeAndAfterAll
 import services.JikanServiceSpec
 
 class JikanConnectorSpec extends BaseSpecWithApplication {
@@ -62,6 +61,19 @@ class JikanConnectorSpec extends BaseSpecWithApplication {
 
       whenReady(TestJikanConnector.get[AnimeSearchResult](s"http://$Host:$Port/searchanime/kindaichi/page=1/status=&min_score=abc&max_score=1000&order_by=&sort=").value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(400, "The min score must be a number. The max score must be between 1 and 10."))
+      }
+    }
+
+    "return an error if the JSON validation fails but status is not 404 or 400" in {
+      stubFor(get(urlEqualTo("/searchanime/kindaichi/page=1/status=&min_score=abc&max_score=1000&order_by=&sort="))
+        .willReturn(aResponse()
+          .withStatus(200)
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            """{"pagination":{"last_visible_page":2,"has_next_page":true,"current_page":1,"items":{"count":25,"total":39,"per_page":25}}}""")))
+
+      whenReady(TestJikanConnector.get[AnimeSearchResult](s"http://$Host:$Port/searchanime/kindaichi/page=1/status=&min_score=abc&max_score=1000&order_by=&sort=").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(200, "Could not parse JSON into required model"))
       }
     }
 

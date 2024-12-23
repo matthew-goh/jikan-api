@@ -1,0 +1,63 @@
+@import helper._
+
+@import java.text.NumberFormat
+@import java.time.format.DateTimeFormatter
+@import java.time.ZoneId
+
+@import play.twirl.api.HtmlFormat.raw
+
+@(anime: AnimeData, episode: EpisodeFullDetails)
+@main("Episode Details"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+
+    <h2>Episode details</h2>
+    <h3>@anime.title
+      @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
+    <h3>Episode @episode.mal_id</h3>
+
+    @if(episode.title.isEmpty) {
+      <p>No episode data available.</p>
+      @if(anime.episodes.nonEmpty && episode.mal_id > anime.episodes.get) {
+        <p>This anime only has @anime.episodes episodes.</p>
+      }
+    } else {
+      <h4>@episode.title</h4>
+      <p>
+        @if(episode.filler || episode.recap) {
+          @if(episode.filler){
+            This is a filler episode. @if(episode.recap){ It is also a recap episode. }
+          } else {
+            This is a recap episode.
+          }
+        } else {
+          This is neither a filler nor a recap episode.
+        }
+      </p>
+      <p><b>Duration:</b>
+        @if(episode.duration.nonEmpty) {
+          @{episode.duration.get / 60}:@{ val s = episode.duration.get % 60; if (s >= 10) s.toString else "0" + s }
+        } else {
+          Info not available
+        }
+      </p>
+      <p><b>Aired:</b>
+      @if(episode.aired.nonEmpty) {
+        @{episode.aired.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}
+      } else {
+        Info not available
+      }</p>
+      <p><b>Synopsis:</b><br>@raw(episode.synopsis.getOrElse("Not available").replace("\n", "<br>"))</p>
+    }
+
+    <br>
+    <p><a class="image-text-link" href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (episode.mal_id / 100 + 1).toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Episode List
+    </a></p>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+}

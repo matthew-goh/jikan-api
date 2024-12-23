@@ -120,6 +120,54 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getAnimeEpisodes()" should {
+    "return anime episodes" in {
+      (mockConnector.get[EpisodeSearchResult](_: String)(_: OFormat[EpisodeSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes?page=1", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testEpisodeSearchJson.as[EpisodeSearchResult]))
+        .once()
+
+      whenReady(testService.getAnimeEpisodes("33263", "1").value) { result =>
+        result shouldBe Right(JikanServiceSpec.testEpisodeSearchResult)
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[EpisodeSearchResult](_: String)(_: OFormat[EpisodeSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes?page=-1", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The page must be at least 1.")))
+        .once()
+
+      whenReady(testService.getAnimeEpisodes("33263", "-1").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The page must be at least 1."))
+      }
+    }
+  }
+
+  "getAnimeEpisodeDetails()" should {
+    "return an episode's details" in {
+      (mockConnector.get[SingleEpisodeResult](_: String)(_: OFormat[SingleEpisodeResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes/143", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testEpisodeDetailsJson.as[SingleEpisodeResult]))
+        .once()
+
+      whenReady(testService.getAnimeEpisodeDetails("33263", "143").value) { result =>
+        result shouldBe Right(SingleEpisodeResult(JikanServiceSpec.testEpisodeDetails))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[SingleEpisodeResult](_: String)(_: OFormat[SingleEpisodeResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/episodes/0", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The episode id must be at least 1.")))
+        .once()
+
+      whenReady(testService.getAnimeEpisodeDetails("33263", "0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The episode id must be at least 1."))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -127,7 +175,7 @@ object JikanServiceSpec {
 
   val kindaichiData1: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
-    "R - 17+ (violence & profanity)",Some(7.94),Some(8317),
+    Some("R - 17+ (violence & profanity)"),Some(7.94),Some(8317),
     Some("""Hajime Kindaichi's unorganized appearance and lax nature may give the impression of an average high school student, but a book should never be judged by its cover. Hajime is the grandson of the man who was once Japan's greatest detective, and he is also a remarkable sleuth himself.
            |
            |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
@@ -136,14 +184,14 @@ object JikanServiceSpec {
 
   val kindaichiData2: AnimeData = AnimeData(22817,"Kindaichi Shounen no Jikenbo Returns",Some("The File of Young Kindaichi Returns"),"TV",Some(25),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2014-04-05T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2014-09-27T00:00:00+00:00").toInstant)),
-    "R - 17+ (violence & profanity)",Some(7.54),Some(7902),
+    Some("R - 17+ (violence & profanity)"),Some(7.54),Some(7902),
     Some("""High school student Hajime Kindaichi is the supposed grandson of famous private detective Kosuke Kindaichi. Visiting Hong Kong for a fashion event with Kindaichi, our hero's girlfriend Miyuki is captured by a stranger in a case of mistaken identity. The journey to save Miyuki itself leads to yet another crime case...
            |
            |(Source: YTV)""".stripMargin),List(Genre(7,"Mystery")),Some(2014))
 
   val kindaichiData3: AnimeData = AnimeData(3245,"Kindaichi Shounen no Jikenbo Specials",Some("Kindaichi Case Files Special"),"TV Special",Some(2),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2007-11-12T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2007-11-19T00:00:00+00:00").toInstant)),
-    "PG-13 - Teens 13 or older",Some(7.23),Some(1202),
+    Some("PG-13 - Teens 13 or older"),Some(7.23),Some(1202),
     Some("""Kindaichi and the gang are on their way to a hot spring, but get lost and end up at a run down and sinister hotel. They are told that a vampire used to live in the hotel way back. Someone even died (was found with bite marks on the neck).
            |
            |Six years ago a girl was found in the cellar with bite marks on her neck, and the villagers killed her. When one of the guests is killed and Miyuki is attacked by a creature with fangs, it would seem like the vampire is still there...""".stripMargin),
@@ -151,20 +199,20 @@ object JikanServiceSpec {
 
   val kindaichiData4: AnimeData = AnimeData(31227,"Kindaichi Shounen no Jikenbo Returns 2nd Season",None,"TV",Some(22),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2015-10-03T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2016-03-26T00:00:00+00:00").toInstant)),
-    "R - 17+ (violence & profanity)",Some(7.66),Some(5199),
+    Some("R - 17+ (violence & profanity)"),Some(7.66),Some(5199),
     Some("""Hajime Kindaichi once again becomes embroiled in solving baffling cases and deciphering puzzling crimes that would confound the most seasoned of detectives. Whether it's a gruesome murder and shady circumstances surrounding the Japanese board game Go; a perplexing and macabre case involving a mysterious character, "Rosenkreutz," and blue roses; or blood curdling crimes associated with an urban legend at a winter ski resort – Hajime is out to crack them all!
            |
            |(Source: YTV)""".stripMargin),
     List(Genre(7,"Mystery")),Some(2015))
 
   val kindaichiData5: AnimeData = AnimeData(2077,"Kindaichi Shounen no Jikenbo Movie 1: Operazakan - Aratanaru Satsujin",None,"Movie",Some(1),"Finished Airing",
-    AirDates(Some(OffsetDateTime.parse("1996-12-14T00:00:00+00:00").toInstant),None),"PG-13 - Teens 13 or older",Some(7.1),Some(1731),
+    AirDates(Some(OffsetDateTime.parse("1996-12-14T00:00:00+00:00").toInstant),None),Some("PG-13 - Teens 13 or older"),Some(7.1),Some(1731),
     Some(s"""Invited for a anniversary celebration, Kindaichi, Miyuki and inspector Kenmochi re-visit the Opera House. There they discover that a play of "The Phantom of the Opera" is being rehearsed again. However, it doesn't take long when members of the acting troupe are killed by the "Phantom". Kindaichi will once again have to solve a murder series in the Opera House. \n\n(Source: ANN)"""),
     List(Genre(7,"Mystery")),None)
 
   val kindaichiData6: AnimeData = AnimeData(9154,"Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue",
     Some("Young Kindaichi's Casebook: Deep Blue Massacre"),"Movie",Some(1),"Finished Airing",
-    AirDates(Some(OffsetDateTime.parse("1999-08-21T00:00:00+00:00").toInstant),None),"PG-13 - Teens 13 or older",Some(6.97),Some(782),
+    AirDates(Some(OffsetDateTime.parse("1999-08-21T00:00:00+00:00").toInstant),None),Some("PG-13 - Teens 13 or older"),Some(6.97),Some(782),
     Some("""The movie is an alternative version to the "Satsuriku no Deep Blue" arc of the 1997 Kindaichi TV series.
            |
            |Kindaichi, Miyuki and Fumi are invited to the resort of the Deep Blue Island by their senpai Akane, the daughter of the president of the Aizawa Group. A group of criminals infiltrate the hotel diguised as waiters to kill the members of the Aizawa Group. The criminals don't know their boss in person, and they don't know either that he's in the hotel with the members of the Aizawa Group.""".stripMargin),
@@ -172,18 +220,18 @@ object JikanServiceSpec {
 
   val kindaichiData7: AnimeData = AnimeData(15819,"Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen",None,"OVA",Some(2),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2012-12-17T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2013-03-15T00:00:00+00:00").toInstant)),
-    "R - 17+ (violence & profanity)",Some(7.01),Some(705),
+    Some("R - 17+ (violence & profanity)"),Some(7.01),Some(705),
     Some("Kindaichi is back with another mystery to solve."),List(Genre(7,"Mystery")),None)
 
   val kindaichiData8: AnimeData = AnimeData(32376,"Kindaichi Shounen no Jikenbo Returns 2nd Season: Akechi Keibu no Jikenbo",None, "Special",Some(1),
-    "Finished Airing",AirDates(Some(OffsetDateTime.parse("2015-12-26T00:00:00+00:00").toInstant),None),"R - 17+ (violence & profanity)",Some(7.11),Some(923),
+    "Finished Airing",AirDates(Some(OffsetDateTime.parse("2015-12-26T00:00:00+00:00").toInstant),None),Some("R - 17+ (violence & profanity)"),Some(7.11),Some(923),
     Some("""The official website of the The File of Young Kindaichi Returns anime announced that a one-hour special television episode of the anime titled "The File of Inspector Akechi" (Akechi Keibu no Jikenbo) will air on December 26. The site streamed a trailer on Sunday, which previews the episode and its story. The video also reveals that Yudai Chiba will play Ryūtaro Kobayashi, a junior detective under detective Kengo Akechi.
            |
            |(Source: ANN)""".stripMargin),
     List(Genre(7,"Mystery")),None)
 
   val kindaichiData9: AnimeData = AnimeData(21701,"Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken",None,"Special",Some(1),
-    "Finished Airing",AirDates(Some(OffsetDateTime.parse("1997-04-27T00:00:00+00:00").toInstant),None),"R - 17+ (violence & profanity)",Some(6.71),Some(606),
+    "Finished Airing",AirDates(Some(OffsetDateTime.parse("1997-04-27T00:00:00+00:00").toInstant),None),Some("R - 17+ (violence & profanity)"),Some(6.71),Some(606),
     Some("""A one-hour special that aired after a month of the series' absence on television between episodes 23 and 24.
            |
            |Kindaichi will have to investigate in a hospital where series of murder happen.""".stripMargin),
@@ -203,6 +251,23 @@ object JikanServiceSpec {
     AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997),
     AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003)
   )
+
+  val testEpisodePagination: EpisodePagination = EpisodePagination(1, has_next_page = false)
+  val testEpisodeList: Seq[AnimeEpisode] = Seq(
+    AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
+    AnimeEpisode(2, "Day 3 (2) Assembly and Arithmetic", Some(OffsetDateTime.parse("2016-11-30T00:00:00+00:00").toInstant), Some(4.42)),
+    AnimeEpisode(3, "Day 4 (1) Beheading 1", Some(OffsetDateTime.parse("2017-01-25T00:00:00+00:00").toInstant), Some(4.44)),
+    AnimeEpisode(4, "Day 4 (2) The 0.14 Tragedy", Some(OffsetDateTime.parse("2017-02-22T00:00:00+00:00").toInstant), Some(4.51)),
+    AnimeEpisode(5, "Day 5 (1) Beheading 2", Some(OffsetDateTime.parse("2017-03-29T00:00:00+00:00").toInstant), Some(4.49)),
+    AnimeEpisode(6, "Day 5 (2) Lies", Some(OffsetDateTime.parse("2017-05-31T00:00:00+00:00").toInstant), Some(4.59)),
+    AnimeEpisode(7, "Episode 7", Some(OffsetDateTime.parse("2017-08-30T00:00:00+00:00").toInstant), Some(4.47)),
+    AnimeEpisode(8, "Episode 8", Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant), Some(4.38))
+  )
+  val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testEpisodePagination, testEpisodeList)
+
+  val testEpisodeDetails: EpisodeFullDetails = EpisodeFullDetails(143, "Russian Dolls Murder Case File 5", Some(1440),
+    Some(OffsetDateTime.parse("2000-08-07T00:00:00+09:00").toInstant), filler = false, recap = false,
+    Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
 
   val testAnimeSearchJsonStr: String =
     """
@@ -1833,4 +1898,128 @@ object JikanServiceSpec {
       |  }
       |}
       |""".stripMargin)
+
+  val testEpisodeSearchJson: JsValue = Json.parse(
+    """{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": false
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": 1,
+      |      "url": null,
+      |      "title": "Day 3 (1) The Savant Gathering",
+      |      "title_japanese": "1) サヴァンの群青",
+      |      "title_romanji": "Mikkame (1) Savant no Gunjou (三日目",
+      |      "aired": "2016-10-26T00:00:00+00:00",
+      |      "score": 4.17,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1563915"
+      |    },
+      |    {
+      |      "mal_id": 2,
+      |      "url": null,
+      |      "title": "Day 3 (2) Assembly and Arithmetic",
+      |      "title_japanese": "2) 集合と算数",
+      |      "title_romanji": "Mikkame (2) Shuugou to Sansuu (三日目",
+      |      "aired": "2016-11-30T00:00:00+00:00",
+      |      "score": 4.42,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1572927"
+      |    },
+      |    {
+      |      "mal_id": 3,
+      |      "url": null,
+      |      "title": "Day 4 (1) Beheading 1",
+      |      "title_japanese": "1) 首斬り一つ",
+      |      "title_romanji": "Yokkame (1) Kubikiri Hitotsu (四日目",
+      |      "aired": "2017-01-25T00:00:00+00:00",
+      |      "score": 4.44,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1587100"
+      |    },
+      |    {
+      |      "mal_id": 4,
+      |      "url": null,
+      |      "title": "Day 4 (2) The 0.14 Tragedy",
+      |      "title_japanese": "2) 0.14の悲劇",
+      |      "title_romanji": "Yokkame (2) 0.14 no Higeki (四日目",
+      |      "aired": "2017-02-22T00:00:00+00:00",
+      |      "score": 4.51,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1593945"
+      |    },
+      |    {
+      |      "mal_id": 5,
+      |      "url": null,
+      |      "title": "Day 5 (1) Beheading 2",
+      |      "title_japanese": "1) 首斬り二つ",
+      |      "title_romanji": "Itsukame (1) Kubikiri Futatsu (五日目",
+      |      "aired": "2017-03-29T00:00:00+00:00",
+      |      "score": 4.49,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1602568"
+      |    },
+      |    {
+      |      "mal_id": 6,
+      |      "url": null,
+      |      "title": "Day 5 (2) Lies",
+      |      "title_japanese": "2) 嘘",
+      |      "title_romanji": "Itsukame (2) Uso (五日目",
+      |      "aired": "2017-05-31T00:00:00+00:00",
+      |      "score": 4.59,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1620331"
+      |    },
+      |    {
+      |      "mal_id": 7,
+      |      "url": null,
+      |      "title": "Episode 7",
+      |      "title_japanese": "3) 鴉の濡れ羽",
+      |      "title_romanji": "Itsukame (3) Karasu no Nureba (五日目",
+      |      "aired": "2017-08-30T00:00:00+00:00",
+      |      "score": 4.47,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1657490"
+      |    },
+      |    {
+      |      "mal_id": 8,
+      |      "url": null,
+      |      "title": "Episode 8",
+      |      "title_japanese": null,
+      |      "title_romanji": null,
+      |      "aired": "2017-09-27T00:00:00+00:00",
+      |      "score": 4.38,
+      |      "filler": false,
+      |      "recap": false,
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1668602"
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
+
+  val testEpisodeDetailsJson: JsValue = Json.parse(
+    """{
+      |  "data": {
+      |    "mal_id": 143,
+      |    "url": "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo/episode/143",
+      |    "title": "Russian Dolls Murder Case File 5",
+      |    "title_japanese": "「露西亜人形殺人事件」ファイル5",
+      |    "title_romanji": "Russia Ningyou Satsujin Jiken File 5",
+      |    "duration": 1440,
+      |    "aired": "2000-08-07T00:00:00+09:00",
+      |    "filler": false,
+      |    "recap": false,
+      |    "synopsis": "The real identity of the \"Conductor\" is revealed. (Source: Wikipedia)"
+      |  }
+      |}""".stripMargin
+  )
 }

@@ -15,10 +15,13 @@
     @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
     <br>
     <p><b>Type:</b> @{anime.`type`}</p>
-    <p><b>Maturity rating:</b> @anime.rating</p>
+    <p><b>Maturity rating:</b> @anime.rating.getOrElse("N/A")</p>
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ") </p>
     <br>
-    <p><b>No. of episodes:</b> @anime.episodes.getOrElse("Not available")</p>
+    <p>
+      <b>No. of episodes:</b> @anime.episodes.getOrElse("Not available")
+      <br><a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, "1")">See episode list</a>
+    </p>
     <p><b>Status:</b> @anime.status</p>
     @if(anime.aired.from.nonEmpty) { <p><b>Start date:</b> @{anime.aired.from.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}</p> }
     @if(anime.aired.to.nonEmpty) { <p><b>End date:</b> @{anime.aired.to.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}</p> }

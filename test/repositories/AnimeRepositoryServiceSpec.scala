@@ -6,7 +6,6 @@ import models.{APIError, AirDates, AnimeData, Genre, SavedAnime}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import repositories.AnimeRepositoryTrait
 import services.AnimeRepositoryService
 
 import java.time.{Instant, OffsetDateTime}
@@ -195,7 +194,7 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
   "refresh()" should {
     val kindaichiDataRefreshed: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
       AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
-      "R - 17+ (violence & profanity)",Some(7.97),Some(8317),
+      Some("R - 17+ (violence & profanity)"),Some(7.97),Some(8317),
       Some("""
            |Hajime Kindaichi's unorganized appearance and lax nature may give the impression of an average high school student, but a book should never be judged by its cover. Hajime is the grandson of the man who was once Japan's greatest detective, and he is also a remarkable sleuth himself.
            |

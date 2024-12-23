@@ -37,4 +37,12 @@ class JikanService @Inject()(connector: JikanConnector) {
   def getUserFavourites(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserFavouritesResult] = {
     connector.get[UserFavouritesResult](s"https://api.jikan.moe/v4/users/$username/favorites")
   }
+
+  def getAnimeEpisodes(animeId: String, page: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, EpisodeSearchResult] = {
+    connector.get[EpisodeSearchResult](s"https://api.jikan.moe/v4/anime/$animeId/episodes?page=$page")
+  }
+
+  def getAnimeEpisodeDetails(animeId: String, episodeId: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, SingleEpisodeResult] = {
+    connector.get[SingleEpisodeResult](s"https://api.jikan.moe/v4/anime/$animeId/episodes/$episodeId")
+  }
 }

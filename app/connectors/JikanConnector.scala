@@ -25,15 +25,15 @@ class JikanConnector @Inject()(ws: WSClient) {
                 result.status match {
                   case 404 => {
                     val message: Option[String] = (resultJson \ "message").asOpt[String]
-                    Left(APIError.BadAPIResponse(404, message.getOrElse("Unknown error")))
+                    Left(APIError.BadAPIResponse(404, message.getOrElse("Unknown 404 error")))
                   }
                   case 400 => {
                     val messages: Option[String] = (resultJson \ "messages").asOpt[Map[String, Seq[String]]].map {
                       messageMap => messageMap.values.flatten.mkString(" ")
                     }
-                    Left(APIError.BadAPIResponse(400, messages.getOrElse("Unknown error")))
+                    Left(APIError.BadAPIResponse(400, messages.getOrElse("Unknown 400 error")))
                   }
-                  case _ => Left(APIError.BadAPIResponse(result.status, "Unknown error"))
+                  case _ => Left(APIError.BadAPIResponse(result.status, "Could not parse JSON into required model"))
                 }
             }
           }

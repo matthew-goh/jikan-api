@@ -4,8 +4,6 @@ import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
 import models._
 import org.scalamock.scalatest.MockFactory
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatest.concurrent.ScalaFutures
 import play.api.test.FakeRequest
 import play.api.libs.json._
 import play.api.mvc._
@@ -45,6 +43,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     fullContent.sliding(target.length).count(window => window == target)
 
   ///// METHODS FOCUSING ON CONNECTOR /////
+  /// 1. Anime search ///
   "ApplicationController .getAnimeResults()" should {
     "list the anime search results" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
@@ -199,6 +198,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
+  /// 2. User profiles ///
   "ApplicationController .getUserProfile()" should {
     "display the user's details" in {
       (mockJikanService.getUserProfile(_: String)(_: ExecutionContext))
@@ -336,6 +336,173 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val sortResult: Future[Result] = TestApplicationController.sortFavourites()(sortRequest)
       status(sortResult) shouldBe BAD_REQUEST
       contentAsString(sortResult) should include ("No username submitted")
+    }
+  }
+
+  /// 3. Anime episodes ///
+  "ApplicationController .getEpisodeList()" should {
+    val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), "Finished Airing",
+      AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440),
+      Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
+          |
+          |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
+          |
+          |[Written by MAL Rewrite]""".stripMargin),
+      List(Genre(8, "Drama"), Genre(7, "Mystery"), Genre(37, "Supernatural")), None)
+
+    "list the anime's episodes" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodes(_: String, _: String)(_: ExecutionContext))
+        .expects("33263", "1", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testEpisodeSearchResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("33263", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      searchResultContent should (include ("Page 1 of 1") and include ("Episodes 1-8 of 8"))
+      searchResultContent should include ("Day 3 (1) The Savant Gathering")
+      searchResultContent should include ("Wed, 26 Oct 2016")
+      searchResultContent should include ("Episode 8")
+      searchResultContent should include ("Wed, 27 Sep 2017")
+
+      countOccurrences(searchResultContent, "Aired") shouldBe 8
+    }
+
+    "show 'No episode data available' if there are no results" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodes(_: String, _: String)(_: ExecutionContext))
+        .expects("33263", "2", *)
+        .returning(EitherT.rightT(EpisodeSearchResult(
+          EpisodePagination(1, has_next_page = false),
+          Seq()
+        )))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("33263", "2")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No episode data available")
+    }
+
+    "return a BadRequest if there is an API result but page number is not an integer" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodes(_: String, _: String)(_: ExecutionContext))
+        .expects("33263", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testEpisodeSearchResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("33263", "abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("API result obtained but page number is not an integer")
+    }
+
+    "return a BadRequest if the API detects an invalid page number" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodes(_: String, _: String)(_: ExecutionContext))
+        .expects("33263", "0", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The page must be at least 1.")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("33263", "0")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The page must be at least 1.")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("abc", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getSingleEpisodeDetails()" should {
+    "display the episode's details" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodeDetails(_: String, _: String)(_: ExecutionContext))
+        .expects("2076", "143", *)
+        .returning(EitherT.rightT(SingleEpisodeResult(JikanServiceSpec.testEpisodeDetails)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getSingleEpisodeDetails("2076", "143")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should include ("Episode 143")
+      searchResultContent should include ("This is neither a filler nor a recap episode.")
+      searchResultContent should include ("24:00")
+      searchResultContent should include ("Sun, 06 Aug 2000")
+    }
+
+    "show 'No episode data available' if the result contains no data (e.g. if episode does not exist)" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodeDetails(_: String, _: String)(_: ExecutionContext))
+        .expects("2076", "150", *)
+        .returning(EitherT.rightT(SingleEpisodeResult(
+          EpisodeFullDetails(150, "", None, None, filler = false, recap = false, None))
+        ))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getSingleEpisodeDetails("2076", "150")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No episode data available")
+      contentAsString(searchResult) should include ("This anime only has 148 episodes")
+    }
+
+    "return a BadRequest if the episode ID is invalid" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeEpisodeDetails(_: String, _: String)(_: ExecutionContext))
+        .expects("2076", "0", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The episode id must be at least 1.")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getSingleEpisodeDetails("2076", "0")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The episode id must be at least 1.")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getEpisodeList("abc", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
   }
 
@@ -554,7 +721,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     "refresh an anime's MAL details in the database" in {
       val kindaichiDataRefreshed: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
         AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
-        "R - 17+ (violence & profanity)",Some(7.97),Some(8317),
+        Some("R - 17+ (violence & profanity)"),Some(7.97),Some(8317),
         Some("""
          |Hajime Kindaichi's unorganized appearance and lax nature may give the impression of an average high school student, but a book should never be judged by its cover. Hajime is the grandson of the man who was once Japan's greatest detective, and he is also a remarkable sleuth himself.
          |

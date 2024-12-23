@@ -9,13 +9,13 @@
 @main("Saved Anime Details"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
-    <p><a class="image-text-link" href="@routes.ApplicationController.listSavedAnime("all", "saved_at", "none")">
-      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
-      Back to Saved Anime
-    </a></p>
     <p><a class="image-text-link" href="@routes.HomeController.index()">
       <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
       Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.ApplicationController.listSavedAnime("all", "saved_at", "none")">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Saved Anime
     </a></p>
   </div>
 
