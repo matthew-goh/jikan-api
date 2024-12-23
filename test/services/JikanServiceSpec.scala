@@ -5,6 +5,7 @@ import cats.data.EitherT
 import connectors.JikanConnector
 import models._
 import models.characters._
+import models.episodes._
 import models.reviews._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures

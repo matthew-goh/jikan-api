@@ -4,6 +4,7 @@ import cats.data.EitherT
 import connectors.JikanConnector
 import models._
 import models.characters._
+import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
 import models.reviews.ReviewsResult
 import play.api.libs.json._
 

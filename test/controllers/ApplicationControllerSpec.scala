@@ -4,6 +4,7 @@ import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
 import models._
 import models.characters._
+import models.episodes._
 import models.reviews.ReviewsResult
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
