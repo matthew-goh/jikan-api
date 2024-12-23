@@ -50,4 +50,8 @@ class JikanService @Inject()(connector: JikanConnector) {
   def getAnimeCharacters(animeId: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, CharacterSearchResult] = {
     connector.get[CharacterSearchResult](s"https://api.jikan.moe/v4/anime/$animeId/characters")
   }
+
+  def getCharacterProfile(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, CharacterProfileResult] = {
+    connector.get[CharacterProfileResult](s"https://api.jikan.moe/v4/characters/$id/full")
+  }
 }

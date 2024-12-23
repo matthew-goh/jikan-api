@@ -246,3 +246,7 @@ label {
     margin-bottom: 10px;
     width: 100%;
 }
+.char-img-profile {
+    max-height: 300px;
+    margin-bottom: 10px;
+}

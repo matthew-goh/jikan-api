@@ -32,10 +32,10 @@
           </div>
           <div class="char-info-container">
             <p>
-              <b>@char.character.name</b>
+              <b><a href="@routes.ApplicationController.getCharacterProfile(char.character.mal_id.toString)">@char.character.name</a></b>
               <br><i>@char.role</i>
             </p>
-            <p>Favourited by @{char.favorites} @{if(char.favorites == 1) "user" else "users"}</p>
+            <p>Favourited by @{NumberFormat.getInstance().format(char.favorites)} @{if(char.favorites == 1) "user" else "users"}</p>
           </div>
         </li>
       }

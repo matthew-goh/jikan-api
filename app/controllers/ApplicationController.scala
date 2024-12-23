@@ -177,6 +177,13 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
+  def getCharacterProfile(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getCharacterProfile(id).value.map{
+      case Right(charResult) => Ok(views.html.characterprofile(charResult.data))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
 
   ///// METHODS FOCUSING ON REPOSITORY /////
   def listSavedAnime(compStatus: String, orderBy: String, sortOrder: String): Action[AnyContent] = Action.async { implicit request =>

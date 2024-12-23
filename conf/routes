@@ -12,10 +12,11 @@ GET     /users/:username/favourites/anime/orderby=:orderBy/order=:sortOrder    c
 POST     /sortfavourites    controllers.ApplicationController.sortFavourites()
 GET     /users/:username/favourites/characters    controllers.ApplicationController.getUserFavouriteCharacters(username: String)
 
-
 GET     /anime/:animeId/episodes/page=:page    controllers.ApplicationController.getEpisodeList(animeId: String, page: String)
 GET     /anime/:animeId/episodes/:episodeId    controllers.ApplicationController.getSingleEpisodeDetails(animeId: String, episodeId: String)
 GET     /anime/:animeId/characters    controllers.ApplicationController.getAnimeCharacters(animeId: String)
+GET     /characters/:id    controllers.ApplicationController.getCharacterProfile(id: String)
+
 
 GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.ApplicationController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
 POST     /sortsaved    controllers.ApplicationController.sortSavedList()

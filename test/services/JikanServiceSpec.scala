@@ -299,10 +299,10 @@ object JikanServiceSpec {
     Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
 
   val testCharacters: Seq[AnimeCharacter] = Seq(
-    AnimeCharacter(CharacterProfile(29593, "Boku", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
-    AnimeCharacter(CharacterProfile(29594, "Kunagisa, Tomo", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
-    AnimeCharacter(CharacterProfile(29595, "Aikawa, Jun", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
-    AnimeCharacter(CharacterProfile(36560, "Akagami, Iria", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
+    AnimeCharacter(CharacterInfo(29593, "Boku", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
+    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
+    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
+    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
   )
 
   val testAnimeSearchJsonStr: String =
