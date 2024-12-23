@@ -4,6 +4,7 @@ import baseSpec.BaseSpec
 import cats.data.EitherT
 import connectors.JikanConnector
 import models._
+import models.characters._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -105,7 +106,7 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
         .once()
 
       whenReady(testService.getUserFavourites("Emotional-Yam8").value) { result =>
-        result shouldBe Right(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testFavouritesList)))
+        result shouldBe Right(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites)))
       }
     }
 
@@ -165,6 +166,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
 
       whenReady(testService.getAnimeEpisodeDetails("33263", "0").value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(400, "The episode id must be at least 1."))
+      }
+    }
+  }
+
+  "getAnimeCharacters()" should {
+    "return anime characters" in {
+      (mockConnector.get[CharacterSearchResult](_: String)(_: OFormat[CharacterSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/characters", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testCharactersJson.as[CharacterSearchResult]))
+        .once()
+
+      whenReady(testService.getAnimeCharacters("33263").value) { result =>
+        result shouldBe Right(CharacterSearchResult(JikanServiceSpec.testCharacters))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[CharacterSearchResult](_: String)(_: OFormat[CharacterSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/abc/characters", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      whenReady(testService.getAnimeCharacters("abc").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
       }
     }
   }
@@ -246,10 +271,14 @@ object JikanServiceSpec {
   val testUserProfile: UserProfile = UserProfile(14084682, "Emotional-Yam8", OffsetDateTime.parse("2024-12-16T17:00:29+00:00").toInstant,
     OffsetDateTime.parse("2021-11-21T00:00:00+00:00").toInstant, None, UserStatisticsObj(testUserAnimeStatistics))
 
-  val testFavouritesList: Seq[AnimeFavourite] = Seq(
+  val testAnimeFavourites: Seq[AnimeFavourite] = Seq(
     AnimeFavourite(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", "OVA", 2016),
     AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997),
     AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003)
+  )
+  val testCharacterFavourites: Seq[CharacterFavourite] = Seq(
+    CharacterFavourite(17650, "Kindaichi, Hajime", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"))),
+    CharacterFavourite(192285, "Isshiki, Totomaru", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
   )
 
   val testEpisodePagination: EpisodePagination = EpisodePagination(1, has_next_page = false)
@@ -268,6 +297,13 @@ object JikanServiceSpec {
   val testEpisodeDetails: EpisodeFullDetails = EpisodeFullDetails(143, "Russian Dolls Murder Case File 5", Some(1440),
     Some(OffsetDateTime.parse("2000-08-07T00:00:00+09:00").toInstant), filler = false, recap = false,
     Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
+
+  val testCharacters: Seq[AnimeCharacter] = Seq(
+    AnimeCharacter(CharacterProfile(29593, "Boku", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
+    AnimeCharacter(CharacterProfile(29594, "Kunagisa, Tomo", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
+    AnimeCharacter(CharacterProfile(29595, "Aikawa, Jun", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
+    AnimeCharacter(CharacterProfile(36560, "Akagami, Iria", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
+  )
 
   val testAnimeSearchJsonStr: String =
     """
@@ -1893,7 +1929,36 @@ object JikanServiceSpec {
       |      }
       |    ],
       |    "manga": [],
-      |    "characters": [],
+      |    "characters": [
+      |      {
+      |        "mal_id": 17650,
+      |        "url": "https://myanimelist.net/character/17650/Hajime_Kindaichi",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/3/289646.webp?s=ca273592603d81a2ccac1993d479020e",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/3/289646t.webp?s=ca273592603d81a2ccac1993d479020e"
+      |          }
+      |        },
+      |        "name": "Kindaichi, Hajime"
+      |      },
+      |      {
+      |        "mal_id": 192285,
+      |        "url": "https://myanimelist.net/character/192285/Totomaru_Isshiki",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.webp?s=14c1c7bed8811a93ec27586ce5d281cb",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/11/516963t.webp?s=14c1c7bed8811a93ec27586ce5d281cb"
+      |          }
+      |        },
+      |        "name": "Isshiki, Totomaru"
+      |      }
+      |    ],
       |    "people": []
       |  }
       |}
@@ -2020,6 +2085,145 @@ object JikanServiceSpec {
       |    "recap": false,
       |    "synopsis": "The real identity of the \"Conductor\" is revealed. (Source: Wikipedia)"
       |  }
+      |}""".stripMargin
+  )
+
+  val testCharactersJson: JsValue = Json.parse(
+    """{
+      |  "data": [
+      |    {
+      |      "character": {
+      |        "mal_id": 29593,
+      |        "url": "https://myanimelist.net/character/29593/Boku",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/15/317434.webp?s=b7f89a35d49c9fe2dea566acb974c171",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/15/317434t.webp?s=b7f89a35d49c9fe2dea566acb974c171"
+      |          }
+      |        },
+      |        "name": "Boku"
+      |      },
+      |      "role": "Main",
+      |      "favorites": 784,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 672,
+      |            "url": "https://myanimelist.net/people/672/Yuuki_Kaji",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/66416.jpg?s=91e56f66a0be72a89dff77e0d8ec55ce"
+      |              }
+      |            },
+      |            "name": "Kaji, Yuuki"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "character": {
+      |        "mal_id": 29594,
+      |        "url": "https://myanimelist.net/character/29594/Tomo_Kunagisa",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/7/311929.webp?s=624f081ad1ac310bc945be5a5fdd17f6",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/7/311929t.webp?s=624f081ad1ac310bc945be5a5fdd17f6"
+      |          }
+      |        },
+      |        "name": "Kunagisa, Tomo"
+      |      },
+      |      "role": "Main",
+      |      "favorites": 371,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 6686,
+      |            "url": "https://myanimelist.net/people/6686/Aoi_Yuuki",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/3/67808.jpg?s=3074a08319fa6f05424eed1f508e2233"
+      |              }
+      |            },
+      |            "name": "Yuuki, Aoi"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "character": {
+      |        "mal_id": 29595,
+      |        "url": "https://myanimelist.net/character/29595/Jun_Aikawa",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/4/371513.webp?s=97d1a9538f07cda0e3498b4804948cf5",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/4/371513t.webp?s=97d1a9538f07cda0e3498b4804948cf5"
+      |          }
+      |        },
+      |        "name": "Aikawa, Jun"
+      |      },
+      |      "role": "Supporting",
+      |      "favorites": 231,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 428,
+      |            "url": "https://myanimelist.net/people/428/Yuuko_Kaida",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/3/74397.jpg?s=cb515aed18f4c63ccea72f4060617258"
+      |              }
+      |            },
+      |            "name": "Kaida, Yuuko"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "character": {
+      |        "mal_id": 36560,
+      |        "url": "https://myanimelist.net/character/36560/Iria_Akagami",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/8/311171.webp?s=ebb18f7088b52cf64834c6b7e688b74e",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/8/311171t.webp?s=ebb18f7088b52cf64834c6b7e688b74e"
+      |          }
+      |        },
+      |        "name": "Akagami, Iria"
+      |      },
+      |      "role": "Supporting",
+      |      "favorites": 1,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 655,
+      |            "url": "https://myanimelist.net/people/655/Mariya_Ise",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/65504.jpg?s=79bb2f4740b9c846b3c2bed12c193b4b"
+      |              }
+      |            },
+      |            "name": "Ise, Mariya"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    }
+      |  ]
       |}""".stripMargin
   )
 }

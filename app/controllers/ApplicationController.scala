@@ -90,7 +90,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def getUserFavourites(username: String, orderBy: String = "title", sortOrder: String = "asc"): Action[AnyContent] = Action.async { implicit request =>
+  def getUserFavouriteAnime(username: String, orderBy: String = "title", sortOrder: String = "asc"): Action[AnyContent] = Action.async { implicit request =>
     val orderByTry: Try[FavouritesOrders.Value] = Try(FavouritesOrders.withName(orderBy))
     val sortOrderTry: Try[SortOrders.Value] = Try(SortOrders.withName(sortOrder))
     (orderByTry, sortOrderTry) match {
@@ -109,7 +109,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
               }
               case FavouritesOrders.none => favesResult.data.anime // keep original order
             }
-            Ok(views.html.userfavourites(animeFavesSorted, username, orderBy, sortOrder))
+            Ok(views.html.userfavouriteanime(animeFavesSorted, username, orderBy, sortOrder))
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
@@ -126,8 +126,15 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
       case Some(username) => {
         val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
         val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
-        Future.successful(Redirect(routes.ApplicationController.getUserFavourites(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
+        Future.successful(Redirect(routes.ApplicationController.getUserFavouriteAnime(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
       }
+    }
+  }
+
+  def getUserFavouriteCharacters(username: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserFavourites(username).value.map{
+      case Right(favesResult) => Ok(views.html.userfavouritecharacters(favesResult.data.characters.sortBy(_.name), username))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 

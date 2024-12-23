@@ -3,7 +3,7 @@
 
 @*RequestHeader needed for form with CRSF*@
 @(animeFaves: Seq[AnimeFavourite], username: String, orderBy: String, sortOrder: String)(implicit request: RequestHeader)
-@main("User Favourites"){
+@main("User's Favourite Anime"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
     <p><a class="image-text-link" href="@routes.HomeController.index()">
@@ -17,7 +17,7 @@
   </div>
 
   <div class="container mb-5">
-    <h2>@username's Favourites</h2>
+    <h2>@username's Favourite Anime</h2>
     @form(action = routes.ApplicationController.sortFavourites()) {
       @CSRF.formField
       <div class="form-div">
@@ -41,7 +41,7 @@
 
     <br>
     @if(animeFaves.isEmpty) {
-      <p>No favourites.</p>
+      <p>No anime favourites.</p>
     } else {
       <p><b>@animeFaves.length</b> favourites on @username's list:</p>
       <ul>

@@ -38,9 +38,13 @@
     </ul>
     <br>
 
-    <p><a class="image-text-link" href="@routes.ApplicationController.getUserFavourites(username, "title", "asc")">
-      <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Home Icon">
-      See favourites
+    <p><a class="image-text-link" href="@routes.ApplicationController.getUserFavouriteAnime(username, "title", "asc")">
+      <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
+      See favourite anime
+    </a></p>
+    <p><a class="image-text-link" href="@routes.ApplicationController.getUserFavouriteCharacters(username)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
+      See favourite characters
     </a></p>
   </div>
 }
