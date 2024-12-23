@@ -3,7 +3,7 @@ package controllers
 import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
 import models._
-import models.characters.CharacterSearchResult
+import models.characters._
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
 import play.api.libs.json._
@@ -589,6 +589,52 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         .once()
 
       val searchResult: Future[Result] = TestApplicationController.getAnimeCharacters("abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getCharacterProfile()" should {
+    "display a character's profile" in {
+      (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
+        .expects("192285", *)
+        .returning(EitherT.rightT(CharacterProfileResult(JikanServiceSpec.testCharacterProfile)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("192285")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Totomaru Isshiki")
+      searchResultContent should include ("<b>Nicknames:</b> Toto")
+      searchResultContent should include ("Kamonohashi Ron no Kindan Suiri 2nd Season")
+      countOccurrences(searchResultContent, "Main role") shouldBe 2
+    }
+
+    "display a character's profile with no biography or anime appearances" in {
+      val characterInNoAnime: CharacterProfile = CharacterProfile(192285,
+        CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
+        "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq())
+
+      (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
+        .expects("192285", *)
+        .returning(EitherT.rightT(CharacterProfileResult(characterInNoAnime)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("192285")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("<b>Nicknames:</b> Nickname 1, Nickname 2")
+      searchResultContent should include ("<b>About:</b><br>Not available")
+      searchResultContent should include ("Not appearing in any anime.")
+    }
+
+    "return a NotFound if the character is not found" in {
+      (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("abc")(FakeRequest())
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }

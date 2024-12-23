@@ -193,6 +193,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getCharacterProfile()" should {
+    "return a character profile" in {
+      (mockConnector.get[CharacterProfileResult](_: String)(_: OFormat[CharacterProfileResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/characters/192285/full", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testCharacterProfileJson.as[CharacterProfileResult]))
+        .once()
+
+      whenReady(testService.getCharacterProfile("192285").value) { result =>
+        result shouldBe Right(CharacterProfileResult(JikanServiceSpec.testCharacterProfile))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[CharacterProfileResult](_: String)(_: OFormat[CharacterProfileResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/characters/0/full", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The id must be at least 1.")))
+        .once()
+
+      whenReady(testService.getCharacterProfile("0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The id must be at least 1."))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -303,6 +327,15 @@ object JikanServiceSpec {
     AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
     AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
     AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
+  )
+
+  val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
+    CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
+    "Totomaru Isshiki", Seq("Toto"), 26,
+    Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
+        |
+        |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
+    Seq(AnimeAppearance("Main", AnimeAppearanceNested(53879, "Kamonohashi Ron no Kindan Suiri")), AnimeAppearance("Main", AnimeAppearanceNested(57635, "Kamonohashi Ron no Kindan Suiri 2nd Season")))
   )
 
   val testAnimeSearchJsonStr: String =
@@ -2226,4 +2259,109 @@ object JikanServiceSpec {
       |  ]
       |}""".stripMargin
   )
+
+  val testCharacterProfileJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": {
+      |    "mal_id": 192285,
+      |    "url": "https://myanimelist.net/character/192285/Totomaru_Isshiki",
+      |    "images": {
+      |      "jpg": {
+      |        "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.jpg"
+      |      },
+      |      "webp": {
+      |        "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.webp",
+      |        "small_image_url": "https://cdn.myanimelist.net/images/characters/11/516963t.webp"
+      |      }
+      |    },
+      |    "name": "Totomaru Isshiki",
+      |    "name_kanji": "一色 都々丸",
+      |    "nicknames": [
+      |      "Toto"
+      |    ],
+      |    "favorites": 26,
+      |    "about": "Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.\n\n(Source: Ron Kamonohashi: Deranged Detective Wiki)",
+      |    "anime": [
+      |      {
+      |        "role": "Main",
+      |        "anime": {
+      |          "mal_id": 53879,
+      |          "url": "https://myanimelist.net/anime/53879/Kamonohashi_Ron_no_Kindan_Suiri",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1799/137123.jpg?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123t.jpg?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123l.jpg?s=a086d60e87f039225ca8a5af44a01b93"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1799/137123.webp?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123t.webp?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123l.webp?s=a086d60e87f039225ca8a5af44a01b93"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri"
+      |        }
+      |      },
+      |      {
+      |        "role": "Main",
+      |        "anime": {
+      |          "mal_id": 57635,
+      |          "url": "https://myanimelist.net/anime/57635/Kamonohashi_Ron_no_Kindan_Suiri_2nd_Season",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334t.jpg?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334l.jpg?s=0ca422cabe591f4850cb7408ced1f580"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1917/144334.webp?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334t.webp?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334l.webp?s=0ca422cabe591f4850cb7408ced1f580"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri 2nd Season"
+      |        }
+      |      }
+      |    ],
+      |    "manga": [
+      |      {
+      |        "role": "Main",
+      |        "manga": {
+      |          "mal_id": 130392,
+      |          "url": "https://myanimelist.net/manga/130392/Kamonohashi_Ron_no_Kindan_Suiri",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/2/240565.jpg?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/2/240565t.jpg?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/2/240565l.jpg?s=1735a8e43bfd6e6568c399e75011773e"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/2/240565.webp?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/2/240565t.webp?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/2/240565l.webp?s=1735a8e43bfd6e6568c399e75011773e"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri"
+      |        }
+      |      }
+      |    ],
+      |    "voices": [
+      |      {
+      |        "person": {
+      |          "mal_id": 30853,
+      |          "url": "https://myanimelist.net/people/30853/Junya_Enoki",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/62840.jpg"
+      |            }
+      |          },
+      |          "name": "Enoki, Junya"
+      |        },
+      |        "language": "Japanese"
+      |      }
+      |    ]
+      |  }
+      |}
+      |""".stripMargin)
 }
