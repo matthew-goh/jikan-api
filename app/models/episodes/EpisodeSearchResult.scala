@@ -1,8 +1,9 @@
-package models
+package models.episodes
 
+import models.SimplePagination
 import play.api.libs.json.{Json, OFormat}
 
-case class EpisodeSearchResult(pagination: EpisodePagination, data: Seq[AnimeEpisode])
+case class EpisodeSearchResult(pagination: SimplePagination, data: Seq[AnimeEpisode])
 
 object EpisodeSearchResult {
   implicit val formats: OFormat[EpisodeSearchResult] = Json.format[EpisodeSearchResult]

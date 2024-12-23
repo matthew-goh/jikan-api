@@ -5,11 +5,18 @@
 @import java.time.ZoneId
 
 @import play.twirl.api.HtmlFormat.raw
+
 @(anime: AnimeData, inDatabase: Boolean)(implicit request: RequestHeader)
 @main("Anime Details"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
 
+  <div class="container mb-5">
     <h2>Anime details</h2>
     <h3>@anime.title (MAL ID: @anime.mal_id)</h3>
     @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
@@ -53,11 +60,11 @@
         <button type="submit">+ Save</button>
       </form>
     }
+  </div>
 
-    <br>
-    <p><a class="image-text-link" href="@routes.HomeController.index()">
-      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
-      Back to Home
-    </a></p>
+  <div class="container mb-5">
+    <h3>More details</h3>
+    <p><a href="@routes.ApplicationController.getAnimeCharacters(anime.mal_id.toString)">Characters</a></p>
+    <p><a href="@routes.ApplicationController.getAnimeReviews(anime.mal_id.toString, "1", "false", "false")">Reviews</a></p>
   </div>
 }

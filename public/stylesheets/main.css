@@ -69,11 +69,17 @@ li {
     margin-bottom: 10px;
 }
 
+.text-container-full {
+    padding: 10px;
+}
 .text-container {
     width: 50%;
     padding: 10px;
     /*margin: 10px;*/
     /*flex-direction: column;*/
+}
+.smaller-text {
+    font-size: 0.9em;
 }
 
 /* Buttons */
@@ -219,4 +225,34 @@ label {
 
 .error {
     color: red;
+}
+
+/* Characters */
+.char-img-container {
+    width: 20%;
+    padding: 10px;
+}
+.char-info-container {
+    width: 80%;
+    padding: 10px;
+}
+.char-img {
+    max-height: 150px;
+}
+.ul-for-chars {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two equal-width columns */
+    padding-left: 0;
+    gap: 10px; /* Space between columns */
+}
+.li-for-char {
+    display: flex;
+    justify-content: flex-start;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    width: 100%;
+}
+.char-img-profile {
+    max-height: 300px;
+    margin-bottom: 10px;
 }

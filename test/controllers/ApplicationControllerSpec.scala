@@ -3,6 +3,9 @@ package controllers
 import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
 import models._
+import models.characters._
+import models.episodes._
+import models.reviews.ReviewsResult
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
 import play.api.libs.json._
@@ -38,6 +41,15 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
   private lazy val kubikiriUpdated: SavedAnime = SavedAnime(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), None,
     Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 4, None, "Closed circle mystery on an island")
+
+  private lazy val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), "Finished Airing",
+    AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440),
+    Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
+           |
+           |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
+           |
+           |[Written by MAL Rewrite]""".stripMargin),
+    List(Genre(8, "Drama"), Genre(7, "Mystery"), Genre(37, "Supernatural")), None)
 
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)
@@ -246,14 +258,14 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  "ApplicationController .getUserFavourites()" should {
-    "list the user's favourites in default order (ascending title)" in {
+  "ApplicationController .getUserFavouriteAnime()" should {
+    "list the user's favourite anime in default order (ascending title)" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testFavouritesList))))
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites))))
         .once()
 
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteAnime("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       val searchResultContent = contentAsString(searchResult)
       searchResultContent should (include ("Title") and include ("Ascending"))
@@ -262,13 +274,13 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent.indexOf("Kubikiri Cycle: Aoiro Savant to Zaregotozukai") should be < searchResultContent.indexOf("Tantei Gakuen Q")
     }
 
-    "list the user's favourites sorted by start year in descending order" in {
+    "list the user's favourite anime sorted by start year in descending order" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testFavouritesList))))
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites))))
         .once()
 
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "start_year", "desc")(testRequest.fakeRequest)
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteAnime("Emotional-Yam8", "start_year", "desc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       val searchResultContent = contentAsString(searchResult)
       searchResultContent should (include ("Start year") and include ("Descending"))
@@ -277,15 +289,15 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent.indexOf("Tantei Gakuen Q") should be < searchResultContent.indexOf("Kindaichi Shounen no Jikenbo")
     }
 
-    "show 'No favourites' if the user has no favourites" in {
+    "show 'No anime favourites' if the user has no favourites listed" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq()))))
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq(), Seq()))))
         .once()
 
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteAnime("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should include ("No favourites")
+      contentAsString(searchResult) should include ("No anime favourites")
     }
 
     "return a NotFound if the user is not found" in {
@@ -294,20 +306,20 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
         .once()
 
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("abc", "title", "asc")(FakeRequest())
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteAnime("abc", "title", "asc")(FakeRequest())
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
     }
 
     "return a BadRequest if the sort parameter values are invalid" in {
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("Emotional-Yam8", "title", "???")(FakeRequest())
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteAnime("Emotional-Yam8", "title", "???")(FakeRequest())
       status(searchResult) shouldBe BAD_REQUEST
       contentAsString(searchResult) should include ("Invalid sort parameter")
     }
   }
 
   "ApplicationController .sortFavourites()" should {
-    "reload the user favourites page when sort parameters are submitted" in {
+    "reload the user's favourite anime page when sort parameters are submitted" in {
       val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody(
         "username" -> "Emotional-Yam8",
         "orderBy" -> "start_year",
@@ -315,7 +327,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val sortResult: Future[Result] = TestApplicationController.sortFavourites()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
-      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/orderby=start_year/order=asc")
+      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/anime/orderby=start_year/order=asc")
     }
 
     "set the sort parameters to 'none' if they are missing from the request" in {
@@ -324,7 +336,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       )
       val sortResult: Future[Result] = TestApplicationController.sortFavourites()(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
-      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/orderby=none/order=none")
+      redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/anime/orderby=none/order=none")
     }
 
     "return a BadRequest if username (hidden field) is blank" in {
@@ -339,17 +351,45 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  /// 3. Anime episodes ///
-  "ApplicationController .getEpisodeList()" should {
-    val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), "Finished Airing",
-      AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440),
-      Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
-          |
-          |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
-          |
-          |[Written by MAL Rewrite]""".stripMargin),
-      List(Genre(8, "Drama"), Genre(7, "Mystery"), Genre(37, "Supernatural")), None)
+  "ApplicationController .getUserFavouriteCharacters()" should {
+    "list the user's favourite characters" in {
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites))))
+        .once()
 
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteCharacters("Emotional-Yam8")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("<b>2</b> favourite characters on Emotional-Yam8's list.")
+      searchResultContent should (include ("Isshiki, Totomaru") and include ("Kindaichi, Hajime"))
+    }
+
+    "show 'No favourite characters' if the user has no favourites listed" in {
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq(), Seq()))))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteCharacters("Emotional-Yam8")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No favourite characters")
+    }
+
+    "return a NotFound if the user is not found" in {
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserFavouriteCharacters("abc")(FakeRequest())
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
+    }
+  }
+
+  /// 3. Anime extra info ///
+  "ApplicationController .getEpisodeList()" should {
     "list the anime's episodes" in {
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
         .expects("33263", *)
@@ -383,7 +423,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       (mockJikanService.getAnimeEpisodes(_: String, _: String)(_: ExecutionContext))
         .expects("33263", "2", *)
         .returning(EitherT.rightT(EpisodeSearchResult(
-          EpisodePagination(1, has_next_page = false),
+          SimplePagination(1, has_next_page = false),
           Seq()
         )))
         .once()
@@ -456,7 +496,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent should include ("Episode 143")
       searchResultContent should include ("This is neither a filler nor a recap episode.")
       searchResultContent should include ("24:00")
-      searchResultContent should include ("Sun, 06 Aug 2000")
+      searchResultContent should include ("Mon, 07 Aug 2000")
     }
 
     "show 'No episode data available' if the result contains no data (e.g. if episode does not exist)" in {
@@ -505,6 +545,228 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
   }
+
+  "ApplicationController .getAnimeCharacters()" should {
+    "list the anime's characters" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeCharacters(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(CharacterSearchResult(JikanServiceSpec.testCharacters)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeCharacters("33263")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      searchResultContent should (include ("Boku") and include ("Kunagisa, Tomo") and include ("Aikawa, Jun") and include ("Akagami, Iria"))
+      searchResultContent should include ("Favourited by 1 user")
+
+      countOccurrences(searchResultContent, "Favourited by") shouldBe 4
+    }
+
+    "show 'No characters to display' if there are no results" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeCharacters(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(CharacterSearchResult(Seq())))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeCharacters("33263")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No characters to display")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeCharacters("abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getCharacterProfile()" should {
+    "display a character's profile" in {
+      (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
+        .expects("192285", *)
+        .returning(EitherT.rightT(CharacterProfileResult(JikanServiceSpec.testCharacterProfile)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("192285")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Totomaru Isshiki")
+      searchResultContent should include ("<b>Nicknames:</b> Toto")
+      searchResultContent should include ("Kamonohashi Ron no Kindan Suiri 2nd Season")
+      countOccurrences(searchResultContent, "Main role") shouldBe 2
+    }
+
+    "display a character's profile with no biography or anime appearances" in {
+      val characterInNoAnime: CharacterProfile = CharacterProfile(192285,
+        CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
+        "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq())
+
+      (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
+        .expects("192285", *)
+        .returning(EitherT.rightT(CharacterProfileResult(characterInNoAnime)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("192285")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("<b>Nicknames:</b> Nickname 1, Nickname 2")
+      searchResultContent should include ("<b>About:</b><br>Not available")
+      searchResultContent should include ("Not appearing in any anime.")
+    }
+
+    "return a NotFound if the character is not found" in {
+      (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("abc")(FakeRequest())
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getAnimeReviews()" should {
+    "display anime reviews, including preliminary and spoiler reviews" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "true", "true", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testReviewsResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "true", "true")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should (include ("MasterGhost") and include ("04 Mar 2019 03:21") and include("Recommended, Preliminary, Spoiler"))
+
+      countOccurrences(searchResultContent, "This review is preliminary.") shouldBe 1
+      countOccurrences(searchResultContent, "Warning! This review contains spoilers.") shouldBe 2
+      countOccurrences(searchResultContent, "checked") shouldBe 2  // checkboxes
+    }
+
+    "display anime reviews, including spoiler reviews but not preliminary reviews" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "false", "true", *)
+        .returning(EitherT.rightT(ReviewsResult(Seq(JikanServiceSpec.testReview1, JikanServiceSpec.testReview2), SimplePagination(1, has_next_page = false))))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "false", "true")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should (include ("MasterGhost") and include("Recommended, Spoiler"))
+      searchResultContent shouldNot include ("This review is preliminary.")
+
+      countOccurrences(searchResultContent, "Warning! This review contains spoilers.") shouldBe 1
+      countOccurrences(searchResultContent, "checked") shouldBe 1  // checkboxes
+    }
+
+    "show 'No reviews available' if there are no reviews" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "true", "true", *)
+        .returning(EitherT.rightT(ReviewsResult(Seq(), SimplePagination(1, has_next_page = false))))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "true", "true")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No reviews available")
+    }
+
+    "return a BadRequest if the API returned a result but a query parameter is invalid" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "ff", "ff", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testReviewsResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "ff", "ff")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("API result obtained but a query parameter is invalid")
+    }
+
+    "return a BadRequest if the API detects an invalid query parameter" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeReviews(_: String, _: String, _: String, _: String)(_: ExecutionContext))
+        .expects("2076", "1", "false", "f", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The spoilers field must be true or false.")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("2076", "1", "false", "f")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The spoilers field must be true or false.")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeReviews("abc", "1", "false", "false")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .filterReviews()" should {
+    "reload the anime reviews page with the correct parameters (where missing means false)" in {
+      val filterRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/filterreviews/2076").withFormUrlEncodedBody(
+        "preliminary" -> "true"
+      )
+      val filterResult: Future[Result] = TestApplicationController.filterReviews("2076")(filterRequest)
+      status(filterResult) shouldBe SEE_OTHER
+      redirectLocation(filterResult) shouldBe Some("/anime/2076/reviews/page=1/preliminary=true/spoilers=false")
+    }
+
+    "return a BadRequest if an invalid parameter value was submitted" in {
+      val filterRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/filterreviews/2076").withFormUrlEncodedBody(
+        "preliminary" -> "true",
+        "spoilers" -> "ff"
+      )
+      val filterResult: Future[Result] = TestApplicationController.filterReviews("2076")(filterRequest)
+      status(filterResult) shouldBe BAD_REQUEST
+      contentAsString(filterResult) should include ("Invalid value submitted for spoilers")
+    }
+  }
+
 
   ///// METHODS FOCUSING ON REPOSITORY /////
   "ApplicationController .listSavedAnime()" should {
@@ -562,7 +824,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
 
     "return a BadRequest if the sort parameter values are invalid" in {
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("all", "?", "?")(testRequest.fakeRequest)
+      val searchResult: Future[Result] = TestApplicationController.listSavedAnime("all", "?", "?")(testRequest.fakeRequest)
       status(searchResult) shouldBe BAD_REQUEST
       contentAsString(searchResult) should include ("Invalid sort parameter")
     }
@@ -617,12 +879,6 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val listingResult: Future[Result] = TestApplicationController.listSavedAnimeFromTitleSearch("kubikiri")(testRequest.fakeRequest)
       status(listingResult) shouldBe OK
       contentAsString(listingResult) should include ("No saved anime matching the searched title.")
-    }
-
-    "return a BadRequest if the sort parameter values are invalid" in {
-      val searchResult: Future[Result] = TestApplicationController.getUserFavourites("all", "?", "?")(testRequest.fakeRequest)
-      status(searchResult) shouldBe BAD_REQUEST
-      contentAsString(searchResult) should include ("Invalid sort parameter")
     }
   }
 

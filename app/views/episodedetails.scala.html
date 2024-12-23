@@ -1,6 +1,6 @@
 @import helper._
+@import models.episodes.EpisodeFullDetails
 
-@import java.text.NumberFormat
 @import java.time.format.DateTimeFormatter
 @import java.time.ZoneId
 
@@ -43,7 +43,7 @@
       </p>
       <p><b>Aired:</b>
       @if(episode.aired.nonEmpty) {
-        @{episode.aired.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}
+        @{episode.aired.get.atZone(ZoneId.of("Asia/Tokyo")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}
       } else {
         Info not available
       }</p>

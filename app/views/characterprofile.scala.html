@@ -1,0 +1,41 @@
+@import helper._
+@import models.characters.CharacterProfile
+
+@import java.text.NumberFormat
+
+@import play.twirl.api.HtmlFormat.raw
+
+@(character: CharacterProfile)
+@main("Character Profile"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Character Profile</h2>
+    <h3>@character.name</h3>
+    <p><b>Nicknames:</b> @{if(character.nicknames.nonEmpty) character.nicknames.mkString(", ") else "None"}</p>
+    <p>Favourited by @{NumberFormat.getInstance().format(character.favorites)} @{if(character.favorites == 1) "user" else "users"}</p>
+    <img class="char-img-profile" src="@character.images.jpg.image_url" alt="Character image">
+
+    <p><b>About:</b><br>@raw(character.about.getOrElse("Not available").replace("\n", "<br>"))</p>
+    <br>
+    @if(character.anime.isEmpty) {
+      <p>Not appearing in any anime.</p>
+    } else {
+      <p><b>Appears in:</b></p>
+      <ul>
+      @for(anime <- character.anime) {
+        <li>
+          <a href="@routes.ApplicationController.getAnimeById(anime.anime.mal_id.toString)">@anime.anime.title</a> -
+          @anime.role role
+        </li>
+      }
+      </ul>
+    }
+  </div>
+}

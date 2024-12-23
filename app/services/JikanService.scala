@@ -3,6 +3,9 @@ package services
 import cats.data.EitherT
 import connectors.JikanConnector
 import models._
+import models.characters._
+import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
+import models.reviews.ReviewsResult
 import play.api.libs.json._
 
 import java.util.Base64
@@ -44,5 +47,17 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getAnimeEpisodeDetails(animeId: String, episodeId: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, SingleEpisodeResult] = {
     connector.get[SingleEpisodeResult](s"https://api.jikan.moe/v4/anime/$animeId/episodes/$episodeId")
+  }
+
+  def getAnimeCharacters(animeId: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, CharacterSearchResult] = {
+    connector.get[CharacterSearchResult](s"https://api.jikan.moe/v4/anime/$animeId/characters")
+  }
+
+  def getCharacterProfile(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, CharacterProfileResult] = {
+    connector.get[CharacterProfileResult](s"https://api.jikan.moe/v4/characters/$id/full")
+  }
+
+  def getAnimeReviews(id: String, page: String, prelim: String, spoilers: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, ReviewsResult] = {
+    connector.get[ReviewsResult](s"https://api.jikan.moe/v4/anime/$id/reviews?page=$page&preliminary=$prelim&spoilers=$spoilers")
   }
 }

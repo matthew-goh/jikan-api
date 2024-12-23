@@ -4,6 +4,9 @@ import baseSpec.BaseSpec
 import cats.data.EitherT
 import connectors.JikanConnector
 import models._
+import models.characters._
+import models.episodes._
+import models.reviews._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -105,7 +108,7 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
         .once()
 
       whenReady(testService.getUserFavourites("Emotional-Yam8").value) { result =>
-        result shouldBe Right(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testFavouritesList)))
+        result shouldBe Right(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites)))
       }
     }
 
@@ -165,6 +168,78 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
 
       whenReady(testService.getAnimeEpisodeDetails("33263", "0").value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(400, "The episode id must be at least 1."))
+      }
+    }
+  }
+
+  "getAnimeCharacters()" should {
+    "return anime characters" in {
+      (mockConnector.get[CharacterSearchResult](_: String)(_: OFormat[CharacterSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/characters", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testCharactersJson.as[CharacterSearchResult]))
+        .once()
+
+      whenReady(testService.getAnimeCharacters("33263").value) { result =>
+        result shouldBe Right(CharacterSearchResult(JikanServiceSpec.testCharacters))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[CharacterSearchResult](_: String)(_: OFormat[CharacterSearchResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/abc/characters", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      whenReady(testService.getAnimeCharacters("abc").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
+      }
+    }
+  }
+
+  "getCharacterProfile()" should {
+    "return a character profile" in {
+      (mockConnector.get[CharacterProfileResult](_: String)(_: OFormat[CharacterProfileResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/characters/192285/full", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testCharacterProfileJson.as[CharacterProfileResult]))
+        .once()
+
+      whenReady(testService.getCharacterProfile("192285").value) { result =>
+        result shouldBe Right(CharacterProfileResult(JikanServiceSpec.testCharacterProfile))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[CharacterProfileResult](_: String)(_: OFormat[CharacterProfileResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/characters/0/full", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The id must be at least 1.")))
+        .once()
+
+      whenReady(testService.getCharacterProfile("0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The id must be at least 1."))
+      }
+    }
+  }
+
+  "getAnimeReviews()" should {
+    "return a character profile" in {
+      (mockConnector.get[ReviewsResult](_: String)(_: OFormat[ReviewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/reviews?page=1&preliminary=true&spoilers=true", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testReviewsJson.as[ReviewsResult]))
+        .once()
+
+      whenReady(testService.getAnimeReviews("2076", "1", "true", "true").value) { result =>
+        result shouldBe Right(JikanServiceSpec.testReviewsResult)
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[ReviewsResult](_: String)(_: OFormat[ReviewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/reviews?page=1&preliminary=ff&spoilers=true", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The preliminary field must be true or false.")))
+        .once()
+
+      whenReady(testService.getAnimeReviews("2076", "1", "ff", "true").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The preliminary field must be true or false."))
       }
     }
   }
@@ -246,13 +321,17 @@ object JikanServiceSpec {
   val testUserProfile: UserProfile = UserProfile(14084682, "Emotional-Yam8", OffsetDateTime.parse("2024-12-16T17:00:29+00:00").toInstant,
     OffsetDateTime.parse("2021-11-21T00:00:00+00:00").toInstant, None, UserStatisticsObj(testUserAnimeStatistics))
 
-  val testFavouritesList: Seq[AnimeFavourite] = Seq(
+  val testAnimeFavourites: Seq[AnimeFavourite] = Seq(
     AnimeFavourite(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", "OVA", 2016),
     AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997),
     AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003)
   )
+  val testCharacterFavourites: Seq[CharacterFavourite] = Seq(
+    CharacterFavourite(17650, "Kindaichi, Hajime", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"))),
+    CharacterFavourite(192285, "Isshiki, Totomaru", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
+  )
 
-  val testEpisodePagination: EpisodePagination = EpisodePagination(1, has_next_page = false)
+  val testSimplePagination: SimplePagination = SimplePagination(1, has_next_page = false)
   val testEpisodeList: Seq[AnimeEpisode] = Seq(
     AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
     AnimeEpisode(2, "Day 3 (2) Assembly and Arithmetic", Some(OffsetDateTime.parse("2016-11-30T00:00:00+00:00").toInstant), Some(4.42)),
@@ -263,11 +342,38 @@ object JikanServiceSpec {
     AnimeEpisode(7, "Episode 7", Some(OffsetDateTime.parse("2017-08-30T00:00:00+00:00").toInstant), Some(4.47)),
     AnimeEpisode(8, "Episode 8", Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant), Some(4.38))
   )
-  val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testEpisodePagination, testEpisodeList)
+  val testEpisodeSearchResult: EpisodeSearchResult = EpisodeSearchResult(testSimplePagination, testEpisodeList)
 
   val testEpisodeDetails: EpisodeFullDetails = EpisodeFullDetails(143, "Russian Dolls Murder Case File 5", Some(1440),
     Some(OffsetDateTime.parse("2000-08-07T00:00:00+09:00").toInstant), filler = false, recap = false,
     Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
+
+  val testCharacters: Seq[AnimeCharacter] = Seq(
+    AnimeCharacter(CharacterInfo(29593, "Boku", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
+    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
+    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
+    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
+  )
+
+  val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
+    CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
+    "Totomaru Isshiki", Seq("Toto"), 26,
+    Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
+        |
+        |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
+    Seq(AnimeAppearance("Main", AnimeAppearanceNested(53879, "Kamonohashi Ron no Kindan Suiri")), AnimeAppearance("Main", AnimeAppearanceNested(57635, "Kamonohashi Ron no Kindan Suiri 2nd Season")))
+  )
+
+  val testReview1: AnimeReview = AnimeReview(Reviewer("MasterGhost"), OffsetDateTime.parse("2014-08-16T08:21:00+00:00").toInstant,
+    """Story: 9
+      |
+      |The anime series of Kindaichi does not have an actual continuous story unlike Detective Conan.""".stripMargin,
+    9, Seq("Recommended"), is_spoiler = false, is_preliminary = false)
+  val testReview2: AnimeReview = AnimeReview(Reviewer("Welkin96"), OffsetDateTime.parse("2019-03-04T03:21:00+00:00").toInstant,
+    "Test spoiler review", 10, Seq("Recommended", "Spoiler"), is_spoiler = true, is_preliminary = false)
+  val testReview3: AnimeReview = AnimeReview(Reviewer("bushman66"), OffsetDateTime.parse("2022-04-09T19:37:00+00:00").toInstant,
+    "Test preliminary and spoiler review", 9, Seq("Recommended", "Preliminary", "Spoiler"), is_spoiler = true, is_preliminary = true)
+  val testReviewsResult: ReviewsResult = ReviewsResult(Seq(testReview1, testReview2, testReview3), testSimplePagination)
 
   val testAnimeSearchJsonStr: String =
     """
@@ -1893,7 +1999,36 @@ object JikanServiceSpec {
       |      }
       |    ],
       |    "manga": [],
-      |    "characters": [],
+      |    "characters": [
+      |      {
+      |        "mal_id": 17650,
+      |        "url": "https://myanimelist.net/character/17650/Hajime_Kindaichi",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/3/289646.webp?s=ca273592603d81a2ccac1993d479020e",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/3/289646t.webp?s=ca273592603d81a2ccac1993d479020e"
+      |          }
+      |        },
+      |        "name": "Kindaichi, Hajime"
+      |      },
+      |      {
+      |        "mal_id": 192285,
+      |        "url": "https://myanimelist.net/character/192285/Totomaru_Isshiki",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.webp?s=14c1c7bed8811a93ec27586ce5d281cb",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/11/516963t.webp?s=14c1c7bed8811a93ec27586ce5d281cb"
+      |          }
+      |        },
+      |        "name": "Isshiki, Totomaru"
+      |      }
+      |    ],
       |    "people": []
       |  }
       |}
@@ -2022,4 +2157,368 @@ object JikanServiceSpec {
       |  }
       |}""".stripMargin
   )
+
+  val testCharactersJson: JsValue = Json.parse(
+    """{
+      |  "data": [
+      |    {
+      |      "character": {
+      |        "mal_id": 29593,
+      |        "url": "https://myanimelist.net/character/29593/Boku",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/15/317434.webp?s=b7f89a35d49c9fe2dea566acb974c171",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/15/317434t.webp?s=b7f89a35d49c9fe2dea566acb974c171"
+      |          }
+      |        },
+      |        "name": "Boku"
+      |      },
+      |      "role": "Main",
+      |      "favorites": 784,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 672,
+      |            "url": "https://myanimelist.net/people/672/Yuuki_Kaji",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/66416.jpg?s=91e56f66a0be72a89dff77e0d8ec55ce"
+      |              }
+      |            },
+      |            "name": "Kaji, Yuuki"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "character": {
+      |        "mal_id": 29594,
+      |        "url": "https://myanimelist.net/character/29594/Tomo_Kunagisa",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/7/311929.webp?s=624f081ad1ac310bc945be5a5fdd17f6",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/7/311929t.webp?s=624f081ad1ac310bc945be5a5fdd17f6"
+      |          }
+      |        },
+      |        "name": "Kunagisa, Tomo"
+      |      },
+      |      "role": "Main",
+      |      "favorites": 371,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 6686,
+      |            "url": "https://myanimelist.net/people/6686/Aoi_Yuuki",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/3/67808.jpg?s=3074a08319fa6f05424eed1f508e2233"
+      |              }
+      |            },
+      |            "name": "Yuuki, Aoi"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "character": {
+      |        "mal_id": 29595,
+      |        "url": "https://myanimelist.net/character/29595/Jun_Aikawa",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/4/371513.webp?s=97d1a9538f07cda0e3498b4804948cf5",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/4/371513t.webp?s=97d1a9538f07cda0e3498b4804948cf5"
+      |          }
+      |        },
+      |        "name": "Aikawa, Jun"
+      |      },
+      |      "role": "Supporting",
+      |      "favorites": 231,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 428,
+      |            "url": "https://myanimelist.net/people/428/Yuuko_Kaida",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/3/74397.jpg?s=cb515aed18f4c63ccea72f4060617258"
+      |              }
+      |            },
+      |            "name": "Kaida, Yuuko"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "character": {
+      |        "mal_id": 36560,
+      |        "url": "https://myanimelist.net/character/36560/Iria_Akagami",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/characters/8/311171.webp?s=ebb18f7088b52cf64834c6b7e688b74e",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/characters/8/311171t.webp?s=ebb18f7088b52cf64834c6b7e688b74e"
+      |          }
+      |        },
+      |        "name": "Akagami, Iria"
+      |      },
+      |      "role": "Supporting",
+      |      "favorites": 1,
+      |      "voice_actors": [
+      |        {
+      |          "person": {
+      |            "mal_id": 655,
+      |            "url": "https://myanimelist.net/people/655/Mariya_Ise",
+      |            "images": {
+      |              "jpg": {
+      |                "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/65504.jpg?s=79bb2f4740b9c846b3c2bed12c193b4b"
+      |              }
+      |            },
+      |            "name": "Ise, Mariya"
+      |          },
+      |          "language": "Japanese"
+      |        }
+      |      ]
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
+
+  val testCharacterProfileJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": {
+      |    "mal_id": 192285,
+      |    "url": "https://myanimelist.net/character/192285/Totomaru_Isshiki",
+      |    "images": {
+      |      "jpg": {
+      |        "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.jpg"
+      |      },
+      |      "webp": {
+      |        "image_url": "https://cdn.myanimelist.net/images/characters/11/516963.webp",
+      |        "small_image_url": "https://cdn.myanimelist.net/images/characters/11/516963t.webp"
+      |      }
+      |    },
+      |    "name": "Totomaru Isshiki",
+      |    "name_kanji": "一色 都々丸",
+      |    "nicknames": [
+      |      "Toto"
+      |    ],
+      |    "favorites": 26,
+      |    "about": "Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.\n\n(Source: Ron Kamonohashi: Deranged Detective Wiki)",
+      |    "anime": [
+      |      {
+      |        "role": "Main",
+      |        "anime": {
+      |          "mal_id": 53879,
+      |          "url": "https://myanimelist.net/anime/53879/Kamonohashi_Ron_no_Kindan_Suiri",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1799/137123.jpg?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123t.jpg?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123l.jpg?s=a086d60e87f039225ca8a5af44a01b93"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1799/137123.webp?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123t.webp?s=a086d60e87f039225ca8a5af44a01b93",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1799/137123l.webp?s=a086d60e87f039225ca8a5af44a01b93"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri"
+      |        }
+      |      },
+      |      {
+      |        "role": "Main",
+      |        "anime": {
+      |          "mal_id": 57635,
+      |          "url": "https://myanimelist.net/anime/57635/Kamonohashi_Ron_no_Kindan_Suiri_2nd_Season",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334t.jpg?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334l.jpg?s=0ca422cabe591f4850cb7408ced1f580"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1917/144334.webp?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334t.webp?s=0ca422cabe591f4850cb7408ced1f580",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334l.webp?s=0ca422cabe591f4850cb7408ced1f580"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri 2nd Season"
+      |        }
+      |      }
+      |    ],
+      |    "manga": [
+      |      {
+      |        "role": "Main",
+      |        "manga": {
+      |          "mal_id": 130392,
+      |          "url": "https://myanimelist.net/manga/130392/Kamonohashi_Ron_no_Kindan_Suiri",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/2/240565.jpg?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/2/240565t.jpg?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/2/240565l.jpg?s=1735a8e43bfd6e6568c399e75011773e"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/2/240565.webp?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/2/240565t.webp?s=1735a8e43bfd6e6568c399e75011773e",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/2/240565l.webp?s=1735a8e43bfd6e6568c399e75011773e"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri"
+      |        }
+      |      }
+      |    ],
+      |    "voices": [
+      |      {
+      |        "person": {
+      |          "mal_id": 30853,
+      |          "url": "https://myanimelist.net/people/30853/Junya_Enoki",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/62840.jpg"
+      |            }
+      |          },
+      |          "name": "Enoki, Junya"
+      |        },
+      |        "language": "Japanese"
+      |      }
+      |    ]
+      |  }
+      |}
+      |""".stripMargin)
+
+  val testReviewsJson: JsValue = Json.parse(
+    """
+      |{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": false
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": 156761,
+      |      "url": "https://myanimelist.net/reviews.php?id=156761",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 77,
+      |        "nice": 74,
+      |        "love_it": 1,
+      |        "funny": 0,
+      |        "confusing": 0,
+      |        "informative": 2,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2014-08-16T08:21:00+00:00",
+      |      "review": "Story: 9\n\nThe anime series of Kindaichi does not have an actual continuous story unlike Detective Conan.",
+      |      "score": 9,
+      |      "tags": [
+      |        "Recommended"
+      |      ],
+      |      "is_spoiler": false,
+      |      "is_preliminary": false,
+      |      "episodes_watched": null,
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/MasterGhost",
+      |        "username": "MasterGhost",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/d39f7d9d-d9b7-4855-aeb2-f035a891ba26_225w?s=c8f7183aa9ad5fde6e89f493c54b15ae"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/d39f7d9d-d9b7-4855-aeb2-f035a891ba26_225w?s=c8f7183aa9ad5fde6e89f493c54b15ae"
+      |          }
+      |        }
+      |      }
+      |    },
+      |    {
+      |      "mal_id": 302878,
+      |      "url": "https://myanimelist.net/reviews.php?id=302878",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 25,
+      |        "nice": 25,
+      |        "love_it": 0,
+      |        "funny": 0,
+      |        "confusing": 0,
+      |        "informative": 0,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2019-03-04T03:21:00+00:00",
+      |      "review": "Test spoiler review",
+      |      "score": 10,
+      |      "tags": [
+      |        "Recommended", "Spoiler"
+      |      ],
+      |      "is_spoiler": true,
+      |      "is_preliminary": false,
+      |      "episodes_watched": null,
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/Welkin96",
+      |        "username": "Welkin96",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/3c9b8b8f-59f8-4dd1-a58f-2704b9d957b6_225w?s=ea212f03a5bda244f774d5429bbb6c97"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/3c9b8b8f-59f8-4dd1-a58f-2704b9d957b6_225w?s=ea212f03a5bda244f774d5429bbb6c97"
+      |          }
+      |        }
+      |      }
+      |    },
+      |    {
+      |      "mal_id": 441056,
+      |      "url": "https://myanimelist.net/reviews.php?id=441056",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 9,
+      |        "nice": 4,
+      |        "love_it": 0,
+      |        "funny": 5,
+      |        "confusing": 0,
+      |        "informative": 0,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2022-04-09T19:37:00+00:00",
+      |      "review": "Test preliminary and spoiler review",
+      |      "score": 9,
+      |      "tags": [
+      |        "Recommended", "Preliminary", "Spoiler"
+      |      ],
+      |      "is_spoiler": true,
+      |      "is_preliminary": true,
+      |      "episodes_watched": null,
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/bushman66",
+      |        "username": "bushman66",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/63f75198-d1ec-4630-9ffb-acb3e376bd7d_42x62_i?s=f8b1a1342ad2943a45c51a1ad4f89ce1"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/s/common/userimages/63f75198-d1ec-4630-9ffb-acb3e376bd7d_42x62_i?s=f8b1a1342ad2943a45c51a1ad4f89ce1"
+      |          }
+      |        }
+      |      }
+      |    }
+      |  ]
+      |}
+      |""".stripMargin)
 }

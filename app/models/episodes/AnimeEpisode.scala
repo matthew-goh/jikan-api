@@ -1,4 +1,4 @@
-package models
+package models.episodes
 
 import play.api.libs.json.{Json, OFormat}
 

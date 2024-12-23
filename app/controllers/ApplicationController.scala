@@ -89,7 +89,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def getUserFavourites(username: String, orderBy: String = "title", sortOrder: String = "asc"): Action[AnyContent] = Action.async { implicit request =>
+  def getUserFavouriteAnime(username: String, orderBy: String = "title", sortOrder: String = "asc"): Action[AnyContent] = Action.async { implicit request =>
     val orderByTry: Try[FavouritesOrders.Value] = Try(FavouritesOrders.withName(orderBy))
     val sortOrderTry: Try[SortOrders.Value] = Try(SortOrders.withName(sortOrder))
     (orderByTry, sortOrderTry) match {
@@ -108,7 +108,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
               }
               case FavouritesOrders.none => favesResult.data.anime // keep original order
             }
-            Ok(views.html.userfavourites(animeFavesSorted, username, orderBy, sortOrder))
+            Ok(views.html.userfavouriteanime(animeFavesSorted, username, orderBy, sortOrder))
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
@@ -125,12 +125,19 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
       case Some(username) => {
         val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
         val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
-        Future.successful(Redirect(routes.ApplicationController.getUserFavourites(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
+        Future.successful(Redirect(routes.ApplicationController.getUserFavouriteAnime(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
       }
     }
   }
 
-  /// 3. Anime episodes ///
+  def getUserFavouriteCharacters(username: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserFavourites(username).value.map{
+      case Right(favesResult) => Ok(views.html.userfavouritecharacters(favesResult.data.characters.sortBy(_.name), username))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  /// 3. Anime extra info ///
   def getEpisodeList(animeId: String, page: String): Action[AnyContent] = Action.async { implicit request =>
     // first get anime details (title, total episodes needed), then get episodes
     service.getAnimeById(animeId).value.flatMap{
@@ -155,6 +162,56 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def getAnimeCharacters(animeId: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(animeId).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeCharacters(animeId).value.map{
+          case Right(charResult) => Ok(views.html.characters(animeResult.data, charResult.data))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def getCharacterProfile(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getCharacterProfile(id).value.map{
+      case Right(charResult) => Ok(views.html.characterprofile(charResult.data))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def getAnimeReviews(id: String, page: String, prelim: String, spoilers: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(id).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeReviews(id, page, prelim, spoilers).value.map{
+          case Right(reviewsResult) => {
+            (Try(page.toInt), Try(prelim.toBoolean), Try(spoilers.toBoolean)) match {
+              case (Success(pg), Success(prelimBool), Success(spoilersBool)) =>
+                Ok(views.html.reviews(animeResult.data, pg, reviewsResult.data, reviewsResult.pagination, prelimBool, spoilersBool))
+              case _ => BadRequest(views.html.unsuccessful("API result obtained but a query parameter is invalid"))
+            }
+          }
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def filterReviews(id: String): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    val preliminary: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("preliminary").flatMap(_.headOption))
+    val spoilers: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("spoilers").flatMap(_.headOption))
+
+    preliminary match {
+      case None | Some("true") => spoilers match {
+        case None | Some("true") =>
+          Future.successful(Redirect(routes.ApplicationController.getAnimeReviews(id, "1", preliminary.getOrElse("false"), spoilers.getOrElse("false"))))
+        case Some(_) => Future.successful(BadRequest(views.html.unsuccessful("Invalid value submitted for spoilers")))
+      }
+      case Some(_) => Future.successful(BadRequest(views.html.unsuccessful("Invalid value submitted for preliminary")))
     }
   }
 
