@@ -20,7 +20,7 @@
     <h2>Anime details</h2>
     <h3>@anime.title (MAL ID: @anime.mal_id)</h3>
     @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
-    <br>
+    <img class="char-img-profile" src="@anime.images.jpg.image_url" alt="Anime image">
     <p><b>Type:</b> @{anime.`type`}</p>
     <p><b>Maturity rating:</b> @anime.rating.getOrElse("N/A")</p>
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ") </p>

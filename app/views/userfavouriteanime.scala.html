@@ -45,13 +45,17 @@
     @if(animeFaves.isEmpty) {
       <p>No anime favourites.</p>
     } else {
-      <p><b>@animeFaves.length</b> favourites on @username's list:</p>
-      <ul>
+      <p><b>@animeFaves.length</b> @{if(animeFaves.length == 1) "favourite" else "favourites"} on @username's list:</p>
+      <ul class="ul-for-chars">
       @for(anime <- animeFaves) {
-        <li>
-          <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)" target="_blank"> <b>@anime.title</b> </a></p>
-          <p>@{anime.`type`}, @anime.start_year</p>
-@*          @if(anime.start_year.nonEmpty){, @anime.year}*@
+        <li class="li-for-char">
+          <div class="char-img-container">
+            <img class="char-img" src="@anime.images.jpg.image_url" alt="Anime image">
+          </div>
+          <div class="char-info-container">
+            <p><a href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)" target="_blank"> <b>@anime.title</b> </a></p>
+            <p>@{anime.`type`}, @anime.start_year</p>
+          </div>
         </li>
       }
       </ul>

@@ -2,11 +2,11 @@ package repositories
 
 import baseSpec.BaseSpec
 import com.mongodb.client.result._
-import models.{APIError, AirDates, AnimeData, Genre, SavedAnime}
+import models._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import services.AnimeRepositoryService
+import services.{AnimeRepositoryService, JikanServiceSpec}
 
 import java.time.{Instant, OffsetDateTime}
 import scala.concurrent.{ExecutionContext, Future}
@@ -192,6 +192,7 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
   }
 
   "refresh()" should {
+    val testImage: Images = Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/81588.jpg"))
     val kindaichiDataRefreshed: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
       AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
       Some("R - 17+ (violence & profanity)"),Some(7.97),Some(8317),
@@ -200,7 +201,7 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
            |
            |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
            |
-           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997))
+           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), testImage)
 
     "return an UpdateResult" in {
       val reqBody = Some(Map(

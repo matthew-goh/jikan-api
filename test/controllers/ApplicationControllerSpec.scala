@@ -44,6 +44,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   private lazy val kubikiriUpdated: SavedAnime = SavedAnime(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), None,
     Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 4, None, "Closed circle mystery on an island")
 
+  private lazy val testImage: Images = Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/81588.jpg"))
   private lazy val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), "Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440),
     Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
@@ -51,7 +52,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
            |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
            |
            |[Written by MAL Rewrite]""".stripMargin),
-    List(Genre(8, "Drama"), Genre(7, "Mystery"), Genre(37, "Supernatural")), None)
+    List(Genre(8, "Drama"), Genre(7, "Mystery"), Genre(37, "Supernatural")), None, testImage)
 
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)
@@ -1036,7 +1037,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
          |
          |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
          |
-         |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997))
+         |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), testImage)
 
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestApplicationController.create()(request)

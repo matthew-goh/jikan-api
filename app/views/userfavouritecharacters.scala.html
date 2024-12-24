@@ -23,7 +23,7 @@
     @if(charFaves.isEmpty) {
       <p>No favourite characters.</p>
     } else {
-      <p><b>@charFaves.length</b> favourite @{if(charFaves.length == 1) "character" else "characters"} on @username's list.</p>
+      <p><b>@charFaves.length</b> favourite @{if(charFaves.length == 1) "character" else "characters"} on @username's list:</p>
 
       <ul class="ul-char-favourites">
       @for(char <- charFaves) {
