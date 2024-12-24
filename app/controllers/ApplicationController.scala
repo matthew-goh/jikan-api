@@ -1,6 +1,7 @@
 package controllers
 
 import models._
+import models.userfavourites.AnimeFavourite
 import play.api.libs.json._
 import play.api.mvc._
 import play.filters.csrf.CSRF

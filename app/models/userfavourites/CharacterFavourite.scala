@@ -1,4 +1,4 @@
-package models
+package models.userfavourites
 
 import models.characters.CharacterImages
 import play.api.libs.json.{Json, OFormat}

@@ -6,6 +6,7 @@ import models._
 import models.characters._
 import models.episodes._
 import models.reviews.ReviewsResult
+import models.userfavourites._
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
 import play.api.libs.json._

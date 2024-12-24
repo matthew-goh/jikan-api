@@ -252,7 +252,25 @@ label {
     margin-bottom: 10px;
     width: 100%;
 }
+
 .char-img-profile {
     max-height: 300px;
     margin-bottom: 10px;
+}
+
+.ul-char-favourites {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* each <li> has min width 180px and can expand to fill remaining space */
+    padding-left: 0;
+    gap: 10px; /* Space between columns */
+}
+.li-char-favourites {
+    display: inline-block;
+    justify-content: center;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+.char-favourites-container {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }

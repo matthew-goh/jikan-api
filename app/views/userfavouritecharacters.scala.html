@@ -1,4 +1,6 @@
 @import helper._
+@import models.userfavourites.CharacterFavourite
+
 @import java.text.NumberFormat
 
 @*RequestHeader needed for form with CRSF*@
@@ -23,16 +25,14 @@
     } else {
       <p><b>@charFaves.length</b> favourite @{if(charFaves.length == 1) "character" else "characters"} on @username's list.</p>
 
-      <ul class="ul-for-chars">
+      <ul class="ul-char-favourites">
       @for(char <- charFaves) {
-        <li class="li-for-char">
-          <div class="char-img-container">
-            <img class="char-img" src="@char.images.jpg.image_url" alt="Character image">
+        <li class="li-char-favourites">
+          <div class="char-favourites-container">
+            <b><a href="@routes.ApplicationController.getCharacterProfile(char.mal_id.toString)" target="_blank">@char.name</a></b>
           </div>
-          <div class="char-info-container">
-            <p>
-              <b><a href="@routes.ApplicationController.getCharacterProfile(char.mal_id.toString)" target="_blank">@char.name</a></b>
-            </p>
+          <div class="char-favourites-container">
+            <img class="char-img" src="@char.images.jpg.image_url" alt="Character image">
           </div>
         </li>
       }

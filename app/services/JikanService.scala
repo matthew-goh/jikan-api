@@ -6,6 +6,7 @@ import models._
 import models.characters._
 import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
 import models.reviews.ReviewsResult
+import models.userfavourites.UserFavouritesResult
 import play.api.libs.json._
 
 import java.util.Base64

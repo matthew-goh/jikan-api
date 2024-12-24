@@ -7,6 +7,7 @@ import models._
 import models.characters._
 import models.episodes._
 import models.reviews._
+import models.userfavourites.{AnimeFavourite, CharacterFavourite, UserFavouritesData, UserFavouritesResult}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
