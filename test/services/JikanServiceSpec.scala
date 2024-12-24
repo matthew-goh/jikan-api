@@ -6,6 +6,7 @@ import connectors.JikanConnector
 import models._
 import models.characters._
 import models.episodes._
+import models.recommendations._
 import models.reviews._
 import models.userfavourites.{AnimeFavourite, CharacterFavourite, UserFavouritesData, UserFavouritesResult}
 import org.scalamock.scalatest.MockFactory
@@ -222,7 +223,7 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
   }
 
   "getAnimeReviews()" should {
-    "return a character profile" in {
+    "return anime reviews" in {
       (mockConnector.get[ReviewsResult](_: String)(_: OFormat[ReviewsResult], _: ExecutionContext))
         .expects("https://api.jikan.moe/v4/anime/2076/reviews?page=1&preliminary=true&spoilers=true", *, *)
         .returning(EitherT.rightT(JikanServiceSpec.testReviewsJson.as[ReviewsResult]))
@@ -241,6 +242,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
 
       whenReady(testService.getAnimeReviews("2076", "1", "ff", "true").value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(400, "The preliminary field must be true or false."))
+      }
+    }
+  }
+
+  "getAnimeRecommendations()" should {
+    "return anime recommendations" in {
+      (mockConnector.get[RecommendationsResult](_: String)(_: OFormat[RecommendationsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/recommendations", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testRecommendationsJson.as[RecommendationsResult]))
+        .once()
+
+      whenReady(testService.getAnimeRecommendations("33263").value) { result =>
+        result shouldBe Right(RecommendationsResult(JikanServiceSpec.testRecommendations))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[RecommendationsResult](_: String)(_: OFormat[RecommendationsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/abc/recommendations", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      whenReady(testService.getAnimeRecommendations("abc").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
       }
     }
   }
@@ -328,8 +353,8 @@ object JikanServiceSpec {
     AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003)
   )
   val testCharacterFavourites: Seq[CharacterFavourite] = Seq(
-    CharacterFavourite(17650, "Kindaichi, Hajime", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"))),
-    CharacterFavourite(192285, "Isshiki, Totomaru", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
+    CharacterFavourite(17650, "Kindaichi, Hajime", Images(JpgImage("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"))),
+    CharacterFavourite(192285, "Isshiki, Totomaru", Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
   )
 
   val testSimplePagination: SimplePagination = SimplePagination(1, has_next_page = false)
@@ -350,15 +375,14 @@ object JikanServiceSpec {
     Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
 
   val testCharacters: Seq[AnimeCharacter] = Seq(
-    AnimeCharacter(CharacterInfo(29593, "Boku", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
-    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
-    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
-    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
+    AnimeCharacter(CharacterInfo(29593, "Boku", Images(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
+    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", Images(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
+    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", Images(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
+    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", Images(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
   )
 
   val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
-    CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
-    "Totomaru Isshiki", Seq("Toto"), 26,
+    Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")), "Totomaru Isshiki", Seq("Toto"), 26,
     Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
         |
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
@@ -375,6 +399,12 @@ object JikanServiceSpec {
   val testReview3: AnimeReview = AnimeReview(Reviewer("bushman66"), OffsetDateTime.parse("2022-04-09T19:37:00+00:00").toInstant,
     "Test preliminary and spoiler review", 9, Seq("Recommended", "Preliminary", "Spoiler"), is_spoiler = true, is_preliminary = true)
   val testReviewsResult: ReviewsResult = ReviewsResult(Seq(testReview1, testReview2, testReview3), testSimplePagination)
+
+  val testRecommendations: Seq[Recommendation] = Seq(
+    Recommendation(RecommendationEntry(5081, "Bakemonogatari", Images(JpgImage("https://cdn.myanimelist.net/images/anime/11/75274.jpg?s=3bb5c42c0803621dde09c52f5c4d4249"))), 16),
+    Recommendation(RecommendationEntry(28621, "Subete ga F ni Naru", Images(JpgImage("https://cdn.myanimelist.net/images/anime/9/76071.jpg?s=fdc6902408ec1ded27127502ae9f0863"))), 10),
+    Recommendation(RecommendationEntry(16592, "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation", Images(JpgImage("https://cdn.myanimelist.net/images/anime/4/51463.jpg?s=548e8ef2df2f9256802267ddc6cb07e9"))), 9)
+  )
 
   val testAnimeSearchJsonStr: String =
     """
@@ -2518,6 +2548,77 @@ object JikanServiceSpec {
       |          }
       |        }
       |      }
+      |    }
+      |  ]
+      |}
+      |""".stripMargin)
+
+  val testRecommendationsJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": [
+      |    {
+      |      "entry": {
+      |        "mal_id": 5081,
+      |        "url": "https://myanimelist.net/anime/5081/Bakemonogatari",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/11/75274.jpg?s=3bb5c42c0803621dde09c52f5c4d4249",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/11/75274t.jpg?s=3bb5c42c0803621dde09c52f5c4d4249",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/11/75274l.jpg?s=3bb5c42c0803621dde09c52f5c4d4249"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/11/75274.webp?s=3bb5c42c0803621dde09c52f5c4d4249",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/11/75274t.webp?s=3bb5c42c0803621dde09c52f5c4d4249",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/11/75274l.webp?s=3bb5c42c0803621dde09c52f5c4d4249"
+      |          }
+      |        },
+      |        "title": "Bakemonogatari"
+      |      },
+      |      "url": "https://myanimelist.net/recommendations/anime/5081-33263",
+      |      "votes": 16
+      |    },
+      |    {
+      |      "entry": {
+      |        "mal_id": 28621,
+      |        "url": "https://myanimelist.net/anime/28621/Subete_ga_F_ni_Naru",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/9/76071.jpg?s=fdc6902408ec1ded27127502ae9f0863",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/9/76071t.jpg?s=fdc6902408ec1ded27127502ae9f0863",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/9/76071l.jpg?s=fdc6902408ec1ded27127502ae9f0863"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/9/76071.webp?s=fdc6902408ec1ded27127502ae9f0863",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/9/76071t.webp?s=fdc6902408ec1ded27127502ae9f0863",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/9/76071l.webp?s=fdc6902408ec1ded27127502ae9f0863"
+      |          }
+      |        },
+      |        "title": "Subete ga F ni Naru"
+      |      },
+      |      "url": "https://myanimelist.net/recommendations/anime/28621-33263",
+      |      "votes": 10
+      |    },
+      |    {
+      |      "entry": {
+      |        "mal_id": 16592,
+      |        "url": "https://myanimelist.net/anime/16592/Danganronpa__Kibou_no_Gakuen_to_Zetsubou_no_Koukousei_The_Animation",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/4/51463.jpg?s=548e8ef2df2f9256802267ddc6cb07e9",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/4/51463t.jpg?s=548e8ef2df2f9256802267ddc6cb07e9",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/4/51463l.jpg?s=548e8ef2df2f9256802267ddc6cb07e9"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/4/51463.webp?s=548e8ef2df2f9256802267ddc6cb07e9",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/4/51463t.webp?s=548e8ef2df2f9256802267ddc6cb07e9",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/4/51463l.webp?s=548e8ef2df2f9256802267ddc6cb07e9"
+      |          }
+      |        },
+      |        "title": "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation"
+      |      },
+      |      "url": "https://myanimelist.net/recommendations/anime/16592-33263",
+      |      "votes": 9
       |    }
       |  ]
       |}

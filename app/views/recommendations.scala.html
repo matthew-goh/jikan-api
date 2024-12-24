@@ -1,9 +1,9 @@
 @import helper._
 @import java.text.NumberFormat
-@import models.characters.AnimeCharacter
+@import models.recommendations.Recommendation
 
-@(anime: AnimeData, characterList: Seq[AnimeCharacter])
-@main("Anime Characters"){
+@(anime: AnimeData, recommendations: Seq[Recommendation])
+@main("Anime Recommendations"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
     <p><a class="image-text-link" href="@routes.HomeController.index()">
@@ -17,25 +17,24 @@
   </div>
 
   <div class="container mb-5">
-    <h2>Characters</h2>
+    <h2>Recommendations if you liked...</h2>
     <h3>@anime.title
       @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
 
-    @if(characterList.isEmpty) {
-      <p>No characters to display.</p>
+    @if(recommendations.isEmpty) {
+      <p>No recommendations available.</p>
     } else {
       <ul class="ul-for-chars">
-      @for(char <- characterList) {
+      @for(rec <- recommendations) {
         <li class="li-for-char">
           <div class="char-img-container">
-            <img class="char-img" src="@char.character.images.jpg.image_url" alt="Character image">
+            <img class="char-img" src="@rec.entry.images.jpg.image_url" alt="Anime image">
           </div>
           <div class="char-info-container">
-            <p>
-              <a href="@routes.ApplicationController.getCharacterProfile(char.character.mal_id.toString)"><b>@char.character.name</b></a>
-              <br><i>@char.role</i>
-            </p>
-            <p>Favourited by @{NumberFormat.getInstance().format(char.favorites)} @{if(char.favorites == 1) "user" else "users"}</p>
+            <p><a href="@routes.ApplicationController.getAnimeById(rec.entry.mal_id.toString)" target="_blank">
+              <b>@rec.entry.title</b>
+            </a></p>
+            <p>@{rec.votes} @{if(rec.votes == 1) "vote" else "votes"}</p>
           </div>
         </li>
       }

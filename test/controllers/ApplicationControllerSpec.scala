@@ -5,6 +5,7 @@ import cats.data.EitherT
 import models._
 import models.characters._
 import models.episodes._
+import models.recommendations.RecommendationsResult
 import models.reviews.ReviewsResult
 import models.userfavourites._
 import org.scalamock.scalatest.MockFactory
@@ -615,7 +616,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "display a character's profile with no biography or anime appearances" in {
       val characterInNoAnime: CharacterProfile = CharacterProfile(192285,
-        CharacterImages(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
+        Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
         "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq())
 
       (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
@@ -765,6 +766,57 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val filterResult: Future[Result] = TestApplicationController.filterReviews("2076")(filterRequest)
       status(filterResult) shouldBe BAD_REQUEST
       contentAsString(filterResult) should include ("Invalid value submitted for spoilers")
+    }
+  }
+
+  "ApplicationController .getAnimeRecommendations()" should {
+    "list anime recommendations" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeRecommendations(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(RecommendationsResult(JikanServiceSpec.testRecommendations)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRecommendations("33263")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      searchResultContent should include ("Bakemonogatari")
+      searchResultContent should include ("Subete ga F ni Naru")
+      searchResultContent should include ("Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation")
+
+      countOccurrences(searchResultContent, "votes") shouldBe 3
+    }
+
+    "show 'No recommendations available' if there are no results" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeRecommendations(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(RecommendationsResult(Seq())))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRecommendations("33263")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No recommendations available")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRecommendations("abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
   }
 

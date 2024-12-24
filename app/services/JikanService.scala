@@ -5,6 +5,7 @@ import connectors.JikanConnector
 import models._
 import models.characters._
 import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
+import models.recommendations.RecommendationsResult
 import models.reviews.ReviewsResult
 import models.userfavourites.UserFavouritesResult
 import play.api.libs.json._
@@ -60,5 +61,9 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getAnimeReviews(id: String, page: String, prelim: String, spoilers: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, ReviewsResult] = {
     connector.get[ReviewsResult](s"https://api.jikan.moe/v4/anime/$id/reviews?page=$page&preliminary=$prelim&spoilers=$spoilers")
+  }
+
+  def getAnimeRecommendations(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, RecommendationsResult] = {
+    connector.get[RecommendationsResult](s"https://api.jikan.moe/v4/anime/$id/recommendations")
   }
 }
