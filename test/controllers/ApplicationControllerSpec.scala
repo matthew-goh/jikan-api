@@ -364,7 +364,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestApplicationController.getUserFavouriteCharacters("Emotional-Yam8")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       val searchResultContent = contentAsString(searchResult)
-      searchResultContent should include ("<b>2</b> favourite characters on Emotional-Yam8's list.")
+      searchResultContent should include ("<b>2</b> favourite characters on Emotional-Yam8's list")
       searchResultContent should (include ("Isshiki, Totomaru") and include ("Kindaichi, Hajime"))
     }
 
@@ -615,10 +615,10 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       countOccurrences(searchResultContent, "Main role") shouldBe 2
     }
 
-    "display a character's profile with no biography or anime appearances" in {
+    "display a character's profile with no biography, anime appearances or voice actor info" in {
       val characterInNoAnime: CharacterProfile = CharacterProfile(192285,
         Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
-        "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq())
+        "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq(), Seq())
 
       (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
         .expects("192285", *)
@@ -631,6 +631,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent should include ("<b>Nicknames:</b> Nickname 1, Nickname 2")
       searchResultContent should include ("<b>About:</b><br>Not available")
       searchResultContent should include ("Not appearing in any anime.")
+      searchResultContent should include ("No voice actor info.")
     }
 
     "return a NotFound if the character is not found" in {

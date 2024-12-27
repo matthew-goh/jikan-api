@@ -386,7 +386,8 @@ object JikanServiceSpec {
     Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
         |
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
-    Seq(AnimeAppearance("Main", AnimeAppearanceNested(53879, "Kamonohashi Ron no Kindan Suiri")), AnimeAppearance("Main", AnimeAppearanceNested(57635, "Kamonohashi Ron no Kindan Suiri 2nd Season")))
+    Seq(AnimeAppearance("Main", AnimeAppearanceNested(53879, "Kamonohashi Ron no Kindan Suiri")), AnimeAppearance("Main", AnimeAppearanceNested(57635, "Kamonohashi Ron no Kindan Suiri 2nd Season"))),
+    Seq(Voice("Japanese", VoiceActor(30853, "Enoki, Junya")))
   )
 
   val testReview1: AnimeReview = AnimeReview(Reviewer("MasterGhost"), OffsetDateTime.parse("2014-08-16T08:21:00+00:00").toInstant,

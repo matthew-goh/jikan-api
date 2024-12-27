@@ -261,7 +261,7 @@ label {
 .ul-char-favourites {
     display: grid;
     /* specify the min and max width for each grid column */
-    grid-template-columns: repeat(auto-fit, minmax(150px, 220px));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 180px));
     padding-left: 0;
     gap: 10px; /* Space between columns */
 }

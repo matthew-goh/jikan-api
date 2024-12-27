@@ -24,10 +24,23 @@
 
     <p><b>About:</b><br>@raw(character.about.getOrElse("Not available").replace("\n", "<br>"))</p>
     <br>
+    @if(character.voices.isEmpty) {
+      <p>No voice actor info.</p>
+    } else {
+      <b>Voice actors:</b>
+      <ul>
+      @for(voice <- character.voices) {
+        <li>
+          @voice.person.name (@voice.language)
+        </li>
+      }
+      </ul>
+    }
+    <br>
     @if(character.anime.isEmpty) {
       <p>Not appearing in any anime.</p>
     } else {
-      <p><b>Appears in:</b></p>
+      <b>Appears in:</b>
       <ul>
       @for(anime <- character.anime) {
         <li>
