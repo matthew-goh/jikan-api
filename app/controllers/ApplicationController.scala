@@ -1,6 +1,7 @@
 package controllers
 
 import models._
+import models.relations.Relation
 import models.userfavourites.AnimeFavourite
 import play.api.libs.json._
 import play.api.mvc._
@@ -222,6 +223,29 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
         service.getAnimeRecommendations(id).value.map{
           case Right(recResult) => Ok(views.html.recommendations(animeResult.data, recResult.data))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def getAnimeRelations(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(id).value.flatMap{
+      case Right(animeResult) =>
+        service.getThemeSongs(id).value.flatMap{
+          case Right(themesResult) =>
+            service.getRelatedAnime(id).value.map{
+              case Right(relations) => {
+                // filter away relation entries that are not anime
+                val animeRelations: Seq[Relation] = relations.data.map { relation =>
+                  Relation(relation.relation, relation.entry.filter(entry => entry.`type` == "anime"))
+                }.filter { relation =>
+                  relation.entry.nonEmpty
+                }
+                Ok(views.html.relations(animeResult.data, animeRelations, themesResult.data))
+              }
+              case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+            }
+          case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
         }
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }

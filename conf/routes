@@ -19,6 +19,8 @@ GET     /characters/:id    controllers.ApplicationController.getCharacterProfile
 GET     /anime/:id/reviews/page=:page/preliminary=:prelim/spoilers=:spoilers    controllers.ApplicationController.getAnimeReviews(id: String, page: String, prelim: String, spoilers: String)
 POST     /filterreviews/:id    controllers.ApplicationController.filterReviews(id: String)
 GET     /anime/:id/recommendations    controllers.ApplicationController.getAnimeRecommendations(id: String)
+GET     /anime/:id/related    controllers.ApplicationController.getAnimeRelations(id: String)
+
 
 GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.ApplicationController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
 POST     /sortsaved    controllers.ApplicationController.sortSavedList()

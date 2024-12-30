@@ -6,6 +6,7 @@ import models._
 import models.characters._
 import models.episodes._
 import models.recommendations.RecommendationsResult
+import models.relations._
 import models.reviews.ReviewsResult
 import models.userfavourites._
 import org.scalamock.scalatest.MockFactory
@@ -819,6 +820,71 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestApplicationController.getAnimeRecommendations("abc")(testRequest.fakeRequest)
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getAnimeRelations()" should {
+    "list related anime and theme songs" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getThemeSongs(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(ThemesResult(JikanServiceSpec.testThemeSongs)))
+        .once()
+
+      (mockJikanService.getRelatedAnime(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(RelationsResult(JikanServiceSpec.testRelations)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRelations("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent shouldNot include ("Adaptation") // removed non-anime relations
+      countOccurrences(searchResultContent, "<tr>") shouldBe 5 // 5 rows in table including header
+      countOccurrences(searchResultContent, "Side Story") shouldBe 2
+
+      searchResultContent should (include ("Openings") and include ("Endings"))
+      countOccurrences(searchResultContent, "\" by") shouldBe 18 // 7 openings, 11 endings
+    }
+
+    "show 'No related anime' and 'No theme songs'" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getThemeSongs(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(ThemesResult(
+          ThemeSongs(Seq(), Seq())
+        )))
+        .once()
+
+      (mockJikanService.getRelatedAnime(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(RelationsResult(Seq())))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRelations("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No related anime")
+      contentAsString(searchResult) should include ("No theme songs")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("99999", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRelations("99999")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
     }
   }
 

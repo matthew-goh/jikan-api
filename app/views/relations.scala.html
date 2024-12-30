@@ -1,0 +1,66 @@
+@import helper._
+@import models.relations.Relation
+@import models.relations.ThemeSongs
+@import play.twirl.api.HtmlFormat.raw
+
+@(anime: AnimeData, animeRelations: Seq[Relation], themeSongs: ThemeSongs)
+@main("Anime Relations"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Anime Details
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Anime related to...</h2>
+    <h3>@anime.title
+      @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
+
+    @if(animeRelations.isEmpty) {
+      <p>No related anime.</p>
+    } else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Relation</th>
+            <th scope="col">Title</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for(relation <- animeRelations) {
+            @for(entry <- relation.entry) {
+              <tr>
+                <td>@relation.relation</td>
+                <td><a href="@routes.ApplicationController.getAnimeById(entry.mal_id.toString)" target="_blank">
+                  @entry.name
+                </a></td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <div class="container mb-5">
+    <h3>Theme Songs</h3>
+    @if(themeSongs.openings.isEmpty && themeSongs.endings.isEmpty){
+      <p>No theme songs.</p>
+    } else {
+      @if(themeSongs.openings.nonEmpty){
+        <h4>Openings</h4>
+        @raw(themeSongs.openings.mkString("<br>"))
+      }
+      @if(themeSongs.endings.nonEmpty){
+        <h4>Endings</h4>
+        @raw(themeSongs.endings.mkString("<br>"))
+      }
+    }
+  </div>
+}

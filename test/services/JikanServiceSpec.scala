@@ -7,8 +7,9 @@ import models._
 import models.characters._
 import models.episodes._
 import models.recommendations._
+import models.relations._
 import models.reviews._
-import models.userfavourites.{AnimeFavourite, CharacterFavourite, UserFavouritesData, UserFavouritesResult}
+import models.userfavourites._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -269,6 +270,54 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getRelatedAnime()" should {
+    "return anime relations" in {
+      (mockConnector.get[RelationsResult](_: String)(_: OFormat[RelationsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/relations", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testRelationsJson.as[RelationsResult]))
+        .once()
+
+      whenReady(testService.getRelatedAnime("2076").value) { result =>
+        result shouldBe Right(RelationsResult(JikanServiceSpec.testRelations))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[RelationsResult](_: String)(_: OFormat[RelationsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/0/relations", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The id must be at least 1.")))
+        .once()
+
+      whenReady(testService.getRelatedAnime("0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The id must be at least 1."))
+      }
+    }
+  }
+
+  "getThemeSongs()" should {
+    "return the lists of theme songs" in {
+      (mockConnector.get[ThemesResult](_: String)(_: OFormat[ThemesResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/themes", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testThemeSongsJson.as[ThemesResult]))
+        .once()
+
+      whenReady(testService.getThemeSongs("2076").value) { result =>
+        result shouldBe Right(ThemesResult(JikanServiceSpec.testThemeSongs))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[ThemesResult](_: String)(_: OFormat[ThemesResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/99999/relations", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      whenReady(testService.getRelatedAnime("99999").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Resource does not exist"))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -405,6 +454,33 @@ object JikanServiceSpec {
     Recommendation(RecommendationEntry(5081, "Bakemonogatari", Images(JpgImage("https://cdn.myanimelist.net/images/anime/11/75274.jpg?s=3bb5c42c0803621dde09c52f5c4d4249"))), 16),
     Recommendation(RecommendationEntry(28621, "Subete ga F ni Naru", Images(JpgImage("https://cdn.myanimelist.net/images/anime/9/76071.jpg?s=fdc6902408ec1ded27127502ae9f0863"))), 10),
     Recommendation(RecommendationEntry(16592, "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation", Images(JpgImage("https://cdn.myanimelist.net/images/anime/4/51463.jpg?s=548e8ef2df2f9256802267ddc6cb07e9"))), 9)
+  )
+
+  val testRelations: Seq[Relation] = Seq(
+    Relation("Sequel", Seq(RelatedAnime(22817, "anime", "Kindaichi Shounen no Jikenbo Returns"))),
+    Relation("Adaptation", Seq(RelatedAnime(393, "manga", "Kindaichi Shounen no Jikenbo: File Series"))),
+    Relation("Side Story", Seq(RelatedAnime(3245, "anime", "Kindaichi Shounen no Jikenbo Specials"), RelatedAnime(15819, "anime", "Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen"))),
+    Relation("Alternative Version", Seq(RelatedAnime(9154, "anime", "Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue")))
+  )
+  val testThemeSongs: ThemeSongs = ThemeSongs(
+    Seq("1: \"Confused Memories\" by Yuko Tsuburaya (eps 1-23)",
+      "2: \"meet again\" by Laputa (eps 24-42)",
+      "3: \"君がいるから‥ (Kimi ga iru kara..)\" by Yui Nishiwaki (eps 43-69)",
+      "4: \"Brave\" by Grass Arcade (eps 70-83)",
+      "5: \"Justice\" by Miru Takayama with TWO-MIX (eps 84-105)",
+      "6: \"Why? (Funky Version)\" by Color (eps 106-138)",
+      "7: \"Never Say Why, Never Say No\" by 566 featuring Sayuri Nakano (eps 139-148)"),
+    Seq("1: \"2人 (Futari)\" by Rie Tomosaka (eps 1-17)",
+      "2: \"Boo Bee Magic\" by Sarina Suzuki (eps 18-29)",
+      "3: \"Mysterious Night\" by R-Orange (eps 30-42)",
+      "4: \"White Page\" by Platinum Pepper Family (eps 43-62)",
+      "5: \"ジーンズ (Jeans)\" by Ryoko Hirosue (eps 63-73)",
+      "6: \"はてしなく青い空を見た (Hateshinaku Aoi Sora wo Mita)\" by Yui Nishiwaki (eps 74-87)",
+      "7: \"Believe Myself\" by New Cinema Tokage (eps 88-98)",
+      "8: \"Sink\" by Plastic Tree (eps 99-110)",
+      "9: \"コングラッチェ (Congrats)\" by Cascade (eps 111-128)",
+      "10: \"Ultrider\" by Pencillin (eps 129-147)",
+      "11: \"君がいるから‥ (Kimi ga iru kara..)\" by Yui Nishiwaki (eps 148)")
   )
 
   val testAnimeSearchJsonStr: String =
@@ -2622,6 +2698,94 @@ object JikanServiceSpec {
       |      "votes": 9
       |    }
       |  ]
+      |}
+      |""".stripMargin)
+
+  val testRelationsJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": [
+      |    {
+      |      "relation": "Sequel",
+      |      "entry": [
+      |        {
+      |          "mal_id": 22817,
+      |          "type": "anime",
+      |          "name": "Kindaichi Shounen no Jikenbo Returns",
+      |          "url": "https://myanimelist.net/anime/22817/Kindaichi_Shounen_no_Jikenbo_Returns"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "relation": "Adaptation",
+      |      "entry": [
+      |        {
+      |          "mal_id": 393,
+      |          "type": "manga",
+      |          "name": "Kindaichi Shounen no Jikenbo: File Series",
+      |          "url": "https://myanimelist.net/manga/393/Kindaichi_Shounen_no_Jikenbo__File_Series"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "relation": "Side Story",
+      |      "entry": [
+      |        {
+      |          "mal_id": 3245,
+      |          "type": "anime",
+      |          "name": "Kindaichi Shounen no Jikenbo Specials",
+      |          "url": "https://myanimelist.net/anime/3245/Kindaichi_Shounen_no_Jikenbo_Specials"
+      |        },
+      |        {
+      |          "mal_id": 15819,
+      |          "type": "anime",
+      |          "name": "Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen",
+      |          "url": "https://myanimelist.net/anime/15819/Kindaichi_Shounen_no_Jikenbo__Kuromajutsu_Satsujin_Jiken-hen"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "relation": "Alternative Version",
+      |      "entry": [
+      |        {
+      |          "mal_id": 9154,
+      |          "type": "anime",
+      |          "name": "Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue",
+      |          "url": "https://myanimelist.net/anime/9154/Kindaichi_Shounen_no_Jikenbo_Movie_2__Satsuriku_no_Deep_Blue"
+      |        }
+      |      ]
+      |    }
+      |  ]
+      |}
+      |""".stripMargin)
+
+  val testThemeSongsJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": {
+      |    "openings": [
+      |      "1: \"Confused Memories\" by Yuko Tsuburaya (eps 1-23)",
+      |      "2: \"meet again\" by Laputa (eps 24-42)",
+      |      "3: \"君がいるから‥ (Kimi ga iru kara..)\" by Yui Nishiwaki (eps 43-69)",
+      |      "4: \"Brave\" by Grass Arcade (eps 70-83)",
+      |      "5: \"Justice\" by Miru Takayama with TWO-MIX (eps 84-105)",
+      |      "6: \"Why? (Funky Version)\" by Color (eps 106-138)",
+      |      "7: \"Never Say Why, Never Say No\" by 566 featuring Sayuri Nakano (eps 139-148)"
+      |    ],
+      |    "endings": [
+      |      "1: \"2人 (Futari)\" by Rie Tomosaka (eps 1-17)",
+      |      "2: \"Boo Bee Magic\" by Sarina Suzuki (eps 18-29)",
+      |      "3: \"Mysterious Night\" by R-Orange (eps 30-42)",
+      |      "4: \"White Page\" by Platinum Pepper Family (eps 43-62)",
+      |      "5: \"ジーンズ (Jeans)\" by Ryoko Hirosue (eps 63-73)",
+      |      "6: \"はてしなく青い空を見た (Hateshinaku Aoi Sora wo Mita)\" by Yui Nishiwaki (eps 74-87)",
+      |      "7: \"Believe Myself\" by New Cinema Tokage (eps 88-98)",
+      |      "8: \"Sink\" by Plastic Tree (eps 99-110)",
+      |      "9: \"コングラッチェ (Congrats)\" by Cascade (eps 111-128)",
+      |      "10: \"Ultrider\" by Pencillin (eps 129-147)",
+      |      "11: \"君がいるから‥ (Kimi ga iru kara..)\" by Yui Nishiwaki (eps 148)"
+      |    ]
+      |  }
       |}
       |""".stripMargin)
 }

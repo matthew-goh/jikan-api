@@ -6,6 +6,7 @@ import models._
 import models.characters._
 import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
 import models.recommendations.RecommendationsResult
+import models.relations.{RelationsResult, ThemesResult}
 import models.reviews.ReviewsResult
 import models.userfavourites.UserFavouritesResult
 import play.api.libs.json._
@@ -65,5 +66,13 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getAnimeRecommendations(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, RecommendationsResult] = {
     connector.get[RecommendationsResult](s"https://api.jikan.moe/v4/anime/$id/recommendations")
+  }
+
+  def getRelatedAnime(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, RelationsResult] = {
+    connector.get[RelationsResult](s"https://api.jikan.moe/v4/anime/$id/relations")
+  }
+
+  def getThemeSongs(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, ThemesResult] = {
+    connector.get[ThemesResult](s"https://api.jikan.moe/v4/anime/$id/themes")
   }
 }
