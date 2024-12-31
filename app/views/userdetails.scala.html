@@ -34,7 +34,11 @@
       <li><b>@NumberFormat.getInstance().format(user.statistics.anime.dropped)</b> anime dropped</li>
       <li>Currently watching <b>@NumberFormat.getInstance().format(user.statistics.anime.watching)</b> anime</li>
       <li><b>@NumberFormat.getInstance().format(user.statistics.anime.plan_to_watch)</b> anime on watchlist</li>
-      <li>Has given a mean score of <b>@user.statistics.anime.mean_score</b></li>
+      @if(user.statistics.anime.mean_score > 0){
+        <li>Has given a mean score of <b>@user.statistics.anime.mean_score</b></li>
+      } else {
+        <li>Has not scored any anime</li>
+      }
     </ul>
     <br>
 
