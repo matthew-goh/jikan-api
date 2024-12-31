@@ -127,6 +127,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
     }
   }
 
+  "getUserRecommendations()" should {
+    "return a user's recommended pairings" in {
+      (mockConnector.get[UserPairingResult](_: String)(_: OFormat[UserPairingResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/recommendations?page=1", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testPairingsJson.as[UserPairingResult]))
+        .once()
+
+      whenReady(testService.getUserRecommendations("Emotional-Yam8", "1").value) { result =>
+        result shouldBe Right(UserPairingResult(JikanServiceSpec.testSimplePagination, JikanServiceSpec.testUserPairings))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[UserPairingResult](_: String)(_: OFormat[UserPairingResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/recommendations?page=0", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The page must be at least 1.")))
+        .once()
+
+      whenReady(testService.getUserRecommendations("Emotional-Yam8", "0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The page must be at least 1."))
+      }
+    }
+  }
+
   "getAnimeEpisodes()" should {
     "return anime episodes" in {
       (mockConnector.get[EpisodeSearchResult](_: String)(_: OFormat[EpisodeSearchResult], _: ExecutionContext))
@@ -321,6 +345,7 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
 }
 
 object JikanServiceSpec {
+  val testSimplePagination: SimplePagination = SimplePagination(1, has_next_page = false)
   val testSearchPagination: AnimeSearchPagination = AnimeSearchPagination(1, 1, has_next_page = false, AnimeSearchPagItems(9, 9, 25))
 
   val kindaichiData1: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
@@ -406,7 +431,28 @@ object JikanServiceSpec {
     CharacterFavourite(192285, "Isshiki, Totomaru", Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
   )
 
-  val testSimplePagination: SimplePagination = SimplePagination(1, has_next_page = false)
+  val testUserPairings: Seq[Pairing] = Seq(
+    Pairing(
+      Seq(RecommendationEntry(240, "Genshiken", Images(JpgImage("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994"))),
+        RecommendationEntry(25835, "Shirobako", Images(JpgImage("https://cdn.myanimelist.net/images/anime/1460/141897.jpg?s=57c5a60e2e898873ab081b88357c792c")))),
+      "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
+      OffsetDateTime.parse("2015-05-06T00:00:00+00:00").toInstant
+    ),
+    Pairing(
+      Seq(RecommendationEntry(7791, "K-On!!", Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/76121.jpg?s=b47588ea746198b3551e0340d31fdf83"))),
+        RecommendationEntry(15061, "Aikatsu!", Images(JpgImage("https://cdn.myanimelist.net/images/anime/6/74783.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276")))),
+      "Cute, light-hearted fun devoid of the usual otaku pandering common in anime today. The characters are treated with respect and are not rampantly sexualised. You will not enjoy either of these if you want the complex or the serious, but if you can enjoy a girl's show, they are two of the very best.",
+      OffsetDateTime.parse("2014-03-09T00:00:00+00:00").toInstant
+    ),
+    Pairing(
+      Seq(RecommendationEntry(149, "Blame!", Images(JpgImage("https://cdn.myanimelist.net/images/manga/1/174389.jpg?s=01ed78eb073d458b028c4edc07845e64"))),
+        RecommendationEntry(1409, "Biomega", Images(JpgImage("https://cdn.myanimelist.net/images/manga/2/211783.jpg?s=4fade63eaf0059fabd3b92317d65d723")))),
+      "Both are dystopian sci-fi manga with minimalistic dialogue, created by Tsutomu Nihei. If you ever feel like being awed by the best artwork in the medium, then check these out. They also have the best panelling that I have seen from any manga. It looks and feels like an action movie. Just be prepared for the despair and depression contained in the story.",
+      OffsetDateTime.parse("2013-12-14T00:00:00+00:00").toInstant
+    )
+  )
+  val testPairingResult: UserPairingResult = UserPairingResult(testSimplePagination, testUserPairings)
+
   val testEpisodeList: Seq[AnimeEpisode] = Seq(
     AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
     AnimeEpisode(2, "Day 3 (2) Assembly and Arithmetic", Some(OffsetDateTime.parse("2016-11-30T00:00:00+00:00").toInstant), Some(4.42)),
@@ -2139,6 +2185,153 @@ object JikanServiceSpec {
       |    ],
       |    "people": []
       |  }
+      |}
+      |""".stripMargin)
+
+  val testPairingsJson: JsValue = Json.parse(
+    """
+      |{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": false
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": "240-25835",
+      |      "entry": [
+      |        {
+      |          "mal_id": 240,
+      |          "url": "https://myanimelist.net/anime/240/Genshiken",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1890/94707t.jpg?s=1af369e5e0da3322516d1f06f8ecb994",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1890/94707l.jpg?s=1af369e5e0da3322516d1f06f8ecb994"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1890/94707.webp?s=1af369e5e0da3322516d1f06f8ecb994",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1890/94707t.webp?s=1af369e5e0da3322516d1f06f8ecb994",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1890/94707l.webp?s=1af369e5e0da3322516d1f06f8ecb994"
+      |            }
+      |          },
+      |          "title": "Genshiken"
+      |        },
+      |        {
+      |          "mal_id": 25835,
+      |          "url": "https://myanimelist.net/anime/25835/Shirobako",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1460/141897.jpg?s=57c5a60e2e898873ab081b88357c792c",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1460/141897t.jpg?s=57c5a60e2e898873ab081b88357c792c",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1460/141897l.jpg?s=57c5a60e2e898873ab081b88357c792c"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1460/141897.webp?s=57c5a60e2e898873ab081b88357c792c",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1460/141897t.webp?s=57c5a60e2e898873ab081b88357c792c",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1460/141897l.webp?s=57c5a60e2e898873ab081b88357c792c"
+      |            }
+      |          },
+      |          "title": "Shirobako"
+      |        }
+      |      ],
+      |      "content": "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
+      |      "date": "2015-05-06T00:00:00+00:00",
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/Veronin",
+      |        "username": "Veronin"
+      |      }
+      |    },
+      |    {
+      |      "mal_id": "7791-15061",
+      |      "entry": [
+      |        {
+      |          "mal_id": 7791,
+      |          "url": "https://myanimelist.net/anime/7791/K-On",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/12/76121.jpg?s=b47588ea746198b3551e0340d31fdf83",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/12/76121t.jpg?s=b47588ea746198b3551e0340d31fdf83",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/12/76121l.jpg?s=b47588ea746198b3551e0340d31fdf83"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/12/76121.webp?s=b47588ea746198b3551e0340d31fdf83",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/12/76121t.webp?s=b47588ea746198b3551e0340d31fdf83",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/12/76121l.webp?s=b47588ea746198b3551e0340d31fdf83"
+      |            }
+      |          },
+      |          "title": "K-On!!"
+      |        },
+      |        {
+      |          "mal_id": 15061,
+      |          "url": "https://myanimelist.net/anime/15061/Aikatsu",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/6/74783.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/6/74783t.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/6/74783l.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/6/74783.webp?s=aaec5c3faad7e3a6855cb94d9b10e276",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/6/74783t.webp?s=aaec5c3faad7e3a6855cb94d9b10e276",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/6/74783l.webp?s=aaec5c3faad7e3a6855cb94d9b10e276"
+      |            }
+      |          },
+      |          "title": "Aikatsu!"
+      |        }
+      |      ],
+      |      "content": "Cute, light-hearted fun devoid of the usual otaku pandering common in anime today. The characters are treated with respect and are not rampantly sexualised. You will not enjoy either of these if you want the complex or the serious, but if you can enjoy a girl's show, they are two of the very best.",
+      |      "date": "2014-03-09T00:00:00+00:00",
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/Veronin",
+      |        "username": "Veronin"
+      |      }
+      |    },
+      |    {
+      |      "mal_id": "149-1409",
+      |      "entry": [
+      |        {
+      |          "mal_id": 149,
+      |          "url": "https://myanimelist.net/manga/149/Blame",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/1/174389.jpg?s=01ed78eb073d458b028c4edc07845e64",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/1/174389t.jpg?s=01ed78eb073d458b028c4edc07845e64",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/1/174389l.jpg?s=01ed78eb073d458b028c4edc07845e64"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/1/174389.webp?s=01ed78eb073d458b028c4edc07845e64",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/1/174389t.webp?s=01ed78eb073d458b028c4edc07845e64",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/1/174389l.webp?s=01ed78eb073d458b028c4edc07845e64"
+      |            }
+      |          },
+      |          "title": "Blame!"
+      |        },
+      |        {
+      |          "mal_id": 1409,
+      |          "url": "https://myanimelist.net/manga/1409/Biomega",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/2/211783.jpg?s=4fade63eaf0059fabd3b92317d65d723",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/2/211783t.jpg?s=4fade63eaf0059fabd3b92317d65d723",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/2/211783l.jpg?s=4fade63eaf0059fabd3b92317d65d723"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/manga/2/211783.webp?s=4fade63eaf0059fabd3b92317d65d723",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/manga/2/211783t.webp?s=4fade63eaf0059fabd3b92317d65d723",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/manga/2/211783l.webp?s=4fade63eaf0059fabd3b92317d65d723"
+      |            }
+      |          },
+      |          "title": "Biomega"
+      |        }
+      |      ],
+      |      "content": "Both are dystopian sci-fi manga with minimalistic dialogue, created by Tsutomu Nihei. If you ever feel like being awed by the best artwork in the medium, then check these out. They also have the best panelling that I have seen from any manga. It looks and feels like an action movie. Just be prepared for the despair and depression contained in the story.",
+      |      "date": "2013-12-14T00:00:00+00:00",
+      |      "user": {
+      |        "url": "https://myanimelist.net/profile/Veronin",
+      |        "username": "Veronin"
+      |      }
+      |    }
+      |  ]
       |}
       |""".stripMargin)
 

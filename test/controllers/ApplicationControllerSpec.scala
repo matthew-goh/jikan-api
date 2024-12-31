@@ -5,7 +5,7 @@ import cats.data.EitherT
 import models._
 import models.characters._
 import models.episodes._
-import models.recommendations.RecommendationsResult
+import models.recommendations._
 import models.relations._
 import models.reviews.ReviewsResult
 import models.userfavourites._
@@ -392,6 +392,81 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
+  "ApplicationController .getUserRecommendedPairings()" should {
+    "list the user's recommended pairings" in {
+      (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "1", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testPairingResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserRecommendedPairings("veronin", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Page 1 of 1")
+      searchResultContent should include ("06 May 2015")
+      searchResultContent should (include ("K-On!!") and include ("Aikatsu!"))
+
+      countOccurrences(searchResultContent, "Added on:") shouldBe 3
+      countOccurrences(searchResultContent, "(Manga)") shouldBe 2 // 1 pairing
+    }
+
+    "show 'No recommended pairings' if there are no results" in {
+      (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "2", *)
+        .returning(EitherT.rightT(UserPairingResult(
+          SimplePagination(1, has_next_page = false),
+          Seq()
+        )))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserRecommendedPairings("veronin", "2")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No recommended pairings")
+    }
+
+    "return a BadRequest if there is an API result but page number is not a positive integer" in {
+      (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testPairingResult))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserRecommendedPairings("veronin", "abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include("API result obtained but page number is not a positive integer")
+    }
+
+    "return an InternalServerError if an entry in the API result does not contain a pair" in {
+      val badPairing: Pairing = Pairing( // only 1 RecommendationEntry
+        Seq(RecommendationEntry(240, "Genshiken", Images(JpgImage("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994")))),
+        "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
+        OffsetDateTime.parse("2015-05-06T00:00:00+00:00").toInstant
+      )
+
+      (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "1", *)
+        .returning(EitherT.rightT(UserPairingResult(
+          SimplePagination(1, has_next_page = false),
+          Seq(badPairing)
+        )))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserRecommendedPairings("veronin", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe INTERNAL_SERVER_ERROR
+      contentAsString(searchResult) should include("Error: An entry returned by the API does not contain a pair")
+    }
+
+    "return a NotFound if the username is not found" in {
+      (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
+        .expects("abc", "1", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getUserRecommendedPairings("abc", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
   /// 3. Anime extra info ///
   "ApplicationController .getEpisodeList()" should {
     "list the anime's episodes" in {
@@ -437,7 +512,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include ("No episode data available")
     }
 
-    "return a BadRequest if there is an API result but page number is not an integer" in {
+    "return a BadRequest if there is an API result but page number is not a positive integer" in {
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
         .expects("33263", *)
         .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
@@ -450,7 +525,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
       val searchResult: Future[Result] = TestApplicationController.getEpisodeList("33263", "abc")(testRequest.fakeRequest)
       status(searchResult) shouldBe BAD_REQUEST
-      contentAsString(searchResult) should include ("API result obtained but page number is not an integer")
+      contentAsString(searchResult) should include ("API result obtained but page number is not a positive integer")
     }
 
     "return a BadRequest if the API detects an invalid page number" in {

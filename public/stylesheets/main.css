@@ -149,7 +149,7 @@ img {
     text-decoration: none;        /* Removes underline */
     font-size: 16px;              /* Adjust text size */
     gap: 8px;                     /* Space between image and text */
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .link-icon {
@@ -274,4 +274,10 @@ label {
 .char-favourites-container {
     margin-top: 5px;
     margin-bottom: 5px;
+}
+
+/* User recommended pairings (mainly uses classes from characters above) */
+.pairing-info-container {
+    width: 60%;
+    padding: 10px;
 }

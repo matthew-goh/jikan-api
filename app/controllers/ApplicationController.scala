@@ -139,6 +139,20 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
+  def getUserRecommendedPairings(username: String, page: String = "1"): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserRecommendations(username, page).value.map{
+      case Right(pairingsResult) => {
+        if (pairingsResult.data.exists(pairing => pairing.entry.length != 2))
+          InternalServerError(views.html.unsuccessful("Error: An entry returned by the API does not contain a pair"))
+        else Try(page.toInt) match {
+          case Success(pg) if pg > 0 => Ok(views.html.userpairings(pairingsResult.data, username, pg, pairingsResult.pagination))
+          case _ => BadRequest(views.html.unsuccessful("API result obtained but page number is not a positive integer"))
+        }
+      }
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
   /// 3. Anime extra info ///
   def getEpisodeList(animeId: String, page: String): Action[AnyContent] = Action.async { implicit request =>
     // first get anime details (title, total episodes needed), then get episodes
@@ -147,8 +161,8 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
         service.getAnimeEpisodes(animeId, page).value.map{
           case Right(episodeResult) =>
             Try(page.toInt) match {
-              case Success(pg) => Ok(views.html.episodelist(animeResult.data, pg, episodeResult.data, episodeResult.pagination))
-              case _ => BadRequest(views.html.unsuccessful("API result obtained but page number is not an integer"))
+              case Success(pg) if pg > 0 => Ok(views.html.episodelist(animeResult.data, pg, episodeResult.data, episodeResult.pagination))
+              case _ => BadRequest(views.html.unsuccessful("API result obtained but page number is not a positive integer"))
             }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
@@ -191,7 +205,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
         service.getAnimeReviews(id, page, prelim, spoilers).value.map{
           case Right(reviewsResult) => {
             (Try(page.toInt), Try(prelim.toBoolean), Try(spoilers.toBoolean)) match {
-              case (Success(pg), Success(prelimBool), Success(spoilersBool)) =>
+              case (Success(pg), Success(prelimBool), Success(spoilersBool)) if pg > 0 =>
                 Ok(views.html.reviews(animeResult.data, pg, reviewsResult.data, reviewsResult.pagination, prelimBool, spoilersBool))
               case _ => BadRequest(views.html.unsuccessful("API result obtained but a query parameter is invalid"))
             }

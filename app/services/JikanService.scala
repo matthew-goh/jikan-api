@@ -5,7 +5,7 @@ import connectors.JikanConnector
 import models._
 import models.characters._
 import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
-import models.recommendations.RecommendationsResult
+import models.recommendations.{RecommendationsResult, UserPairingResult}
 import models.relations.{RelationsResult, ThemesResult}
 import models.reviews.ReviewsResult
 import models.userfavourites.UserFavouritesResult
@@ -42,6 +42,10 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getUserFavourites(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserFavouritesResult] = {
     connector.get[UserFavouritesResult](s"https://api.jikan.moe/v4/users/$username/favorites")
+  }
+
+  def getUserRecommendations(username: String, page: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserPairingResult] = {
+    connector.get[UserPairingResult](s"https://api.jikan.moe/v4/users/$username/recommendations?page=$page")
   }
 
   def getAnimeEpisodes(animeId: String, page: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, EpisodeSearchResult] = {
