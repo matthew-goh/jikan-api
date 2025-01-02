@@ -8,8 +8,8 @@ import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
 import models.recommendations.{RecommendationsResult, UserPairingResult}
 import models.relations.{RelationsResult, ThemesResult}
 import models.reviews.ReviewsResult
+import models.statistics.StatisticsResult
 import models.userfavourites.UserFavouritesResult
-import play.api.libs.json._
 
 import java.util.Base64
 import javax.inject._
@@ -80,5 +80,9 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getThemeSongs(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, ThemesResult] = {
     connector.get[ThemesResult](s"https://api.jikan.moe/v4/anime/$id/themes")
+  }
+
+  def getAnimeStatistics(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, StatisticsResult] = {
+    connector.get[StatisticsResult](s"https://api.jikan.moe/v4/anime/$id/statistics")
   }
 }

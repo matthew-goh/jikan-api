@@ -1,0 +1,46 @@
+@import helper._
+@import java.text.NumberFormat
+@import models.statistics.AnimeStats
+
+@import play.api.libs.json.Json
+@(anime: AnimeData, statistics: AnimeStats)
+@main("Anime Statistics"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Anime Details
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>User and Score Statistics</h2>
+    <h3>@anime.title</h3>
+    @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
+
+    <div id="viewers-chart" hidden>@Json.toJson(statistics)</div>
+    <canvas id="viewersChart" width="400" height="200"></canvas>
+    Total members: @NumberFormat.getInstance().format(statistics.total)
+
+    <p></p>
+
+    @if(anime.score.nonEmpty){
+      <div id="scores-chart" hidden>@Json.toJson(statistics.scores)</div>
+      <canvas id="barChart" width="400" height="200"></canvas>
+      Average score: @anime.score
+      @if(anime.scored_by.nonEmpty){
+        <br>Total votes: @NumberFormat.getInstance().format(anime.scored_by.get)
+      }
+    } else {
+      No scores available.
+    }
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="@routes.Assets.versioned("javascripts/viewersBarChart.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/scoresBarChart.js")"></script>
+}

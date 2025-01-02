@@ -271,6 +271,17 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
+  def getAnimeStatistics(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(id).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeStatistics(id).value.map{
+          case Right(statsResult) => Ok(views.html.animestats(animeResult.data, statsResult.data))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
 
   ///// METHODS FOCUSING ON REPOSITORY /////
   def listSavedAnime(compStatus: String, orderBy: String, sortOrder: String): Action[AnyContent] = Action.async { implicit request =>
