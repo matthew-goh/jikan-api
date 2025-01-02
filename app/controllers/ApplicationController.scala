@@ -32,7 +32,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
       case Right(animeSearchResult) =>
         repoService.index().map{
           case Right(animeInDB) => {
-            val queryParams: AnimeSearchParams = service.queryExtToAnimeSearchParams(queryExt)
+            val queryParams: AnimeSearchParams = service.queryExtToAnimeSearchParams(queryExt) // fills in blanks by default, even if expected parameter is missing
             Ok(views.html.searchanime(animeSearchResult.data, animeSearchResult.pagination, search, queryExt, queryParams, animeInDB.map(_.MALId)))
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
@@ -47,13 +47,19 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     searchTerm match {
       case None | Some("") => Future.successful(BadRequest(views.html.unsuccessful("No search term provided")))
       case Some(search) => {
-        val status: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("status").flatMap(_.headOption))
-        val minScore: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("minScore").flatMap(_.headOption))
-        val maxScore: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("maxScore").flatMap(_.headOption))
-        val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
-        val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sort").flatMap(_.headOption))
-        val queryExt = s"status=${status.getOrElse("")}&min_score=${minScore.getOrElse("")}&max_score=${maxScore.getOrElse("")}&order_by=${orderBy.getOrElse("")}&sort=${sortOrder.getOrElse("")}"
-        Future.successful(Redirect(routes.ApplicationController.getAnimeResults(search = search, page = "1", queryExt = queryExt)))
+        val searchParamsJson: JsValue = Json.toJson{
+          request.body.asFormUrlEncoded.map(_.map{
+            case (param, paramValList) => param -> paramValList.headOption
+          })
+        }
+        // check that form has submitted all parameters
+        searchParamsJson.validate[AnimeSearchParams] match {
+          case JsSuccess(params, _) => {
+            val queryExt = s"status=${params.status}&min_score=${params.minScore}&max_score=${params.maxScore}&order_by=${params.orderBy}&sort=${params.sort}"
+            Future.successful(Redirect(routes.ApplicationController.getAnimeResults(search = search, page = "1", queryExt = queryExt)))
+          }
+          case JsError(_) => Future.successful(BadRequest(views.html.unsuccessful("Invalid search parameters submitted")))
+        }
       }
     }
   }

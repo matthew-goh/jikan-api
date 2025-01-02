@@ -22,11 +22,13 @@ class JikanService @Inject()(connector: JikanConnector) {
   }
 
   def queryExtToAnimeSearchParams(queryExt: String): AnimeSearchParams = {
-    val queryParamMap: Map[String, String] =
+    val queryParamMap: Map[String, String] = {
+      // e.g. List("status=complete", "min_score=7", "max_score=", "order_by=title", "sort=")
       queryExt.split("&").map { param =>
         val parts = param.split("=", 2)
         parts(0) -> (if (parts.length > 1) parts(1) else "")
       }.toMap
+    }
 
     AnimeSearchParams(queryParamMap.getOrElse("status", ""), queryParamMap.getOrElse("min_score", ""),
       queryParamMap.getOrElse("max_score", ""), queryParamMap.getOrElse("order_by", ""), queryParamMap.getOrElse("sort", ""))

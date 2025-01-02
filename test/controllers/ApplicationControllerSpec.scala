@@ -169,6 +169,20 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       status(searchResult) shouldBe BAD_REQUEST
       contentAsString(searchResult) should include ("No search term provided")
     }
+
+    "return a BadRequest if expected search parameters are missing" in {
+      val searchRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/searchanime").withFormUrlEncodedBody(
+        "search" -> "kindaichi",
+        "status" -> "",
+        "minScore" -> "",
+        "maxScore" -> "8.5",
+        "orderBy" -> "title",
+        "srt" -> "" // wrong
+      )
+      val searchResult: Future[Result] = TestApplicationController.searchAnime()(searchRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Invalid search parameters submitted")
+    }
   }
 
   "ApplicationController .getAnimeById()" should {
