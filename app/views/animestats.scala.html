@@ -40,11 +40,15 @@
       <div class="bar-chart">
         <canvas id="scoresChart"></canvas>
       </div>
+      <div class="single-bar-chart">
+        <canvas id="scoresBinaryChart" height="60"></canvas>
+      </div>
       <div class="pie-chart">
         <canvas id="scoresPieChart"></canvas>
       </div>
 
       <script src="@routes.Assets.versioned("javascripts/scoresBarChart.js")"></script>
+      <script src="@routes.Assets.versioned("javascripts/scoresBinaryChart.js")"></script>
       <script src="@routes.Assets.versioned("javascripts/scoresPieChart.js")"></script>
 
     } else {

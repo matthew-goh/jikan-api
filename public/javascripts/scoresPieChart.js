@@ -23,8 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const labels = Object.keys(groupedVotes);
     const votes = Object.values(groupedVotes);
 
-    const numberFormatter = new Intl.NumberFormat('en-UK'); // Formatter for numbers with commas
-
     const ctx = document.getElementById('scoresPieChart').getContext('2d');
     new Chart(ctx, {
         type: 'pie',
@@ -57,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     color: '#2c3e50',
                     padding: {
                         top: 20,
-                        bottom: 20
+                        bottom: 10
                     }
                 },
                 tooltip: {
@@ -67,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             const totalVotes = context.dataset.data.reduce((a, b) => a + b, 0);
                             const value = context.raw;
                             const percentage = ((value / totalVotes) * 100).toFixed(1);
-                            return `${numberFormatter.format(value)} votes (${percentage}%)`;
+                            return `${value.toLocaleString()} votes (${percentage}%)`;
                         }
                     }
                 }

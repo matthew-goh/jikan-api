@@ -296,3 +296,10 @@ label {
     padding: 10px;
     margin: auto; /* centre-align */
 }
+
+.single-bar-chart {
+    width: 80%;
+    max-width: 2400px;
+    padding: 10px;
+    margin: auto; /* centre-align */
+}

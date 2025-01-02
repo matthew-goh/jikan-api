@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const votes = data.map(item => item.votes);
     const percentages = data.map(item => item.percentage);
 
-    const numberFormatter = new Intl.NumberFormat('en-UK'); // Formatter for numbers with commas
+    // const numberFormatter = new Intl.NumberFormat('en-UK'); // Formatter for numbers with commas
 
     const ctx = document.getElementById('scoresChart').getContext('2d');
     new Chart(ctx, {
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             const index = context.dataIndex;
                             const numVotes = votes[index]; // context.dataset.data[index]
                             const percentage = percentages[index];
-                            return `${numberFormatter.format(numVotes)} votes (${percentage}%)`;
+                            return `${numVotes.toLocaleString()} votes (${percentage}%)`;
                         }
                     }
                 }

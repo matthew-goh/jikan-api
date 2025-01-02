@@ -12,10 +12,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return result;
     }, {});
 
-    const labels = Object.keys(filteredData);  // Get the keys (category names)
     const values = Object.values(filteredData);  // Get the corresponding values for each category
 
-    const numberFormatter = new Intl.NumberFormat('en-UK'); // Formatter for numbers with commas
+    // const numberFormatter = new Intl.NumberFormat('en-UK'); // Formatter for numbers with commas
 
     const ctx = document.getElementById('viewersChart').getContext('2d');
     new Chart(ctx, {
@@ -56,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     callbacks: {
                         label: function (context) {
                             const value = context.raw;  // Get the value of the bar
-                            return `${numberFormatter.format(value)} users`;
+                            return `${value.toLocaleString()} users`;
                         }
                     }
                 }
