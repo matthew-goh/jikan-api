@@ -22,25 +22,36 @@
     <h3>@anime.title</h3>
     @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
 
+    <b>Total members:</b> @NumberFormat.getInstance().format(statistics.total)
     <div id="viewers-chart" hidden>@Json.toJson(statistics)</div>
-    <canvas id="viewersChart" width="400" height="200"></canvas>
-    Total members: @NumberFormat.getInstance().format(statistics.total)
+    <div class="bar-chart">
+      <canvas id="viewersChart"></canvas>
+    </div>
 
     <p></p>
 
     @if(anime.score.nonEmpty){
-      <div id="scores-chart" hidden>@Json.toJson(statistics.scores)</div>
-      <canvas id="barChart" width="400" height="200"></canvas>
-      Average score: @anime.score
+      <b>Average score:</b> @anime.score
       @if(anime.scored_by.nonEmpty){
-        <br>Total votes: @NumberFormat.getInstance().format(anime.scored_by.get)
+        <br><b>Total votes:</b> @NumberFormat.getInstance().format(anime.scored_by.get)
       }
+
+      <div id="scores-chart" hidden>@Json.toJson(statistics.scores)</div>
+      <div class="bar-chart">
+        <canvas id="scoresChart"></canvas>
+      </div>
+      <div class="pie-chart">
+        <canvas id="scoresPieChart"></canvas>
+      </div>
+
+      <script src="@routes.Assets.versioned("javascripts/scoresBarChart.js")"></script>
+      <script src="@routes.Assets.versioned("javascripts/scoresPieChart.js")"></script>
+
     } else {
-      No scores available.
+      <i>No scores available.</i>
     }
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="@routes.Assets.versioned("javascripts/viewersBarChart.js")"></script>
-  <script src="@routes.Assets.versioned("javascripts/scoresBarChart.js")"></script>
 }

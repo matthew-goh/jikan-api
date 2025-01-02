@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Viewer Breakdown',
+                    text: 'Viewing Status Breakdown',
                     font: {
                         size: 16,
                         weight: 'bold'

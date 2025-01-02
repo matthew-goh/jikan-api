@@ -281,3 +281,18 @@ label {
     width: 60%;
     padding: 10px;
 }
+
+/* Charts */
+.bar-chart {
+    width: 90%;
+    max-width: 3000px;
+    padding: 10px;
+    margin: auto; /* centre-align */
+}
+
+.pie-chart {
+    width: 60%;
+    max-width: 1800px;
+    padding: 10px;
+    margin: auto; /* centre-align */
+}

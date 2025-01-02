@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const numberFormatter = new Intl.NumberFormat('en-UK'); // Formatter for numbers with commas
 
-    const ctx = document.getElementById('barChart').getContext('2d');
+    const ctx = document.getElementById('scoresChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
         data: {
