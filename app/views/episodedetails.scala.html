@@ -1,6 +1,7 @@
 @import helper._
 @import models.episodes.EpisodeFullDetails
 
+@import java.text.NumberFormat
 @import java.time.format.DateTimeFormatter
 @import java.time.ZoneId
 
@@ -14,7 +15,7 @@
     <h2>Episode details</h2>
     <h3>@anime.title
       @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
-    <h3>Episode @episode.mal_id</h3>
+    <h3>Episode @NumberFormat.getInstance().format(episode.mal_id)</h3>
 
     @if(episode.title.isEmpty) {
       <p>No episode data available.</p>

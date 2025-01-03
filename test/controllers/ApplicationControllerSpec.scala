@@ -80,7 +80,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestApplicationController.getAnimeResults("kindaichi", "1", "status=&min_score=&max_score=&order_by=&sort=")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       val searchResultContent = contentAsString(searchResult)
-      searchResultContent should (include ("Page 1 of 1") and include ("Results 1-9"))
+      searchResultContent should (include ("Page 1 of 1") and include ("Results 1 - 9"))
       searchResultContent should include ("Kindaichi Shounen no Jikenbo")
       searchResultContent should include ("Average score: 7.94")
       searchResultContent should include ("Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken")
@@ -108,7 +108,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       status(searchResult) shouldBe OK
       val searchResultContent = contentAsString(searchResult)
       searchResultContent should (include ("Complete") and include ("No. of episodes") and include ("Descending"))
-      searchResultContent should include ("Results 1-3")
+      searchResultContent should include ("Results 1 - 3")
       searchResultContent should include ("The File of Young Kindaichi")
       searchResultContent.indexOf("The File of Young Kindaichi") should be < searchResultContent.indexOf("Average score: 7.54")
       searchResultContent.indexOf("Average score: 7.54") should be < searchResultContent.indexOf("Kindaichi Shounen no Jikenbo Returns 2nd Season")
@@ -499,7 +499,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       status(searchResult) shouldBe OK
       val searchResultContent = contentAsString(searchResult)
       searchResultContent should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
-      searchResultContent should (include ("Page 1 of 1") and include ("Episodes 1-8 of 8"))
+      searchResultContent should (include ("Page 1 of 1") and include ("Episodes 1 - 8 of 8"))
       searchResultContent should include ("Day 3 (1) The Savant Gathering")
       searchResultContent should include ("Wed, 26 Oct 2016")
       searchResultContent should include ("Episode 8")

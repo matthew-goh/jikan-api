@@ -26,7 +26,7 @@
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ") </p>
     <br>
     <p>
-      <b>No. of episodes:</b> @anime.episodes.getOrElse("Not available")
+      <b>No. of episodes:</b> @anime.episodes.getOrElse("TBC")
       <br><a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, "1")">See episode list</a>
     </p>
     <p><b>Status:</b> @anime.status</p>
