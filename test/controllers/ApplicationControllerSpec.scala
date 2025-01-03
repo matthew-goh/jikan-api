@@ -1017,7 +1017,8 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
       val searchResult: Future[Result] = TestApplicationController.getAnimeStatistics("2076")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should include ("canvas id=\"viewersChart\"")
+      contentAsString(searchResult) should (include ("canvas id=\"viewersChart\"") and not include ("canvas id=\"scoresChart\"")
+      and not include ("canvas id=\"scoresBinaryChart\"") and not include ("canvas id=\"scoresPieChart\""))
       contentAsString(searchResult) should include ("No scores available")
     }
 

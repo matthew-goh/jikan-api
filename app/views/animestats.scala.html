@@ -57,6 +57,8 @@
     }
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@*  use if chart.js is not downloaded/saved - add to application.conf *@
+@*  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>*@
+  <script src="@routes.Assets.versioned("javascripts/chart.min.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/viewersBarChart.js")"></script>
 }
