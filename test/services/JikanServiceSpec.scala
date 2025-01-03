@@ -9,6 +9,7 @@ import models.episodes._
 import models.recommendations._
 import models.relations._
 import models.reviews._
+import models.statistics._
 import models.userfavourites._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -342,6 +343,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getAnimeStatistics()" should {
+    "return anime statistics" in {
+      (mockConnector.get[StatisticsResult](_: String)(_: OFormat[StatisticsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/statistics", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testAnimeStatsJson.as[StatisticsResult]))
+        .once()
+
+      whenReady(testService.getAnimeStatistics("2076").value) { result =>
+        result shouldBe Right(StatisticsResult(JikanServiceSpec.testAnimeStats))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[StatisticsResult](_: String)(_: OFormat[StatisticsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/99999/statistics", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      whenReady(testService.getAnimeStatistics("99999").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Resource does not exist"))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -528,6 +553,11 @@ object JikanServiceSpec {
       "10: \"Ultrider\" by Pencillin (eps 129-147)",
       "11: \"君がいるから‥ (Kimi ga iru kara..)\" by Yui Nishiwaki (eps 148)")
   )
+
+  val testAnimeStats: AnimeStats = AnimeStats(3547, 7945, 2657, 1586, 17189, 32924, Seq(
+    Score(1, 47, 0.6),  Score(2, 23, 0.3),  Score(3, 32, 0.4),  Score(4, 92, 1.1),  Score(5, 246, 3),
+    Score(6, 659, 7.9),  Score(7, 1848, 22.2),  Score(8, 2401, 28.8),  Score(9, 1539, 18.5),  Score(10, 1448, 17.4)
+  ))
 
   val testAnimeSearchJsonStr: String =
     """
@@ -2980,5 +3010,15 @@ object JikanServiceSpec {
       |    ]
       |  }
       |}
+      |""".stripMargin)
+
+  val testAnimeStatsJson: JsValue = Json.parse(
+    """
+      |{"data":{"watching":3547,"completed":7945,"on_hold":2657,"dropped":1586,"plan_to_watch":17189,"total":32924,
+      |"scores":[{"score":1,"votes":47,"percentage":0.6},{"score":2,"votes":23,"percentage":0.3},
+      |{"score":3,"votes":32,"percentage":0.4},{"score":4,"votes":92,"percentage":1.1},
+      |{"score":5,"votes":246,"percentage":3},{"score":6,"votes":659,"percentage":7.9},
+      |{"score":7,"votes":1848,"percentage":22.2},{"score":8,"votes":2401,"percentage":28.8},
+      |{"score":9,"votes":1539,"percentage":18.5},{"score":10,"votes":1448,"percentage":17.4}]}}
       |""".stripMargin)
 }

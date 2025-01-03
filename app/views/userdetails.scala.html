@@ -22,7 +22,7 @@
     <p><b>Last online</b>: @{user.last_online.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
     <br>
 
-    <h3>Anime Statistics</h3>
+    <h3>Viewing Statistics</h3>
     <p>
       @user.username has watched <b>@NumberFormat.getInstance().format(user.statistics.anime.episodes_watched)
       episode@if(user.statistics.anime.episodes_watched != 1){s}</b> of anime,

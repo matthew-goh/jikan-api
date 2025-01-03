@@ -8,6 +8,7 @@ import models.episodes._
 import models.recommendations._
 import models.relations._
 import models.reviews.ReviewsResult
+import models.statistics._
 import models.userfavourites._
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
@@ -974,6 +975,61 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestApplicationController.getAnimeRelations("99999")(testRequest.fakeRequest)
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
+    }
+  }
+
+  "ApplicationController .getAnimeStatistics()" should {
+    "display anime statistics" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeStatistics(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(StatisticsResult(JikanServiceSpec.testAnimeStats)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeStatistics("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should include ("<b>Total members:</b> 32,924")
+      searchResultContent should (include ("canvas id=\"viewersChart\"") and include ("canvas id=\"scoresChart\"")
+        and include ("canvas id=\"scoresBinaryChart\"") and include ("canvas id=\"scoresPieChart\""))
+
+      searchResultContent should include (Json.stringify(Json.toJson(JikanServiceSpec.testAnimeStats)).replace("\"","&quot;"))
+      searchResultContent should include (Json.stringify(Json.toJson(JikanServiceSpec.testAnimeStats.scores)).replace("\"","&quot;"))
+    }
+
+    "show 'No scores available' if there are no scores from users" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeStatistics(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(StatisticsResult(
+          AnimeStats(2, 0, 0, 0, 13827, 13829, Seq())
+        )))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeStatistics("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("canvas id=\"viewersChart\"")
+      contentAsString(searchResult) should include ("No scores available")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeRecommendations("abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
   }
 

@@ -3,6 +3,7 @@
 @import models.statistics.AnimeStats
 
 @import play.api.libs.json.Json
+
 @(anime: AnimeData, statistics: AnimeStats)
 @main("Anime Statistics"){
   <div class="container mb-5">
@@ -30,8 +31,8 @@
 
     <p></p>
 
-    @if(anime.score.nonEmpty){
-      <b>Average score:</b> @anime.score
+    @if(statistics.scores.nonEmpty){
+      @if(anime.score.nonEmpty){ <b>Average score:</b> @anime.score }
       @if(anime.scored_by.nonEmpty){
         <br><b>Total votes:</b> @NumberFormat.getInstance().format(anime.scored_by.get)
       }
