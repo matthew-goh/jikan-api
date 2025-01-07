@@ -23,6 +23,9 @@ libraryDependencies ++= Seq(
   "com.github.tomakehurst" % "wiremock-jre8" % "2.33.2" % Test
 )
 
+libraryDependencies += "eu.timepit" %% "refined" % "0.11.3"
+libraryDependencies += "be.venneborg" %% "play28-refined" % "0.6.0"
+
 dependencyOverrides +="com.fasterxml.jackson.core" % "jackson-databind" % "2.11.0"
 
 // Adds additional packages into Twirl

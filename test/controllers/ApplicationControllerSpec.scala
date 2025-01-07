@@ -2,6 +2,7 @@ package controllers
 
 import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
+import eu.timepit.refined.auto._
 import models._
 import models.characters._
 import models.episodes._

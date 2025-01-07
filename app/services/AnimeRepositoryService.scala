@@ -1,5 +1,7 @@
 package services
 
+import eu.timepit.refined.api._
+import models.RefinedTypes.{NaturalNum, ScoreInt}
 import models.{APIError, AnimeData, SavedAnime}
 import org.mongodb.scala.result
 import repositories.AnimeRepositoryTrait
@@ -81,12 +83,21 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
       // if any data type is invalid, the result is Left(invalidTypeError)
       id <- Try(idStr.toInt).toOption.toRight(invalidTypeError)
       savedAt <- Try(Instant.parse(savedAtStr)).toOption.toRight(invalidTypeError)
-      epsWatched <- Try(epsWatchedStr.toInt).toOption.toRight(invalidTypeError)
         // after .toOption, the below will be Some(Some(x)) if a number, Some(None) if missing, or None if invalid
       numEpisodes <- Try(reqBody.flatMap(_.get("numEpisodes").flatMap(_.headOption)).map(_.toInt)).toOption.toRight(invalidTypeError)
       year <- Try(reqBody.flatMap(_.get("year").flatMap(_.headOption)).map(_.toInt)).toOption.toRight(invalidTypeError)
       malScore <- Try(reqBody.flatMap(_.get("MALScore").flatMap(_.headOption)).map(_.toDouble)).toOption.toRight(invalidTypeError)
-      myScore <- Try(myScoreOpt.map(_.toInt)).toOption.toRight(invalidTypeError)
+      // refined types
+      epsWatchedInt <- Try(epsWatchedStr.toInt).toOption.toRight(invalidTypeError)
+      epsWatched <- RefType.applyRef[NaturalNum](epsWatchedInt).left.map(_ => invalidTypeError)
+      myScoreInt <- Try(myScoreOpt.map(_.toInt)).toOption.toRight(invalidTypeError)
+      myScore <- myScoreInt match {
+        case None => Right(None)
+        case Some(x) => RefType.applyRef[ScoreInt](x) match {
+          case Right(x) => Right(Some(x))
+          case Left(_) => Left(invalidTypeError)
+        }
+      }
     } yield SavedAnime(id, title, titleEnglish, typ, numEpisodes, year, malScore, savedAt, epsWatched, myScore, notes)
 
     reqBodyValuesEither match {
@@ -106,9 +117,17 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
       notes <- reqBody.flatMap(_.get("notes").flatMap(_.headOption)).toRight(missingError)
       // if any data type is invalid, the result is Left(invalidTypeError)
       savedAt <- Try(Instant.parse(savedAtStr)).toOption.toRight(invalidTypeError)
-      epsWatched <- Try(epsWatchedStr.toInt).toOption.toRight(invalidTypeError)
-        // after .toOption, the below will be Some(Some(x)) if a number, Some(None) if missing, or None if invalid
-      myScore <- Try(reqBody.flatMap(_.get("score").flatMap(_.headOption)).map(_.toInt)).toOption.toRight(invalidTypeError)
+      // refined types
+      epsWatchedInt <- Try(epsWatchedStr.toInt).toOption.toRight(invalidTypeError)
+      epsWatched <- RefType.applyRef[NaturalNum](epsWatchedInt).left.map(_ => invalidTypeError)
+      myScoreInt <- Try(reqBody.flatMap(_.get("score").flatMap(_.headOption)).map(_.toInt)).toOption.toRight(invalidTypeError)
+      myScore <- myScoreInt match {
+        case None => Right(None)
+        case Some(x) => RefType.applyRef[ScoreInt](x) match {
+          case Right(x) => Right(Some(x))
+          case Left(_) => Left(invalidTypeError)
+        }
+      }
     } yield SavedAnime(animeData.mal_id, animeData.title, animeData.title_english, animeData.`type`, animeData.episodes, animeData.year,
       animeData.score, savedAt, epsWatched, myScore, notes)
 

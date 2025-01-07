@@ -2,6 +2,7 @@ package repositories
 
 import baseSpec.BaseSpec
 import com.mongodb.client.result._
+import eu.timepit.refined.auto._
 import models._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -189,6 +190,25 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
         result shouldBe Left(APIError.BadAPIResponse(400, "Invalid data type"))
       }
     }
+
+    "return an error if an invalid number of episodes is provided" in {
+      val reqBody = Some(Map(
+        "id" -> List("33263"),
+        "title" -> List("Kubikiri Cycle: Aoiro Savant to Zaregotozukai"),
+        "titleEnglish" -> List("The Kubikiri Cycle"),
+        "type" -> List("OVA"),
+        "numEpisodes" -> List("8"),
+        "MALScore" -> List("7.75"),
+        "savedAt" -> List("2024-12-18T10:01:49Z"),
+        "epsWatched" -> List("-1"),
+        "score" -> List(""),
+        "notes" -> List("Closed circle mystery on an island")
+      ))
+
+      whenReady(testRepoService.update(reqBody)) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "Invalid data type"))
+      }
+    }
   }
 
   "refresh()" should {
@@ -265,6 +285,21 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
         "savedAt" -> List("2024-12-18T10:01:49Z"),
         "epsWatched" -> List("abc"),
         "score" -> List("10"),
+        "notes" -> List("Best mystery anime")
+      ))
+
+      whenReady(testRepoService.refresh(reqBody, kindaichiDataRefreshed)) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "Invalid data type"))
+      }
+    }
+
+    "return an error if an invalid score is provided" in {
+      val reqBody = Some(Map(
+        "url" -> List("/saved/2076"),
+        "id" -> List("2076"),
+        "savedAt" -> List("2024-12-18T10:01:49Z"),
+        "epsWatched" -> List("100"),
+        "score" -> List("12"),
         "notes" -> List("Best mystery anime")
       ))
 

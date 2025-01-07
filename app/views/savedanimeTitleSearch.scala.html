@@ -1,4 +1,5 @@
 @import helper._
+@import eu.timepit.refined.auto._
 @import java.text.NumberFormat
 
 @*RequestHeader needed for form with CRSF*@
@@ -40,13 +41,13 @@
           <div class="text-container">
             <span>
               @{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
-              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get){
+              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched.value == anime.numEpisodes.get){
                 <br>Completed
               }
-              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get){
+              @if(anime.numEpisodes.nonEmpty && anime.episodesWatched.value > 0 && anime.episodesWatched.value < anime.numEpisodes.get){
                 <br>Started watching
               }
-              @if(anime.numEpisodes.isEmpty || anime.episodesWatched == 0){
+              @if(anime.numEpisodes.isEmpty || anime.episodesWatched.value == 0){
                 <br>Not started
               }
               @if(anime.score.nonEmpty){

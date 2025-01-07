@@ -3,6 +3,7 @@ package services
 import baseSpec.BaseSpec
 import cats.data.EitherT
 import connectors.JikanConnector
+import eu.timepit.refined.auto._
 import models._
 import models.characters._
 import models.episodes._
@@ -555,7 +556,7 @@ object JikanServiceSpec {
   )
 
   val testAnimeStats: AnimeStats = AnimeStats(3547, 7945, 2657, 1586, 17189, 32924, Seq(
-    Score(1, 47, 0.6),  Score(2, 23, 0.3),  Score(3, 32, 0.4),  Score(4, 92, 1.1),  Score(5, 246, 3),
+    Score(1, 47, 0.6),  Score(2, 23, 0.3),  Score(3, 32, 0.4),  Score(4, 92, 1.1),  Score(5, 246, 3.0),
     Score(6, 659, 7.9),  Score(7, 1848, 22.2),  Score(8, 2401, 28.8),  Score(9, 1539, 18.5),  Score(10, 1448, 17.4)
   ))
 

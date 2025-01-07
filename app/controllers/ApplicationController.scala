@@ -1,5 +1,6 @@
 package controllers
 
+import eu.timepit.refined.auto._
 import models._
 import models.relations.Relation
 import models.userfavourites.AnimeFavourite
@@ -8,7 +9,6 @@ import play.api.mvc._
 import play.filters.csrf.CSRF
 import services.{AnimeRepositoryService, JikanService}
 
-import java.util.Base64
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -294,9 +294,9 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
         repoService.index().map{
           case Right(animeList) => {
             val animeListFiltered: Seq[SavedAnime] = compStatusValue match {
-              case SavedAnimeStatus.not_started => animeList.filter(anime => anime.numEpisodes.isEmpty || anime.episodesWatched == 0)
-              case SavedAnimeStatus.watching => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched > 0 && anime.episodesWatched < anime.numEpisodes.get)
-              case SavedAnimeStatus.completed => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched == anime.numEpisodes.get)
+              case SavedAnimeStatus.not_started => animeList.filter(anime => anime.numEpisodes.isEmpty || anime.episodesWatched.value == 0)
+              case SavedAnimeStatus.watching => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched.value > 0 && anime.episodesWatched.value < anime.numEpisodes.get)
+              case SavedAnimeStatus.completed => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched.value == anime.numEpisodes.get)
               case _ => animeList
             }
             val animeListSorted = orderByValue match {
@@ -313,8 +313,8 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
                 case _ => animeListFiltered.sortBy(_.year)
               }
               case SavedAnimeOrders.score => sortOrderValue match {
-                case SortOrders.desc => animeListFiltered.sortBy(_.score).reverse
-                case _ => animeListFiltered.sortBy(_.score)
+                case SortOrders.desc => animeListFiltered.sortBy(_.score.map(_.value)).reverse
+                case _ => animeListFiltered.sortBy(_.score.map(_.value)) // map Option[ScoreInt] to Option[Int]
               }
             }
             Ok(views.html.savedanime(animeListSorted, compStatus, orderBy, sortOrder))
