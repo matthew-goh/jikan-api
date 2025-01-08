@@ -1,0 +1,49 @@
+@import helper._
+@import java.text.NumberFormat
+@import java.time.format.DateTimeFormatter
+@import java.time.ZoneId
+@import models.news.AnimeNews
+
+@(anime: AnimeData, newsList: Seq[AnimeNews])
+@main("Anime News"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.ApplicationController.getAnimeById(anime.mal_id.toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to Anime Details
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Latest News</h2>
+    <h3>@anime.title
+      @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
+
+    @if(newsList.isEmpty) {
+      <p>No news available.</p>
+    } else {
+      <ul class="ul-with-boxes">
+      @for(news <- newsList) {
+        <li class="li-with-box">
+          <div class="news-img-container">
+            <img class="news-img" src="@news.images.jpg.image_url" alt="News image">
+          </div>
+          <div class="news-info-container">
+            <p><b>@news.title</b></p>
+            <p>@news.excerpt</p>
+            <p><a href="@news.url" target="_blank">View full article on MAL</a></p>
+            <p class="smaller-text">Posted by
+              <a href="@routes.ApplicationController.getUserProfile(news.author_username)" target="_blank">@news.author_username</a>
+              on @{news.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}
+            </p>
+          </div>
+        </li>
+      }
+      </ul>
+    }
+  </div>
+}

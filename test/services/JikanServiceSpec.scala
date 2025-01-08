@@ -7,6 +7,7 @@ import eu.timepit.refined.auto._
 import models._
 import models.characters._
 import models.episodes._
+import models.news.{AnimeNews, NewsResult}
 import models.recommendations._
 import models.relations._
 import models.reviews._
@@ -368,6 +369,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getAnimeNews()" should {
+    "return anime news" in {
+      (mockConnector.get[NewsResult](_: String)(_: OFormat[NewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/33263/news", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testAnimeNewsJson.as[NewsResult]))
+        .once()
+
+      whenReady(testService.getAnimeNews("33263").value) { result =>
+        result shouldBe Right(NewsResult(JikanServiceSpec.testNewsList))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[NewsResult](_: String)(_: OFormat[NewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/99999/news", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      whenReady(testService.getAnimeNews("99999").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Resource does not exist"))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -381,14 +406,14 @@ object JikanServiceSpec {
            |
            |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
            |
-           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), Images(JpgImage("https://cdn.myanimelist.net/images/anime/1702/120440.jpg")))
+           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg"))))
 
   val kindaichiData2: AnimeData = AnimeData(22817,"Kindaichi Shounen no Jikenbo Returns",Some("The File of Young Kindaichi Returns"),"TV",Some(25),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2014-04-05T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2014-09-27T00:00:00+00:00").toInstant)),
     Some("R - 17+ (violence & profanity)"),Some(7.54),Some(7902),
     Some("""High school student Hajime Kindaichi is the supposed grandson of famous private detective Kosuke Kindaichi. Visiting Hong Kong for a fashion event with Kindaichi, our hero's girlfriend Miyuki is captured by a stranger in a case of mistaken identity. The journey to save Miyuki itself leads to yet another crime case...
            |
-           |(Source: YTV)""".stripMargin),List(Genre(7,"Mystery")),Some(2014), Images(JpgImage("https://cdn.myanimelist.net/images/anime/7/61271.jpg")))
+           |(Source: YTV)""".stripMargin),List(Genre(7,"Mystery")),Some(2014), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/7/61271.jpg"))))
 
   val kindaichiData3: AnimeData = AnimeData(3245,"Kindaichi Shounen no Jikenbo Specials",Some("Kindaichi Case Files Special"),"TV Special",Some(2),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2007-11-12T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2007-11-19T00:00:00+00:00").toInstant)),
@@ -396,7 +421,7 @@ object JikanServiceSpec {
     Some("""Kindaichi and the gang are on their way to a hot spring, but get lost and end up at a run down and sinister hotel. They are told that a vampire used to live in the hotel way back. Someone even died (was found with bite marks on the neck).
            |
            |Six years ago a girl was found in the cellar with bite marks on her neck, and the villagers killed her. When one of the guests is killed and Miyuki is attacked by a creature with fangs, it would seem like the vampire is still there...""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage("https://cdn.myanimelist.net/images/anime/1766/121287.jpg")))
+    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1766/121287.jpg"))))
 
   val kindaichiData4: AnimeData = AnimeData(31227,"Kindaichi Shounen no Jikenbo Returns 2nd Season",None,"TV",Some(22),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2015-10-03T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2016-03-26T00:00:00+00:00").toInstant)),
@@ -404,12 +429,12 @@ object JikanServiceSpec {
     Some("""Hajime Kindaichi once again becomes embroiled in solving baffling cases and deciphering puzzling crimes that would confound the most seasoned of detectives. Whether it's a gruesome murder and shady circumstances surrounding the Japanese board game Go; a perplexing and macabre case involving a mysterious character, "Rosenkreutz," and blue roses; or blood curdling crimes associated with an urban legend at a winter ski resort – Hajime is out to crack them all!
            |
            |(Source: YTV)""".stripMargin),
-    List(Genre(7,"Mystery")),Some(2015), Images(JpgImage("https://cdn.myanimelist.net/images/anime/9/75726.jpg")))
+    List(Genre(7,"Mystery")),Some(2015), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/75726.jpg"))))
 
   val kindaichiData5: AnimeData = AnimeData(2077,"Kindaichi Shounen no Jikenbo Movie 1: Operazakan - Aratanaru Satsujin",None,"Movie",Some(1),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("1996-12-14T00:00:00+00:00").toInstant),None),Some("PG-13 - Teens 13 or older"),Some(7.1),Some(1731),
     Some(s"""Invited for a anniversary celebration, Kindaichi, Miyuki and inspector Kenmochi re-visit the Opera House. There they discover that a play of "The Phantom of the Opera" is being rehearsed again. However, it doesn't take long when members of the acting troupe are killed by the "Phantom". Kindaichi will once again have to solve a murder series in the Opera House. \n\n(Source: ANN)"""),
-    List(Genre(7,"Mystery")),None, Images(JpgImage("https://cdn.myanimelist.net/images/anime/10/25372.jpg")))
+    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/10/25372.jpg"))))
 
   val kindaichiData6: AnimeData = AnimeData(9154,"Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue",
     Some("Young Kindaichi's Casebook: Deep Blue Massacre"),"Movie",Some(1),"Finished Airing",
@@ -417,26 +442,26 @@ object JikanServiceSpec {
     Some("""The movie is an alternative version to the "Satsuriku no Deep Blue" arc of the 1997 Kindaichi TV series.
            |
            |Kindaichi, Miyuki and Fumi are invited to the resort of the Deep Blue Island by their senpai Akane, the daughter of the president of the Aizawa Group. A group of criminals infiltrate the hotel diguised as waiters to kill the members of the Aizawa Group. The criminals don't know their boss in person, and they don't know either that he's in the hotel with the members of the Aizawa Group.""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage("https://cdn.myanimelist.net/images/anime/1845/92957.jpg")))
+    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1845/92957.jpg"))))
 
   val kindaichiData7: AnimeData = AnimeData(15819,"Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen",None,"OVA",Some(2),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2012-12-17T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2013-03-15T00:00:00+00:00").toInstant)),
     Some("R - 17+ (violence & profanity)"),Some(7.01),Some(705),
-    Some("Kindaichi is back with another mystery to solve."),List(Genre(7,"Mystery")),None, Images(JpgImage("https://cdn.myanimelist.net/images/anime/3/45070.jpg")))
+    Some("Kindaichi is back with another mystery to solve."),List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/3/45070.jpg"))))
 
   val kindaichiData8: AnimeData = AnimeData(32376,"Kindaichi Shounen no Jikenbo Returns 2nd Season: Akechi Keibu no Jikenbo",None, "Special",Some(1),
     "Finished Airing",AirDates(Some(OffsetDateTime.parse("2015-12-26T00:00:00+00:00").toInstant),None),Some("R - 17+ (violence & profanity)"),Some(7.11),Some(923),
     Some("""The official website of the The File of Young Kindaichi Returns anime announced that a one-hour special television episode of the anime titled "The File of Inspector Akechi" (Akechi Keibu no Jikenbo) will air on December 26. The site streamed a trailer on Sunday, which previews the episode and its story. The video also reveals that Yudai Chiba will play Ryūtaro Kobayashi, a junior detective under detective Kengo Akechi.
            |
            |(Source: ANN)""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage("https://cdn.myanimelist.net/images/anime/9/77703.jpg")))
+    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/77703.jpg"))))
 
   val kindaichiData9: AnimeData = AnimeData(21701,"Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken",None,"Special",Some(1),
     "Finished Airing",AirDates(Some(OffsetDateTime.parse("1997-04-27T00:00:00+00:00").toInstant),None),Some("R - 17+ (violence & profanity)"),Some(6.71),Some(606),
     Some("""A one-hour special that aired after a month of the series' absence on television between episodes 23 and 24.
            |
            |Kindaichi will have to investigate in a hospital where series of murder happen.""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage("https://cdn.myanimelist.net/images/anime/1256/92959.jpg")))
+    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1256/92959.jpg"))))
 
   val testSearchData: Seq[AnimeData] = Seq(kindaichiData1, kindaichiData2, kindaichiData3, kindaichiData4, kindaichiData5, kindaichiData6, kindaichiData7, kindaichiData8, kindaichiData9)
 
@@ -448,31 +473,31 @@ object JikanServiceSpec {
     OffsetDateTime.parse("2021-11-21T00:00:00+00:00").toInstant, None, UserStatisticsObj(testUserAnimeStatistics))
 
   val testAnimeFavourites: Seq[AnimeFavourite] = Seq(
-    AnimeFavourite(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", "OVA", 2016, Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/81588.jpg?s=96117a32acdeb4883b97db0ae9f24e13"))),
-    AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997, Images(JpgImage("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=d0612b378c4a74b0bbca8588229a3975"))),
-    AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003, Images(JpgImage("https://cdn.myanimelist.net/images/anime/1/407.jpg?s=9f41e7b4e410ae8bd9dbbd307e85bb44")))
+    AnimeFavourite(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", "OVA", 2016, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/81588.jpg?s=96117a32acdeb4883b97db0ae9f24e13")))),
+    AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=d0612b378c4a74b0bbca8588229a3975")))),
+    AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1/407.jpg?s=9f41e7b4e410ae8bd9dbbd307e85bb44"))))
   )
   val testCharacterFavourites: Seq[CharacterFavourite] = Seq(
-    CharacterFavourite(17650, "Kindaichi, Hajime", Images(JpgImage("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e"))),
-    CharacterFavourite(192285, "Isshiki, Totomaru", Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb")))
+    CharacterFavourite(17650, "Kindaichi, Hajime", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e")))),
+    CharacterFavourite(192285, "Isshiki, Totomaru", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"))))
   )
 
   val testUserPairings: Seq[Pairing] = Seq(
     Pairing(
-      Seq(RecommendationEntry(240, "Genshiken", Images(JpgImage("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994"))),
-        RecommendationEntry(25835, "Shirobako", Images(JpgImage("https://cdn.myanimelist.net/images/anime/1460/141897.jpg?s=57c5a60e2e898873ab081b88357c792c")))),
+      Seq(RecommendationEntry(240, "https://myanimelist.net/anime/240/Genshiken", "Genshiken", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994")))),
+        RecommendationEntry(25835, "https://myanimelist.net/anime/25835/Shirobako", "Shirobako", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1460/141897.jpg?s=57c5a60e2e898873ab081b88357c792c"))))),
       "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
       OffsetDateTime.parse("2015-05-06T00:00:00+00:00").toInstant
     ),
     Pairing(
-      Seq(RecommendationEntry(7791, "K-On!!", Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/76121.jpg?s=b47588ea746198b3551e0340d31fdf83"))),
-        RecommendationEntry(15061, "Aikatsu!", Images(JpgImage("https://cdn.myanimelist.net/images/anime/6/74783.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276")))),
+      Seq(RecommendationEntry(7791, "https://myanimelist.net/anime/7791/K-On", "K-On!!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/76121.jpg?s=b47588ea746198b3551e0340d31fdf83")))),
+        RecommendationEntry(15061, "https://myanimelist.net/anime/15061/Aikatsu", "Aikatsu!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/6/74783.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276"))))),
       "Cute, light-hearted fun devoid of the usual otaku pandering common in anime today. The characters are treated with respect and are not rampantly sexualised. You will not enjoy either of these if you want the complex or the serious, but if you can enjoy a girl's show, they are two of the very best.",
       OffsetDateTime.parse("2014-03-09T00:00:00+00:00").toInstant
     ),
     Pairing(
-      Seq(RecommendationEntry(149, "Blame!", Images(JpgImage("https://cdn.myanimelist.net/images/manga/1/174389.jpg?s=01ed78eb073d458b028c4edc07845e64"))),
-        RecommendationEntry(1409, "Biomega", Images(JpgImage("https://cdn.myanimelist.net/images/manga/2/211783.jpg?s=4fade63eaf0059fabd3b92317d65d723")))),
+      Seq(RecommendationEntry(149, "https://myanimelist.net/manga/149/Blame", "Blame!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/manga/1/174389.jpg?s=01ed78eb073d458b028c4edc07845e64")))),
+        RecommendationEntry(1409, "https://myanimelist.net/manga/1409/Biomega", "Biomega", Images(JpgImage(Some("https://cdn.myanimelist.net/images/manga/2/211783.jpg?s=4fade63eaf0059fabd3b92317d65d723"))))),
       "Both are dystopian sci-fi manga with minimalistic dialogue, created by Tsutomu Nihei. If you ever feel like being awed by the best artwork in the medium, then check these out. They also have the best panelling that I have seen from any manga. It looks and feels like an action movie. Just be prepared for the despair and depression contained in the story.",
       OffsetDateTime.parse("2013-12-14T00:00:00+00:00").toInstant
     )
@@ -496,14 +521,14 @@ object JikanServiceSpec {
     Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
 
   val testCharacters: Seq[AnimeCharacter] = Seq(
-    AnimeCharacter(CharacterInfo(29593, "Boku", Images(JpgImage("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171"))), "Main", 784),
-    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", Images(JpgImage("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6"))), "Main", 371),
-    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", Images(JpgImage("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5"))), "Supporting", 231),
-    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", Images(JpgImage("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e"))), "Supporting", 1)
+    AnimeCharacter(CharacterInfo(29593, "Boku", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171")))), "Main", 784),
+    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6")))), "Main", 371),
+    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5")))), "Supporting", 231),
+    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e")))), "Supporting", 1)
   )
 
   val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
-    Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")), "Totomaru Isshiki", Seq("Toto"), 26,
+    Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg"))), "Totomaru Isshiki", Seq("Toto"), 26,
     Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
         |
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
@@ -523,9 +548,12 @@ object JikanServiceSpec {
   val testReviewsResult: ReviewsResult = ReviewsResult(Seq(testReview1, testReview2, testReview3), testSimplePagination)
 
   val testRecommendations: Seq[Recommendation] = Seq(
-    Recommendation(RecommendationEntry(5081, "Bakemonogatari", Images(JpgImage("https://cdn.myanimelist.net/images/anime/11/75274.jpg?s=3bb5c42c0803621dde09c52f5c4d4249"))), 16),
-    Recommendation(RecommendationEntry(28621, "Subete ga F ni Naru", Images(JpgImage("https://cdn.myanimelist.net/images/anime/9/76071.jpg?s=fdc6902408ec1ded27127502ae9f0863"))), 10),
-    Recommendation(RecommendationEntry(16592, "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation", Images(JpgImage("https://cdn.myanimelist.net/images/anime/4/51463.jpg?s=548e8ef2df2f9256802267ddc6cb07e9"))), 9)
+    Recommendation(RecommendationEntry(5081, "https://myanimelist.net/anime/5081/Bakemonogatari", "Bakemonogatari",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/11/75274.jpg?s=3bb5c42c0803621dde09c52f5c4d4249")))), 16),
+    Recommendation(RecommendationEntry(28621, "https://myanimelist.net/anime/28621/Subete_ga_F_ni_Naru", "Subete ga F ni Naru",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/76071.jpg?s=fdc6902408ec1ded27127502ae9f0863")))), 10),
+    Recommendation(RecommendationEntry(16592, "https://myanimelist.net/anime/16592/Danganronpa__Kibou_no_Gakuen_to_Zetsubou_no_Koukousei_The_Animation", "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/4/51463.jpg?s=548e8ef2df2f9256802267ddc6cb07e9")))), 9)
   )
 
   val testRelations: Seq[Relation] = Seq(
@@ -559,6 +587,17 @@ object JikanServiceSpec {
     Score(1, 47, 0.6),  Score(2, 23, 0.3),  Score(3, 32, 0.4),  Score(4, 92, 1.1),  Score(5, 246, 3.0),
     Score(6, 659, 7.9),  Score(7, 1848, 22.2),  Score(8, 2401, 28.8),  Score(9, 1539, 18.5),  Score(10, 1448, 17.4)
   ))
+
+  val testNewsList: Seq[AnimeNews] = Seq(
+    AnimeNews("PV Collection for Mar 20 - 26", "https://myanimelist.net/news/50124208", OffsetDateTime.parse("2017-03-26T15:27:00+00:00").toInstant,
+      "Sakana-san", Images(JpgImage(None)), "Here is a collection of promotional videos (PVs), TV ads (CMs), and trailers for the last week. This thread excludes videos that have already been featured in an art..."),
+    AnimeNews("Shaft to Produce 'Kubikiri Cycle: Aoiro Savant to Zaregototsukai' OVA Series", "https://myanimelist.net/news/47421641", OffsetDateTime.parse("2016-08-19T18:36:00+00:00").toInstant,
+      "Snow", Images(JpgImage(Some("https://cdn.myanimelist.net/s/common/uploaded_files/1471656889-75d53422b09f23be6f6093cdf563224b.jpeg?s=da0d5000f953ebb3ce2940cf3594aade"))),
+      "The official website for Isin Nisio's and Take's Zaregoto Series has announced that the upcoming OVA series will be produced by studio Shaft and consist of..."),
+    AnimeNews("Anime Project of 'Zaregoto' Light Novel Series Announced", "https://myanimelist.net/news/45895386", OffsetDateTime.parse("2016-05-05T08:39:00+00:00").toInstant,
+      "Stark700", Images(JpgImage(Some("https://cdn.myanimelist.net/s/common/uploaded_files/1462462489-94ca66a78c9921eba68cc11037c3d793.jpeg?s=d9d2cadb09bcba288e01c556cb9824b9"))),
+      "A special page on author NisiOisiN's official website has announced an anime project of the Zaregoto light novel series. Zaregoto was originally published betwe...")
+  )
 
   val testAnimeSearchJsonStr: String =
     """
@@ -3022,4 +3061,63 @@ object JikanServiceSpec {
       |{"score":7,"votes":1848,"percentage":22.2},{"score":8,"votes":2401,"percentage":28.8},
       |{"score":9,"votes":1539,"percentage":18.5},{"score":10,"votes":1448,"percentage":17.4}]}}
       |""".stripMargin)
+
+  val testAnimeNewsJson: JsValue = Json.parse(
+    """{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": false
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": 50124208,
+      |      "url": "https://myanimelist.net/news/50124208",
+      |      "title": "PV Collection for Mar 20 - 26",
+      |      "date": "2017-03-26T15:27:00+00:00",
+      |      "author_username": "Sakana-san",
+      |      "author_url": "https://myanimelist.net/profile/Sakana-san",
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1602204",
+      |      "images": {
+      |        "jpg": {
+      |          "image_url": null
+      |        }
+      |      },
+      |      "comments": 12,
+      |      "excerpt": "Here is a collection of promotional videos (PVs), TV ads (CMs), and trailers for the last week. This thread excludes videos that have already been featured in an art..."
+      |    },
+      |    {
+      |      "mal_id": 47421641,
+      |      "url": "https://myanimelist.net/news/47421641",
+      |      "title": "Shaft to Produce 'Kubikiri Cycle: Aoiro Savant to Zaregototsukai' OVA Series",
+      |      "date": "2016-08-19T18:36:00+00:00",
+      |      "author_username": "Snow",
+      |      "author_url": "https://myanimelist.net/profile/Snow",
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1544639",
+      |      "images": {
+      |        "jpg": {
+      |          "image_url": "https://cdn.myanimelist.net/s/common/uploaded_files/1471656889-75d53422b09f23be6f6093cdf563224b.jpeg?s=da0d5000f953ebb3ce2940cf3594aade"
+      |        }
+      |      },
+      |      "comments": 28,
+      |      "excerpt": "The official website for Isin Nisio's and Take's Zaregoto Series has announced that the upcoming OVA series will be produced by studio Shaft and consist of..."
+      |    },
+      |    {
+      |      "mal_id": 45895386,
+      |      "url": "https://myanimelist.net/news/45895386",
+      |      "title": "Anime Project of 'Zaregoto' Light Novel Series Announced",
+      |      "date": "2016-05-05T08:39:00+00:00",
+      |      "author_username": "Stark700",
+      |      "author_url": "https://myanimelist.net/profile/Stark700",
+      |      "forum_url": "https://myanimelist.net/forum/?topicid=1507561",
+      |      "images": {
+      |        "jpg": {
+      |          "image_url": "https://cdn.myanimelist.net/s/common/uploaded_files/1462462489-94ca66a78c9921eba68cc11037c3d793.jpeg?s=d9d2cadb09bcba288e01c556cb9824b9"
+      |        }
+      |      },
+      |      "comments": 96,
+      |      "excerpt": "A special page on author NisiOisiN's official website has announced an anime project of the Zaregoto light novel series. Zaregoto was originally published betwe..."
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
 }

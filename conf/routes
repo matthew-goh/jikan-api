@@ -22,6 +22,7 @@ POST     /filterreviews/:id    controllers.ApplicationController.filterReviews(i
 GET     /anime/:id/recommendations    controllers.ApplicationController.getAnimeRecommendations(id: String)
 GET     /anime/:id/related    controllers.ApplicationController.getAnimeRelations(id: String)
 GET     /anime/:id/statistics    controllers.ApplicationController.getAnimeStatistics(id: String)
+GET     /anime/:id/news    controllers.ApplicationController.getAnimeNews(id: String)
 
 GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.ApplicationController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
 POST     /sortsaved    controllers.ApplicationController.sortSavedList()

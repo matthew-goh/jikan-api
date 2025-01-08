@@ -34,7 +34,7 @@
       @for(pairing <- pairings) {
         <li class="li-with-box">
           <div class="char-img-container">
-            @if(pairing.entry.head.images.jpg.image_url.contains("/images/manga/")) {
+            @if(pairing.entry.head.url.value.contains("/manga/")) {
               <p><b>@pairing.entry.head.title</b> (Manga)</p>
             } else {
               <p><a href="@routes.ApplicationController.getAnimeById(pairing.entry.head.mal_id.toString)" target="_blank"> <b>@pairing.entry.head.title</b> </a></p>
@@ -42,11 +42,11 @@
             <img class="char-img" src="@pairing.entry.head.images.jpg.image_url" alt="Anime image">
           </div>
           <div class="pairing-info-container">
-            <p><b>Added on:</b> @{pairing.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p>
+            <p><b>Posted on:</b> @{pairing.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p>
             <p>@pairing.content</p>
           </div>
           <div class="char-img-container">
-            @if(pairing.entry.last.images.jpg.image_url.contains("/images/manga/")) {
+            @if(pairing.entry.last.url.value.contains("/manga/")) {
               <p><b>@pairing.entry.last.title</b> (Manga)</p>
             } else {
               <p><a href="@routes.ApplicationController.getAnimeById(pairing.entry.last.mal_id.toString)" target="_blank"> <b>@pairing.entry.last.title</b> </a></p>

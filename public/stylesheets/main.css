@@ -282,6 +282,19 @@ label {
     padding: 10px;
 }
 
+/* News */
+.news-img-container {
+    width: 15%;
+    padding: 10px;
+}
+.news-info-container {
+    width: 85%;
+    padding: 10px;
+}
+.news-img {
+    max-height: 200px;
+}
+
 /* Charts */
 .bar-chart {
     width: 90%;

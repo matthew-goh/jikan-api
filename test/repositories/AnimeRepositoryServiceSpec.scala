@@ -212,7 +212,7 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
   }
 
   "refresh()" should {
-    val testImage: Images = Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/81588.jpg"))
+    val testImage: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/81588.jpg")))
     val kindaichiDataRefreshed: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
       AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
       Some("R - 17+ (violence & profanity)"),Some(7.97),Some(8317),

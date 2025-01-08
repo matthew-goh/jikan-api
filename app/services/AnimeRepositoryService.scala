@@ -28,7 +28,7 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
     // titleEnglish can be missing
     val titleEnglish: Option[String] = reqBody.flatMap(_.get("titleEnglish").flatMap(_.headOption))
 
-    val reqBodyValuesEither: Either[APIError.BadAPIResponse, SavedAnime] = for {
+    val reqBodyValuesEither: Either[APIError, SavedAnime] = for {
       // if any required value is missing, the result is Left(missingError)
       idStr <- reqBody.flatMap(_.get("id").flatMap(_.headOption)).toRight(missingError)
       title <- reqBody.flatMap(_.get("title").flatMap(_.headOption)).toRight(missingError)
@@ -73,7 +73,7 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
       case Some(score) => Some(score)
     }
 
-    val reqBodyValuesEither: Either[APIError.BadAPIResponse, SavedAnime] = for {
+    val reqBodyValuesEither: Either[APIError, SavedAnime] = for {
       // if any required value is missing, the result is Left(missingError)
       idStr <- reqBody.flatMap(_.get("id").flatMap(_.headOption)).toRight(missingError)
       title <- reqBody.flatMap(_.get("title").flatMap(_.headOption)).toRight(missingError)
@@ -110,7 +110,7 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
     val missingError = APIError.BadAPIResponse(400, "Missing required value")
     val invalidTypeError = APIError.BadAPIResponse(400, "Invalid data type")
 
-    val reqBodyValuesEither: Either[APIError.BadAPIResponse, SavedAnime] = for {
+    val reqBodyValuesEither: Either[APIError, SavedAnime] = for {
       // if any required value is missing, the result is Left(missingError)
       savedAtStr <- reqBody.flatMap(_.get("savedAt").flatMap(_.headOption)).toRight(missingError)
       epsWatchedStr <- reqBody.flatMap(_.get("epsWatched").flatMap(_.headOption)).toRight(missingError)

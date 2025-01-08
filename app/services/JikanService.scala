@@ -5,13 +5,13 @@ import connectors.JikanConnector
 import models._
 import models.characters._
 import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
+import models.news.NewsResult
 import models.recommendations.{RecommendationsResult, UserPairingResult}
 import models.relations.{RelationsResult, ThemesResult}
 import models.reviews.ReviewsResult
 import models.statistics.StatisticsResult
 import models.userfavourites.UserFavouritesResult
 
-import java.util.Base64
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
@@ -84,5 +84,9 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getAnimeStatistics(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, StatisticsResult] = {
     connector.get[StatisticsResult](s"https://api.jikan.moe/v4/anime/$id/statistics")
+  }
+
+  def getAnimeNews(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, NewsResult] = {
+    connector.get[NewsResult](s"https://api.jikan.moe/v4/anime/$id/news")
   }
 }

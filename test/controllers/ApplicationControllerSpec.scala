@@ -6,6 +6,7 @@ import eu.timepit.refined.auto._
 import models._
 import models.characters._
 import models.episodes._
+import models.news.NewsResult
 import models.recommendations._
 import models.relations._
 import models.reviews.ReviewsResult
@@ -47,7 +48,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   private lazy val kubikiriUpdated: SavedAnime = SavedAnime(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), None,
     Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 4, None, "Closed circle mystery on an island")
 
-  private lazy val testImage: Images = Images(JpgImage("https://cdn.myanimelist.net/images/anime/12/81588.jpg"))
+  private lazy val testImage: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/81588.jpg")))
   private lazy val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), "Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440),
     Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
@@ -422,7 +423,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent should include ("06 May 2015")
       searchResultContent should (include ("K-On!!") and include ("Aikatsu!"))
 
-      countOccurrences(searchResultContent, "Added on:") shouldBe 3
+      countOccurrences(searchResultContent, "Posted on:") shouldBe 3
       countOccurrences(searchResultContent, "(Manga)") shouldBe 2 // 1 pairing
     }
 
@@ -453,7 +454,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "return an InternalServerError if an entry in the API result does not contain a pair" in {
       val badPairing: Pairing = Pairing( // only 1 RecommendationEntry
-        Seq(RecommendationEntry(240, "Genshiken", Images(JpgImage("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994")))),
+        Seq(RecommendationEntry(240, "https://myanimelist.net/anime/240/Genshiken", "Genshiken", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994"))))),
         "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
         OffsetDateTime.parse("2015-05-06T00:00:00+00:00").toInstant
       )
@@ -709,7 +710,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "display a character's profile with no biography, anime appearances or voice actor info" in {
       val characterInNoAnime: CharacterProfile = CharacterProfile(192285,
-        Images(JpgImage("https://cdn.myanimelist.net/images/characters/11/516963.jpg")),
+        Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg"))),
         "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq(), Seq())
 
       (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
@@ -1030,6 +1031,57 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         .once()
 
       val searchResult: Future[Result] = TestApplicationController.getAnimeRecommendations("abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getAnimeNews()" should {
+    "list anime news entries" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeNews(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(NewsResult(JikanServiceSpec.testNewsList)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeNews("33263")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kubikiri Cycle: Aoiro Savant to Zaregotozukai")
+      searchResultContent should include ("PV Collection for Mar 20 - 26")
+      searchResultContent should include ("19 Aug 2016 18:36")
+      searchResultContent should include ("Stark700")
+
+      countOccurrences(searchResultContent, "View full article on MAL") shouldBe 3
+    }
+
+    "show 'No news available' if there are no results" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(kubikiriData)))
+        .once()
+
+      (mockJikanService.getAnimeNews(_: String)(_: ExecutionContext))
+        .expects("33263", *)
+        .returning(EitherT.rightT(NewsResult(Seq())))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeNews("33263")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No news available")
+    }
+
+    "return a NotFound if the anime ID is not found" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("abc", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeNews("abc")(testRequest.fakeRequest)
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
