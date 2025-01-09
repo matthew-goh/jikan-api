@@ -97,7 +97,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def getUserFavouriteAnime(username: String, orderBy: String = "title", sortOrder: String = "asc"): Action[AnyContent] = Action.async { implicit request =>
+  def getUserFavouriteAnime(username: String, orderBy: String, sortOrder: String): Action[AnyContent] = Action.async { implicit request =>
     val orderByTry: Try[FavouritesOrders.Value] = Try(FavouritesOrders.withName(orderBy))
     val sortOrderTry: Try[SortOrders.Value] = Try(SortOrders.withName(sortOrder))
     (orderByTry, sortOrderTry) match {
@@ -145,7 +145,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def getUserRecommendedPairings(username: String, page: String = "1"): Action[AnyContent] = Action.async { implicit request =>
+  def getUserRecommendedPairings(username: String, page: String): Action[AnyContent] = Action.async { implicit request =>
     service.getUserRecommendations(username, page).value.map{
       case Right(pairingsResult) => {
         if (pairingsResult.data.exists(pairing => pairing.entry.length != 2))

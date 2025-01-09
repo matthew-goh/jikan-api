@@ -35,6 +35,20 @@
           @if(pagination.has_next_page){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 1).toString)"> Next </a> }
         </p>
         <p>Episodes @NumberFormat.getInstance().format(episodeList.head.mal_id) - @NumberFormat.getInstance().format(episodeList.last.mal_id) of @anime.episodes.getOrElse("TBC")</p>
+        @if(pagination.last_visible_page > 1) {
+          <p class="smaller-text">
+            Page:
+            @if(page > 4){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, "1")">First</a> ... }
+            @if(page > 3){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page - 3).toString)">@{page - 3}</a> - }
+            @if(page > 2){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page - 2).toString)">@{page - 2}</a> - }
+            @if(page > 1){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page - 1).toString)">@{page - 1}</a> - }
+            <b>@page</b>
+            @if(pagination.last_visible_page - page > 0){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 1).toString)">@{page + 1}</a> }
+            @if(pagination.last_visible_page - page > 1){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 2).toString)">@{page + 2}</a> }
+            @if(pagination.last_visible_page - page > 2){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 3).toString)">@{page + 3}</a> }
+            @if(pagination.last_visible_page - page > 3){ ... <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, pagination.last_visible_page.toString)">Last</a> }
+          </p>
+        }
       </div>
       <ul class="ul-with-boxes">
       @for(episode <- episodeList) {
@@ -65,6 +79,20 @@
           @if(pagination.has_next_page){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 1).toString)"> Next </a> }
         </p>
         <p>Episodes @NumberFormat.getInstance().format(episodeList.head.mal_id) - @NumberFormat.getInstance().format(episodeList.last.mal_id) of @anime.episodes.getOrElse("TBC")</p>
+        @if(pagination.last_visible_page > 1) {
+          <p class="smaller-text">
+            Page:
+            @if(page > 4){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, "1")">First</a> ... }
+            @if(page > 3){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page - 3).toString)">@{page - 3}</a> - }
+            @if(page > 2){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page - 2).toString)">@{page - 2}</a> - }
+            @if(page > 1){ <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page - 1).toString)">@{page - 1}</a> - }
+            <b>@page</b>
+            @if(pagination.last_visible_page - page > 0){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 1).toString)">@{page + 1}</a> }
+            @if(pagination.last_visible_page - page > 1){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 2).toString)">@{page + 2}</a> }
+            @if(pagination.last_visible_page - page > 2){ - <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, (page + 3).toString)">@{page + 3}</a> }
+            @if(pagination.last_visible_page - page > 3){ ... <a href="@routes.ApplicationController.getEpisodeList(anime.mal_id.toString, pagination.last_visible_page.toString)">Last</a> }
+          </p>
+        }
       </div>
     }
   </div>

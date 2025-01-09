@@ -60,6 +60,20 @@
         </p>
         <p>Results @NumberFormat.getInstance().format((pagination.current_page-1) * pagination.items.per_page + 1) - @NumberFormat.getInstance().format((pagination.current_page-1) * pagination.items.per_page + pagination.items.count)
           of @NumberFormat.getInstance().format(pagination.items.total)</p>
+        @if(pagination.last_visible_page > 1) {
+          <p class="smaller-text">
+            Page:
+            @if(pagination.current_page > 4){ <a href="@routes.ApplicationController.getAnimeResults(search, "1", queryExt)">First</a> ... }
+            @if(pagination.current_page > 3){ <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page - 3).toString, queryExt)">@{pagination.current_page - 3}</a> - }
+            @if(pagination.current_page > 2){ <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page - 2).toString, queryExt)">@{pagination.current_page - 2}</a> - }
+            @if(pagination.current_page > 1){ <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page - 1).toString, queryExt)">@{pagination.current_page - 1}</a> - }
+            <b>@pagination.current_page</b>
+            @if(pagination.last_visible_page - pagination.current_page > 0){ - <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page + 1).toString, queryExt)">@{pagination.current_page + 1}</a> }
+            @if(pagination.last_visible_page - pagination.current_page > 1){ - <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page + 2).toString, queryExt)">@{pagination.current_page + 2}</a> }
+            @if(pagination.last_visible_page - pagination.current_page > 2){ - <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page + 3).toString, queryExt)">@{pagination.current_page + 3}</a> }
+            @if(pagination.last_visible_page - pagination.current_page > 3){ ... <a href="@routes.ApplicationController.getAnimeResults(search, pagination.last_visible_page.toString, queryExt)">Last</a> }
+          </p>
+        }
       </div>
       <ul class="ul-with-boxes">
       @for(anime <- animeResults) {
@@ -119,6 +133,20 @@
         </p>
         <p>Results @NumberFormat.getInstance().format((pagination.current_page-1) * pagination.items.per_page + 1) - @NumberFormat.getInstance().format((pagination.current_page-1) * pagination.items.per_page + pagination.items.count)
           of @NumberFormat.getInstance().format(pagination.items.total)</p>
+        @if(pagination.last_visible_page > 1) {
+          <p class="smaller-text">
+            Page:
+            @if(pagination.current_page > 4){ <a href="@routes.ApplicationController.getAnimeResults(search, "1", queryExt)">First</a> ... }
+            @if(pagination.current_page > 3){ <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page - 3).toString, queryExt)">@{pagination.current_page - 3}</a> - }
+            @if(pagination.current_page > 2){ <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page - 2).toString, queryExt)">@{pagination.current_page - 2}</a> - }
+            @if(pagination.current_page > 1){ <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page - 1).toString, queryExt)">@{pagination.current_page - 1}</a> - }
+            <b>@pagination.current_page</b>
+            @if(pagination.last_visible_page - pagination.current_page > 0){ - <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page + 1).toString, queryExt)">@{pagination.current_page + 1}</a> }
+            @if(pagination.last_visible_page - pagination.current_page > 1){ - <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page + 2).toString, queryExt)">@{pagination.current_page + 2}</a> }
+            @if(pagination.last_visible_page - pagination.current_page > 2){ - <a href="@routes.ApplicationController.getAnimeResults(search, (pagination.current_page + 3).toString, queryExt)">@{pagination.current_page + 3}</a> }
+            @if(pagination.last_visible_page - pagination.current_page > 3){ ... <a href="@routes.ApplicationController.getAnimeResults(search, pagination.last_visible_page.toString, queryExt)">Last</a> }
+          </p>
+        }
       </div>
     }
   </div>
