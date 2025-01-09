@@ -13,6 +13,7 @@ import models.relations._
 import models.reviews._
 import models.statistics._
 import models.userfavourites._
+import models.userprofile._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite

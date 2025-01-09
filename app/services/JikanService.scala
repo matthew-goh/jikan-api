@@ -11,6 +11,7 @@ import models.relations.{RelationsResult, ThemesResult}
 import models.reviews.ReviewsResult
 import models.statistics.StatisticsResult
 import models.userfavourites.UserFavouritesResult
+import models.userprofile.UserProfileResult
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}

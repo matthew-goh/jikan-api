@@ -12,6 +12,7 @@ import models.relations._
 import models.reviews.ReviewsResult
 import models.statistics._
 import models.userfavourites._
+import models.userprofile.UserProfileResult
 import org.scalamock.scalatest.MockFactory
 import play.api.test.FakeRequest
 import play.api.libs.json._
