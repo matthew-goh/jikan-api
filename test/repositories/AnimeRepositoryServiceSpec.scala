@@ -7,7 +7,7 @@ import models._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import services.{AnimeRepositoryService, JikanServiceSpec}
+import services.AnimeRepositoryService
 
 import java.time.{Instant, OffsetDateTime}
 import scala.concurrent.{ExecutionContext, Future}

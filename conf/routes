@@ -2,17 +2,20 @@
 # This file defines all application routes (Higher priority routes first)
 GET     /                           controllers.HomeController.index()
 
+# Anime search
 GET     /searchanime/:search/page=:page/*queryExt    controllers.ApplicationController.getAnimeResults(search: String, page: String, queryExt: String)
 POST     /searchanime    controllers.ApplicationController.searchAnime()
 GET     /anime/:id    controllers.ApplicationController.getAnimeById(id: String)
 
-GET     /users/:username    controllers.ApplicationController.getUserProfile(username: String)
-POST     /searchuser    controllers.ApplicationController.searchUser()
-GET     /users/:username/favourites/anime/orderby=:orderBy/order=:sortOrder    controllers.ApplicationController.getUserFavouriteAnime(username: String, orderBy: String, sortOrder: String)
-POST     /sortfavourites    controllers.ApplicationController.sortFavourites()
-GET     /users/:username/favourites/characters    controllers.ApplicationController.getUserFavouriteCharacters(username: String)
-GET     /users/:username/pairings/page=:page    controllers.ApplicationController.getUserRecommendedPairings(username: String, page: String)
+# User profiles
+GET     /users/:username    controllers.UserProfileController.getUserProfile(username: String)
+POST     /searchuser    controllers.UserProfileController.searchUser()
+GET     /users/:username/favourites/anime/orderby=:orderBy/order=:sortOrder    controllers.UserProfileController.getUserFavouriteAnime(username: String, orderBy: String, sortOrder: String)
+POST     /sortfavourites    controllers.UserProfileController.sortFavourites()
+GET     /users/:username/favourites/characters    controllers.UserProfileController.getUserFavouriteCharacters(username: String)
+GET     /users/:username/pairings/page=:page    controllers.UserProfileController.getUserRecommendedPairings(username: String, page: String)
 
+# Anime extra info
 GET     /anime/:animeId/episodes/page=:page    controllers.ApplicationController.getEpisodeList(animeId: String, page: String)
 GET     /anime/:animeId/episodes/:episodeId    controllers.ApplicationController.getSingleEpisodeDetails(animeId: String, episodeId: String)
 GET     /anime/:animeId/characters    controllers.ApplicationController.getAnimeCharacters(animeId: String)
@@ -24,23 +27,24 @@ GET     /anime/:id/related    controllers.ApplicationController.getAnimeRelation
 GET     /anime/:id/statistics    controllers.ApplicationController.getAnimeStatistics(id: String)
 GET     /anime/:id/news    controllers.ApplicationController.getAnimeNews(id: String)
 
-GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.ApplicationController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
-POST     /sortsaved    controllers.ApplicationController.sortSavedList()
-GET     /saved/titlesearch/:title     controllers.ApplicationController.listSavedAnimeFromTitleSearch(title: String)
-POST     /saved/titlesearch    controllers.ApplicationController.searchSavedAnimeByTitle()
-GET     /saved/:id     controllers.ApplicationController.viewSavedAnime(id: String)
-POST     /saveanime     controllers.ApplicationController.saveAnime()
-POST     /refresh     controllers.ApplicationController.refreshSavedAnime()
-GET     /update/:id     controllers.ApplicationController.showUpdateForm(id: String)
-POST     /update/:id     controllers.ApplicationController.updateFormSubmit(id: String)
-POST     /unsave/:id     controllers.ApplicationController.unsaveAnime(id: String)
+# Saved anime
+GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.SavedAnimeController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
+POST     /sortsaved    controllers.SavedAnimeController.sortSavedList()
+GET     /saved/titlesearch/:title     controllers.SavedAnimeController.listSavedAnimeFromTitleSearch(title: String)
+POST     /saved/titlesearch    controllers.SavedAnimeController.searchSavedAnimeByTitle()
+GET     /saved/:id     controllers.SavedAnimeController.viewSavedAnime(id: String)
+POST     /saveanime     controllers.SavedAnimeController.saveAnime()
+POST     /refresh     controllers.SavedAnimeController.refreshSavedAnime()
+GET     /update/:id     controllers.SavedAnimeController.showUpdateForm(id: String)
+POST     /update/:id     controllers.SavedAnimeController.updateFormSubmit(id: String)
+POST     /unsave/:id     controllers.SavedAnimeController.unsaveAnime(id: String)
+GET     /test-only/deleteall     controllers.SavedAnimeController.deleteAll()
 
-GET     /test-only/deleteall     controllers.ApplicationController.deleteAll()
-GET     /update_old/:id     controllers.ApplicationController.showUpdateFormOld(id: String)
-POST     /update_old/:id     controllers.ApplicationController.updateFormSubmitOld(id: String)
+GET     /update_old/:id     controllers.SavedAnimeController.showUpdateFormOld(id: String)
+POST     /update_old/:id     controllers.SavedAnimeController.updateFormSubmitOld(id: String)
 
 # non-frontend
-POST     /api/create     controllers.ApplicationController.create()
+POST     /api/create     controllers.SavedAnimeController.create()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

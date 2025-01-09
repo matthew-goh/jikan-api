@@ -42,15 +42,15 @@
     </ul>
     <br>
 
-    <p><a class="image-text-link" href="@routes.ApplicationController.getUserFavouriteAnime(username, "title", "asc")">
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouriteAnime(username, "title", "asc")">
       <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
       See favourite anime
     </a></p>
-    <p><a class="image-text-link" href="@routes.ApplicationController.getUserFavouriteCharacters(username)">
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouriteCharacters(username)">
       <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
       See favourite characters
     </a></p>
-    <p><a class="image-text-link" href="@routes.ApplicationController.getUserRecommendedPairings(username, "1")">
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserRecommendedPairings(username, "1")">
       <img class="link-icon" src="@routes.Assets.versioned("images/pairing-icon.png")" alt="Pairing Icon">
       See recommended anime pairings
     </a></p>

@@ -12,7 +12,7 @@
       <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
       Back to Home
     </a></p>
-    <p><a class="image-text-link" href="@routes.ApplicationController.getUserProfile(username)">
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserProfile(username)">
       <img class="link-icon" src="@routes.Assets.versioned("images/profile-icon.png")" alt="Profile Icon">
       Back to User Profile
     </a></p>
@@ -20,7 +20,7 @@
 
   <div class="container mb-5">
     <h2>@username's Favourite Anime</h2>
-    @form(action = routes.ApplicationController.sortFavourites()) {
+    @form(action = routes.UserProfileController.sortFavourites()) {
       @CSRF.formField
       <div class="form-div">
         <h3>Sort favourites:</h3>

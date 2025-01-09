@@ -12,7 +12,7 @@
       <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
       Back to Home
     </a></p>
-    <p><a class="image-text-link" href="@routes.ApplicationController.getUserProfile(username)">
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserProfile(username)">
       <img class="link-icon" src="@routes.Assets.versioned("images/profile-icon.png")" alt="Profile Icon">
       Back to User Profile
     </a></p>
@@ -25,23 +25,23 @@
     } else {
       <div>
         <p>
-          @if(page > 1){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 1).toString)"> Previous </a> - }
+          @if(page > 1){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 1).toString)"> Previous </a> - }
           <b>Page @page of @pagination.last_visible_page</b>
-          @if(pagination.has_next_page){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 1).toString)"> Next </a> }
+          @if(pagination.has_next_page){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 1).toString)"> Next </a> }
         </p>
         @* User with many recommended pairings: Stark700 *@
         @if(pagination.last_visible_page > 1) {
           <p class="smaller-text">
             Page:
-            @if(page > 4){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, "1")">First</a> ... }
-            @if(page > 3){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 3).toString)">@{page - 3}</a> - }
-            @if(page > 2){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 2).toString)">@{page - 2}</a> - }
-            @if(page > 1){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 1).toString)">@{page - 1}</a> - }
+            @if(page > 4){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, "1")">First</a> ... }
+            @if(page > 3){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 3).toString)">@{page - 3}</a> - }
+            @if(page > 2){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 2).toString)">@{page - 2}</a> - }
+            @if(page > 1){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 1).toString)">@{page - 1}</a> - }
             <b>@page</b>
-            @if(pagination.last_visible_page - page > 0){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 1).toString)">@{page + 1}</a> }
-            @if(pagination.last_visible_page - page > 1){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 2).toString)">@{page + 2}</a> }
-            @if(pagination.last_visible_page - page > 2){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 3).toString)">@{page + 3}</a> }
-            @if(pagination.last_visible_page - page > 3){ ... <a href="@routes.ApplicationController.getUserRecommendedPairings(username, pagination.last_visible_page.toString)">Last</a> }
+            @if(pagination.last_visible_page - page > 0){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 1).toString)">@{page + 1}</a> }
+            @if(pagination.last_visible_page - page > 1){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 2).toString)">@{page + 2}</a> }
+            @if(pagination.last_visible_page - page > 2){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 3).toString)">@{page + 3}</a> }
+            @if(pagination.last_visible_page - page > 3){ ... <a href="@routes.UserProfileController.getUserRecommendedPairings(username, pagination.last_visible_page.toString)">Last</a> }
           </p>
         }
       </div>
@@ -74,22 +74,22 @@
       <br>
       <div>
         <p>
-          @if(page > 1){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 1).toString)"> Previous </a> - }
+          @if(page > 1){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 1).toString)"> Previous </a> - }
           <b>Page @page of @pagination.last_visible_page</b>
-          @if(pagination.has_next_page){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 1).toString)"> Next </a> }
+          @if(pagination.has_next_page){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 1).toString)"> Next </a> }
         </p>
         @if(pagination.last_visible_page > 1) {
           <p class="smaller-text">
             Page:
-            @if(page > 4){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, "1")">First</a> ... }
-            @if(page > 3){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 3).toString)">@{page - 3}</a> - }
-            @if(page > 2){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 2).toString)">@{page - 2}</a> - }
-            @if(page > 1){ <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page - 1).toString)">@{page - 1}</a> - }
+            @if(page > 4){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, "1")">First</a> ... }
+            @if(page > 3){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 3).toString)">@{page - 3}</a> - }
+            @if(page > 2){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 2).toString)">@{page - 2}</a> - }
+            @if(page > 1){ <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page - 1).toString)">@{page - 1}</a> - }
             <b>@page</b>
-            @if(pagination.last_visible_page - page > 0){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 1).toString)">@{page + 1}</a> }
-            @if(pagination.last_visible_page - page > 1){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 2).toString)">@{page + 2}</a> }
-            @if(pagination.last_visible_page - page > 2){ - <a href="@routes.ApplicationController.getUserRecommendedPairings(username, (page + 3).toString)">@{page + 3}</a> }
-            @if(pagination.last_visible_page - page > 3){ ... <a href="@routes.ApplicationController.getUserRecommendedPairings(username, pagination.last_visible_page.toString)">Last</a> }
+            @if(pagination.last_visible_page - page > 0){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 1).toString)">@{page + 1}</a> }
+            @if(pagination.last_visible_page - page > 1){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 2).toString)">@{page + 2}</a> }
+            @if(pagination.last_visible_page - page > 2){ - <a href="@routes.UserProfileController.getUserRecommendedPairings(username, (page + 3).toString)">@{page + 3}</a> }
+            @if(pagination.last_visible_page - page > 3){ ... <a href="@routes.UserProfileController.getUserRecommendedPairings(username, pagination.last_visible_page.toString)">Last</a> }
           </p>
         }
       </div>

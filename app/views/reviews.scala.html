@@ -52,7 +52,7 @@
         <li class="li-with-box">
           <div class="text-container-full">
             <p>
-              <b>Review by:</b> <a href="@routes.ApplicationController.getUserProfile(review.user.username)" target="_blank">@review.user.username</a> on
+              <b>Review by:</b> <a href="@routes.UserProfileController.getUserProfile(review.user.username)" target="_blank">@review.user.username</a> on
                 @{review.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}
               <br><b>Tags:</b> @{if(review.tags.nonEmpty) review.tags.mkString(", ") else "None"}
               @if(review.is_preliminary){ <br><span class="info">This review is preliminary.</span> }

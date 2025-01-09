@@ -10,7 +10,7 @@
 
   <div class="container mb-5">
     <h3>Search for a MAL User</h3>
-    @form(action = routes.ApplicationController.searchUser()) {
+    @form(action = routes.UserProfileController.searchUser()) {
       @CSRF.formField
       <div>
         <input type="text" name="username" placeholder="Enter username" size="30" required>
@@ -59,11 +59,11 @@
 
   <div class="container mb-5">
     <h3>Saved Anime</h3>
-    <p><a href="@routes.ApplicationController.listSavedAnime(compStatus = "all", orderBy = "saved_at", sortOrder = "none")">
+    <p><a href="@routes.SavedAnimeController.listSavedAnime(compStatus = "all", orderBy = "saved_at", sortOrder = "none")">
       Show all saved anime
     </a></p>
 
-    @form(action = routes.ApplicationController.searchSavedAnimeByTitle()) {
+    @form(action = routes.SavedAnimeController.searchSavedAnimeByTitle()) {
       @CSRF.formField
       <div>
         <b>Search saved anime by title:</b><br>

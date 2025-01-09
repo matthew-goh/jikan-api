@@ -37,7 +37,7 @@
             <p>@news.excerpt</p>
             <p><a href="@news.url" target="_blank">View full article on MAL</a></p>
             <p class="smaller-text">Posted by
-              <a href="@routes.ApplicationController.getUserProfile(news.author_username)" target="_blank">@news.author_username</a>
+              <a href="@routes.UserProfileController.getUserProfile(news.author_username)" target="_blank">@news.author_username</a>
               on @{news.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}
             </p>
           </div>

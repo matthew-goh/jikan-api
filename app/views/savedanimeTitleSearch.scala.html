@@ -15,7 +15,7 @@
 
   <div class="container mb-5">
     <h2>Saved Anime: Search by Title</h2>
-    @form(action = routes.ApplicationController.searchSavedAnimeByTitle()) {
+    @form(action = routes.SavedAnimeController.searchSavedAnimeByTitle()) {
       @CSRF.formField
       <div class="form-div">
         <h3>Modify Search:
@@ -34,7 +34,7 @@
       @for(anime <- animeList) {
         <li class="li-with-box">
           <div class="text-container">
-            <p><a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
+            <p><a href="@routes.SavedAnimeController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
               @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
             </p>
           </div>

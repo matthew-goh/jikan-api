@@ -15,7 +15,7 @@
 
   <div class="container mb-5">
     <h2>Saved Anime</h2>
-    @form(action = routes.ApplicationController.sortSavedList()) {
+    @form(action = routes.SavedAnimeController.sortSavedList()) {
       @CSRF.formField
       <div class="form-div">
         Completion status:
@@ -50,10 +50,10 @@
       @for(anime <- animeList) {
         <li class="li-with-box">
           <div class="text-container">
-            <p><a href="@routes.ApplicationController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
+            <p><a href="@routes.SavedAnimeController.viewSavedAnime(anime.MALId.toString)" target="_blank"><b>@anime.title</b></a>
               @if(anime.titleEnglish.nonEmpty){ <br><i>@anime.titleEnglish</i> }
             </p>
-            <form action="@routes.ApplicationController.unsaveAnime(anime.MALId.toString)" method="POST" class="button-form">
+            <form action="@routes.SavedAnimeController.unsaveAnime(anime.MALId.toString)" method="POST" class="button-form">
               @CSRF.formField
             <input type="hidden" name="url" value="@request.uri">
             <button type="submit">Unsave</button>

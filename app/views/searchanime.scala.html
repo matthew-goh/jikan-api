@@ -85,7 +85,7 @@
             @if(idsInDatabase.contains(anime.mal_id)){
               <p class="button-box"> Saved </p>
             } else {
-              <form action="@routes.ApplicationController.saveAnime()" method="POST" class="button-form">
+              <form action="@routes.SavedAnimeController.saveAnime()" method="POST" class="button-form">
                 @CSRF.formField
                 <input type="hidden" name="url" value="@request.uri">
                 <input type="hidden" name="id" value="@anime.mal_id">

@@ -7,7 +7,7 @@
         <h2>Update saved anime:</h2>
         <h3>@savedAnimeForm("title").value</h3>
 
-        @helper.form(action = routes.ApplicationController.updateFormSubmit(id.toString)) {
+        @helper.form(action = routes.SavedAnimeController.updateFormSubmit(id.toString)) {
             @helper.CSRF.formField
             <input type="hidden" name="MALId" value="@savedAnimeForm("MALId").value">
             <input type="hidden" name="title" value="@savedAnimeForm("title").value">
@@ -39,7 +39,7 @@
             <input class="button-link" type="submit" value="Submit">
         }
         <br>
-        <p><a class="image-text-link" href="@routes.ApplicationController.viewSavedAnime(id.toString)">
+        <p><a class="image-text-link" href="@routes.SavedAnimeController.viewSavedAnime(id.toString)">
             <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
             Back to Anime Details
         </a></p>
