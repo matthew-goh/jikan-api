@@ -104,7 +104,7 @@ class AnimeRepositoryServiceSpec extends BaseSpec with MockFactory with ScalaFut
     }
   }
 
-  "update() (version called by frontend)" should {
+  "update() (version used by form without binding)" should {
     "return an UpdateResult" in {
       val reqBody = Some(Map(
         "id" -> List("33263"),

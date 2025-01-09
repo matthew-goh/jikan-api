@@ -410,12 +410,12 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def showUpdateForm(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def showUpdateFormOld(id: String): Action[AnyContent] = Action.async { implicit request =>
     val idTry: Try[Int] = Try(id.toInt)
     idTry match {
       case Success(id) => {
         repoService.read(id).map {
-          case Right(anime) => Ok(views.html.updatesavedanime(anime))
+          case Right(anime) => Ok(views.html.updatesavedanime_old(anime))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
       }
@@ -423,12 +423,50 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
     }
   }
 
-  def updateFormSubmit(id: String): Action[AnyContent] =  Action.async { implicit request =>
+  def updateFormSubmitOld(id: String): Action[AnyContent] = Action.async { implicit request =>
     // accessed via a POST route, so not possible to call with an invalid ID via URL
     accessToken()
     repoService.update(request.body.asFormUrlEncoded).map{
       case Right(_) => Ok(views.html.confirmation("Anime details updated!", Some(s"/saved/$id")))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def showUpdateForm(id: String): Action[AnyContent] = Action.async { implicit request =>
+    val idTry: Try[Int] = Try(id.toInt)
+    idTry match {
+      case Success(id) => {
+        repoService.read(id).map {
+          case Right(anime) => {
+            val formWithDetails = SavedAnime.savedAnimeForm.fill(anime)
+            Ok(views.html.updatesavedanime(id, formWithDetails))
+          }
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      }
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
+    }
+  }
+
+  def updateFormSubmit(id: String): Action[AnyContent] = Action.async { implicit request =>
+    accessToken()
+    val idTry: Try[Int] = Try(id.toInt)
+    idTry match {
+      case Success(id) => {
+        SavedAnime.savedAnimeForm.bindFromRequest().fold(
+          formWithErrors => {
+            println(formWithErrors.errors)
+            Future.successful(BadRequest(views.html.updatesavedanime(id, formWithErrors)))
+          },
+          formData => {
+            repoService.update(id, formData).map{
+              case Right(_) => Ok(views.html.confirmation("Anime details updated!", Some(s"/saved/$id")))
+              case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+            }
+          }
+        )
+      }
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
     }
   }
 

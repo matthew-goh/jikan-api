@@ -1422,14 +1422,15 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       status(createdResult) shouldBe CREATED
 
       val updateRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/update/33263").withFormUrlEncodedBody(
-        "id" -> "33263",
+        "MALId" -> "33263",
         "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
         "titleEnglish" -> "The Kubikiri Cycle",
         "type" -> "OVA",
         "numEpisodes" -> "8",
+        "year" -> "",
         "MALScore" -> "7.75",
         "savedAt" -> "2024-12-18T10:01:49Z",
-        "epsWatched" -> "4",
+        "episodesWatched" -> "4",
         "score" -> "",
         "notes" -> "Closed circle mystery on an island"
       )
@@ -1444,14 +1445,15 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "return a NotFound if the anime is not in the database" in {
       val updateRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/update/33263").withFormUrlEncodedBody(
-        "id" -> "33263",
+        "MALId" -> "33263",
         "title" -> "Kubikiri Cycle: Aoiro Savant to Zaregotozukai",
         "titleEnglish" -> "The Kubikiri Cycle",
         "type" -> "OVA",
         "numEpisodes" -> "8",
+        "year" -> "",
         "MALScore" -> "7.75",
         "savedAt" -> "2024-12-18T10:01:49Z",
-        "epsWatched" -> "4",
+        "episodesWatched" -> "4",
         "score" -> "",
         "notes" -> "Closed circle mystery on an island"
       )

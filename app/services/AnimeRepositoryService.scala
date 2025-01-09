@@ -55,10 +55,11 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
     repositoryTrait.titleSearch(search)
   }
 
-//  def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]] = {
-//    repositoryTrait.update(MALId, anime)
-//  }
-  // version called by frontend
+  // version used by SavedAnime Play form
+  def update(MALId: Int, anime: SavedAnime): Future[Either[APIError, result.UpdateResult]] = {
+    repositoryTrait.update(MALId, anime)
+  }
+  // version used by form without binding
   def update(reqBody: Option[Map[String, Seq[String]]]): Future[Either[APIError, result.UpdateResult]] = {
     val missingError = APIError.BadAPIResponse(400, "Missing required value")
     val invalidTypeError = APIError.BadAPIResponse(400, "Invalid data type")

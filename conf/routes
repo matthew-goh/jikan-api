@@ -36,6 +36,8 @@ POST     /update/:id     controllers.ApplicationController.updateFormSubmit(id: 
 POST     /unsave/:id     controllers.ApplicationController.unsaveAnime(id: String)
 
 GET     /test-only/deleteall     controllers.ApplicationController.deleteAll()
+GET     /update_old/:id     controllers.ApplicationController.showUpdateFormOld(id: String)
+POST     /update_old/:id     controllers.ApplicationController.updateFormSubmitOld(id: String)
 
 # non-frontend
 POST     /api/create     controllers.ApplicationController.create()
