@@ -3,7 +3,6 @@ package controllers
 import eu.timepit.refined.auto._
 import models._
 import models.relations.Relation
-import models.userfavourites.AnimeFavourite
 import play.api.libs.json._
 import play.api.mvc._
 import play.filters.csrf.CSRF

@@ -24,9 +24,6 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     component // comes from BaseSpecWithApplication
   )
 
-  override def beforeEach(): Unit = await(repository.deleteAll())
-  override def afterEach(): Unit = await(repository.deleteAll())
-
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)
   
