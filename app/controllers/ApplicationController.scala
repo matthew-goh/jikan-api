@@ -1,5 +1,6 @@
 package controllers
 
+import cats.data.EitherT
 import eu.timepit.refined.auto._
 import models._
 import models.relations.Relation
@@ -168,25 +169,21 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   }
 
   def getAnimeRelations(id: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getAnimeById(id).value.flatMap{
-      case Right(animeResult) =>
-        service.getThemeSongs(id).value.flatMap{
-          case Right(themesResult) =>
-            service.getRelatedAnime(id).value.map{
-              case Right(relations) => {
-                // filter away relation entries that are not anime
-                val animeRelations: Seq[Relation] = relations.data.map { relation =>
-                  Relation(relation.relation, relation.entry.filter(entry => entry.`type` == "anime"))
-                }.filter { relation =>
-                  relation.entry.nonEmpty
-                }
-                Ok(views.html.relations(animeResult.data, animeRelations, themesResult.data))
-              }
-              case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
-            }
-          case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
-        }
-      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    val result: EitherT[Future, APIError, Result] = for {
+      anime <- service.getAnimeById(id)
+      themes <- service.getThemeSongs(id)
+      relations <- service.getRelatedAnime(id)
+    } yield {
+      val animeRelations: Seq[Relation] = relations.data.map { relation =>
+        Relation(relation.relation, relation.entry.filter(entry => entry.`type` == "anime"))
+      }.filter(_.entry.nonEmpty)
+      Ok(views.html.relations(anime.data, animeRelations, themes.data))
+    }
+
+    result.value.map {
+      case Right(res) => res
+      case Left(error) => // use the error of the first service call that failed
+        Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 
