@@ -1,5 +1,6 @@
 package controllers
 
+import controllers.actions._
 import models._
 import play.api.libs.json._
 import play.api.mvc._
@@ -11,7 +12,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, service: JikanService, val controllerComponents: ControllerComponents)
+class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, service: JikanService,
+                                     urlActionBuilder: UrlActionBuilderImpl,
+                                     saveAnimeRefiner: SaveAnimeRefiner,
+                                     val controllerComponents: ControllerComponents)
                                     (implicit ec: ExecutionContext) extends BaseController with play.api.i18n.I18nSupport {
   // JikanService used in refreshSavedAnime
 
@@ -99,39 +103,45 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
 
   }
 
-  def saveAnime(): Action[AnyContent] = Action.async { implicit request =>
-    accessToken()
-    val sourceUrl: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("url").flatMap(_.headOption))
-    sourceUrl match {
-      case Some(url) => {
-        repoService.create(request.body.asFormUrlEncoded).map{
-          case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(url)))
-          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
-        }
-      }
-      case None => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+//  def saveAnime(): Action[AnyContent] = Action.async { implicit request =>
+//    accessToken()
+//    val sourceUrl: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("url").flatMap(_.headOption))
+//    sourceUrl match {
+//      case Some(url) => {
+//        repoService.create(request.body.asFormUrlEncoded).map{
+//          case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(url)))
+//          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+//        }
+//      }
+//      case None => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+//    }
+//  }
+
+  def saveAnime(): Action[AnyContent] = (urlActionBuilder andThen saveAnimeRefiner).async { implicit request =>
+    // now the "request" is the output of saveAnimeRefiner, which is a SaveAnimeRequest
+    repoService.create(request.animeToSave).map{
+      case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(request.sourceUrl)))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 
-  def refreshSavedAnime(): Action[AnyContent] = Action.async { implicit request =>
+  def refreshSavedAnime(): Action[AnyContent] = urlActionBuilder.async { implicit request =>
     accessToken()
     val reqBody: Option[Map[String, Seq[String]]] = request.body.asFormUrlEncoded
-    val sourceUrl: Option[String] = reqBody.flatMap(_.get("url").flatMap(_.headOption))
     val idTry: Try[Int] = Try(reqBody.flatMap(_.get("id").flatMap(_.headOption)).get.toInt)
-    (sourceUrl, idTry) match {
-      case (Some(url), Success(id)) => {
+    idTry match {
+      case Success(id) => {
         service.getAnimeById(id.toString).value.flatMap{
           case Right(animeResult) => {
             repoService.refresh(reqBody, animeResult.data).map{
-              case Right(_) => Ok(views.html.confirmation("Anime details refreshed!", Some(url)))
+              case Right(_) => Ok(views.html.confirmation("Anime details refreshed!", Some(request.sourceUrl)))
               case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
             }
           }
           case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
         }
       }
-      case(Some(_), Failure(_)) => Future.successful(BadRequest(views.html.unsuccessful("Invalid or missing anime ID")))
-      case (None, _) => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+      case _ => Future.successful(BadRequest(views.html.unsuccessful("Invalid or missing anime ID")))
     }
   }
 
@@ -180,7 +190,6 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
       case Success(id) => {
         SavedAnime.savedAnimeForm.bindFromRequest().fold(
           formWithErrors => {
-            println(formWithErrors.errors)
             Future.successful(BadRequest(views.html.updatesavedanime(id, formWithErrors)))
           },
           formData => {
@@ -203,8 +212,7 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
     idTry match {
       case Success(id) =>
         repoService.delete(id).map{
-          case Right(_) =>
-            Ok(views.html.confirmation("Anime removed from saved list", Some(sourceUrl)))
+          case Right(_) => Ok(views.html.confirmation("Anime removed from saved list", Some(sourceUrl)))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))

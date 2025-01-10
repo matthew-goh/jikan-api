@@ -16,9 +16,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory {
   val mockJikanService: JikanService = mock[JikanService]
+//  val mockSaveAnimeAction: SaveAnimeAction = mock[SaveAnimeAction]
   val TestSavedAnimeController = new SavedAnimeController(
     repoService,
     mockJikanService,
+    urlActionBuilder,
+    saveAnimeRefiner,
     component // comes from BaseSpecWithApplication
   )
 
@@ -41,6 +44,14 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     Some(7.75), Instant.parse("2024-12-18T10:01:49Z"), 4, None, "Closed circle mystery on an island")
 
   private lazy val testImage: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/81588.jpg")))
+  private lazy val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"), "OVA", Some(8), "Finished Airing",
+    AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440),
+    Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
+           |
+           |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
+           |
+           |[Written by MAL Rewrite]""".stripMargin),
+    List(Genre(8, "Drama"), Genre(7, "Mystery"), Genre(37, "Supernatural")), None, testImage)
 
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)
@@ -216,9 +227,29 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
         "numEpisodes" -> "8",
         "MALScore" -> "7.75"
       )
+//      val saveResult = route(app, saveRequest).get
       val saveResult: Future[Result] = TestSavedAnimeController.saveAnime()(saveRequest)
       status(saveResult) shouldBe OK
       contentAsString(saveResult) should include ("Anime saved!")
+//      (mockSaveAnimeAction.refine(_: Request[AnyContent]))
+//        .expects(saveRequest)
+//        .returning(Future.successful(Right(
+//          SaveAnimeRequest("/anime/33263", kubikiri)
+//        )))
+//        .once()
+//
+//      println("Hello 1")
+//      val saveResult: Future[Result] = TestSavedAnimeController.saveAnime()(saveRequest)
+//      println("Hello 2")
+//      status(saveResult) shouldBe OK
+//      contentAsString(saveResult) should include ("Anime saved!")
+
+      // Check that the anime is indeed saved
+      val indexResult: Future[Result] = TestSavedAnimeController.index()(FakeRequest())
+      status(indexResult) shouldBe OK
+      val savedAnime = contentAsJson(indexResult).as[Seq[SavedAnime]]
+      savedAnime.length shouldBe 1
+      savedAnime.head.MALId shouldBe 33263
     }
 
     "return an InternalServerError if the anime is already in the database" in {
@@ -236,6 +267,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
         "MALScore" -> "7.75"
       )
       val saveResult: Future[Result] = TestSavedAnimeController.saveAnime()(saveRequest)
+//      val saveResult = route(app, saveRequest).get
       status(saveResult) shouldBe INTERNAL_SERVER_ERROR
       contentAsString(saveResult) should include ("Bad response from upstream: Anime has already been saved")
     }
@@ -244,6 +276,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
       val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
         "id" -> "33263"
       )
+//      val saveResult = route(app, saveRequest).get
       val saveResult: Future[Result] = TestSavedAnimeController.saveAnime()(saveRequest)
       status(saveResult) shouldBe BAD_REQUEST
       contentAsString(saveResult) should include ("Failed to post source url")

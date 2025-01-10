@@ -31,6 +31,8 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   val TestSavedAnimeController = new SavedAnimeController(
     repoService,
     mockJikanService,
+    urlActionBuilder,
+    saveAnimeRefiner,
     component // comes from BaseSpecWithApplication
   )
 
