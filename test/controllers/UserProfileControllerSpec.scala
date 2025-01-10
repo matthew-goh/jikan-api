@@ -28,7 +28,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     fullContent.sliding(target.length).count(window => window == target)
   
   
-  "ApplicationController .getUserProfile()" should {
+  "UserProfileController .getUserProfile()" should {
     "display the user's details" in {
       (mockJikanService.getUserProfile(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
@@ -55,7 +55,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  "ApplicationController .searchUser()" should {
+  "UserProfileController .searchUser()" should {
     "redirect to user details page when a username is searched" in {
       val searchRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/searchuser").withFormUrlEncodedBody(
         "username" -> "Emotional-Yam8"
@@ -75,7 +75,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  "ApplicationController .getUserFavouriteAnime()" should {
+  "UserProfileController .getUserFavouriteAnime()" should {
     "list the user's favourite anime in default order (ascending title)" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
@@ -135,40 +135,26 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  "ApplicationController .sortFavourites()" should {
+  "UserProfileController .sortFavourites()" should {
     "reload the user's favourite anime page when sort parameters are submitted" in {
       val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody(
-        "username" -> "Emotional-Yam8",
         "orderBy" -> "start_year",
         "sortOrder" -> "asc"
       )
-      val sortResult: Future[Result] = TestUserProfileController.sortFavourites()(sortRequest)
+      val sortResult: Future[Result] = TestUserProfileController.sortFavourites("Emotional-Yam8")(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
       redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/anime/orderby=start_year/order=asc")
     }
 
     "set the sort parameters to 'none' if they are missing from the request" in {
-      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody(
-        "username" -> "Emotional-Yam8"
-      )
-      val sortResult: Future[Result] = TestUserProfileController.sortFavourites()(sortRequest)
+      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody()
+      val sortResult: Future[Result] = TestUserProfileController.sortFavourites("Emotional-Yam8")(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
       redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/anime/orderby=none/order=none")
     }
-
-    "return a BadRequest if username (hidden field) is blank" in {
-      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody(
-        "username" -> "",
-        "orderBy" -> "start_year",
-        "sortOrder" -> "none"
-      )
-      val sortResult: Future[Result] = TestUserProfileController.sortFavourites()(sortRequest)
-      status(sortResult) shouldBe BAD_REQUEST
-      contentAsString(sortResult) should include ("No username submitted")
-    }
   }
 
-  "ApplicationController .getUserFavouriteCharacters()" should {
+  "UserProfileController .getUserFavouriteCharacters()" should {
     "list the user's favourite characters" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
@@ -205,7 +191,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     }
   }
 
-  "ApplicationController .getUserRecommendedPairings()" should {
+  "UserProfileController .getUserRecommendedPairings()" should {
     "list the user's recommended pairings" in {
       (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
         .expects("veronin", "1", *)

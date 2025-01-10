@@ -46,7 +46,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     fullContent.sliding(target.length).count(window => window == target)
   
   ///// METHODS FOCUSING ON REPOSITORY /////
-  "ApplicationController .listSavedAnime()" should {
+  "SavedAnimeController .listSavedAnime()" should {
     "list all saved anime in default order (ascending saved_at)" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
@@ -107,7 +107,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .sortSavedList()" should {
+  "SavedAnimeController .sortSavedList()" should {
     "reload the saved anime page when sort parameters are submitted" in {
       val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortsaved").withFormUrlEncodedBody(
         "completionStatus" -> "completed",
@@ -129,7 +129,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .listSavedAnimeFromTitleSearch()" should {
+  "SavedAnimeController .listSavedAnimeFromTitleSearch()" should {
     "list saved anime whose title contains the searched title (in alphabetical order)" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
@@ -159,7 +159,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .searchSavedAnimeByTitle()" should {
+  "SavedAnimeController .searchSavedAnimeByTitle()" should {
     "redirect to saved anime title search page when a title is searched" in {
       val searchRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saved/titlesearch").withFormUrlEncodedBody(
         "title" -> "kindaichi"
@@ -179,7 +179,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .viewSavedAnime()" should {
+  "SavedAnimeController .viewSavedAnime()" should {
     "display the saved anime's details" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
@@ -205,7 +205,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .saveAnime()" should {
+  "SavedAnimeController .saveAnime()" should {
     "save an anime to the database" in {
       val saveRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/saveanime").withFormUrlEncodedBody(
         "url" -> "/anime/33263",
@@ -250,7 +250,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .refreshSavedAnime()" should {
+  "SavedAnimeController .refreshSavedAnime()" should {
     "refresh an anime's MAL details in the database" in {
       val kindaichiDataRefreshed: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
         AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
@@ -345,7 +345,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .showUpdateForm()" should {
+  "SavedAnimeController .showUpdateForm()" should {
     "display the update form with existing data filled in" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
@@ -371,7 +371,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .updateFormSubmit()" should {
+  "SavedAnimeController .updateFormSubmit()" should {
     "update anime details in the database" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kubikiri))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
@@ -419,7 +419,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .unsaveAnime()" should {
+  "SavedAnimeController .unsaveAnime()" should {
     "delete an anime from the database" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
@@ -443,7 +443,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .deleteAll() (test-only method)" should {
+  "SavedAnimeController .deleteAll() (test-only method)" should {
     "delete all anime in the database" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Result = await(TestSavedAnimeController.create()(request))
@@ -471,7 +471,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
   }
 
   ///// NON-FRONTEND METHODS, FOR TESTING /////
-  "ApplicationController .index()" should {
+  "SavedAnimeController .index()" should {
     "list all anime in the database" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Result = await(TestSavedAnimeController.create()(request))
@@ -483,7 +483,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
   }
 
-  "ApplicationController .create()" should {
+  "SavedAnimeController .create()" should {
     "save an anime in the database" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
