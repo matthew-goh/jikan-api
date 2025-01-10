@@ -2,7 +2,6 @@ package controllers
 
 import models._
 import models.userfavourites.AnimeFavourite
-import play.api.libs.json._
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import services.JikanService
@@ -63,17 +62,10 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
     }
   }
 
-  def sortFavourites(): Action[AnyContent] = Action.async { implicit request =>
-    accessToken()
-    val usernameSubmitted: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("username").flatMap(_.headOption))
-    usernameSubmitted match {
-      case None | Some("") => Future.successful(BadRequest(views.html.unsuccessful("No username submitted")))
-      case Some(username) => {
-        val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
-        val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
-        Future.successful(Redirect(routes.UserProfileController.getUserFavouriteAnime(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
-      }
-    }
+  def sortFavourites(username: String): Action[AnyContent] = Action.async { implicit request =>
+    val orderBy: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("orderBy").flatMap(_.headOption))
+    val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
+    Future.successful(Redirect(routes.UserProfileController.getUserFavouriteAnime(username, orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
   }
 
   def getUserFavouriteCharacters(username: String): Action[AnyContent] = Action.async { implicit request =>

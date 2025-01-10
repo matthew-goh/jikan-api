@@ -20,11 +20,10 @@
 
   <div class="container mb-5">
     <h2>@username's Favourite Anime</h2>
-    @form(action = routes.UserProfileController.sortFavourites()) {
+    @form(action = routes.UserProfileController.sortFavourites(username)) {
       @CSRF.formField
       <div class="form-div">
         <h3>Sort favourites:</h3>
-        <input type="text" name="username" value="@username" hidden>
         Order by:
         <select name="orderBy">
           <option value="none" @(if(orderBy == "none") "selected" else "")>Select</option>

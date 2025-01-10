@@ -11,7 +11,7 @@ GET     /anime/:id    controllers.ApplicationController.getAnimeById(id: String)
 GET     /users/:username    controllers.UserProfileController.getUserProfile(username: String)
 POST     /searchuser    controllers.UserProfileController.searchUser()
 GET     /users/:username/favourites/anime/orderby=:orderBy/order=:sortOrder    controllers.UserProfileController.getUserFavouriteAnime(username: String, orderBy: String, sortOrder: String)
-POST     /sortfavourites    controllers.UserProfileController.sortFavourites()
+POST     /sortfavourites/:username    controllers.UserProfileController.sortFavourites(username: String)
 GET     /users/:username/favourites/characters    controllers.UserProfileController.getUserFavouriteCharacters(username: String)
 GET     /users/:username/pairings/page=:page    controllers.UserProfileController.getUserRecommendedPairings(username: String, page: String)
 
