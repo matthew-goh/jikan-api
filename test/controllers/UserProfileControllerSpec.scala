@@ -8,7 +8,6 @@ import models.recommendations._
 import models.userfavourites._
 import models.userprofile.UserProfileResult
 import org.scalamock.scalatest.MockFactory
-import play.api.libs.json._
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
