@@ -6,4 +6,8 @@ case class AnimeSearchParams(status: String, minScore: String, maxScore: String,
 
 object AnimeSearchParams {
   implicit val formats: OFormat[AnimeSearchParams] = Json.format[AnimeSearchParams]
+
+  implicit class AnimeSearchParamsOps(params: AnimeSearchParams) {
+    def formQueryExt: String = s"status=${params.status}&min_score=${params.minScore}&max_score=${params.maxScore}&order_by=${params.orderBy}&sort=${params.sort}"
+  }
 }

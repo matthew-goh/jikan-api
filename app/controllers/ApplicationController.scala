@@ -52,10 +52,8 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
         }
         // check that form has submitted all parameters
         searchParamsJson.validate[AnimeSearchParams] match {
-          case JsSuccess(params, _) => {
-            val queryExt = s"status=${params.status}&min_score=${params.minScore}&max_score=${params.maxScore}&order_by=${params.orderBy}&sort=${params.sort}"
-            Future.successful(Redirect(routes.ApplicationController.getAnimeResults(search = search, page = "1", queryExt = queryExt)))
-          }
+          case JsSuccess(params, _) =>
+            Future.successful(Redirect(routes.ApplicationController.getAnimeResults(search = search, page = "1", queryExt = params.formQueryExt)))
           case JsError(_) => Future.successful(BadRequest(views.html.unsuccessful("Invalid search parameters submitted")))
         }
       }
@@ -64,7 +62,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
 
   def getAnimeById(id: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeById(id).value.flatMap{
-      case Right(animeResult) => {
+      case Right(animeResult) =>
         // check if the anime has already been saved
         repoService.read(animeResult.data.mal_id).map{
           case Right(_) => Ok(views.html.animedetails(animeResult.data, inDatabase = true))
@@ -73,7 +71,6 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
             case _ => Status(e.httpResponseStatus)(views.html.unsuccessful(e.reason))
           }
         }
-      }
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
