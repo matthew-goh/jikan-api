@@ -29,10 +29,9 @@
     <p><b>No. of episodes:</b> @anime.numEpisodes.getOrElse("Not available")</p>
     <p><b>MAL average score:</b> @anime.MALScore.getOrElse("N/A")</p>
     <p><a href="@routes.ApplicationController.getAnimeById(anime.MALId.toString)">View full MAL profile</a></p>
-    <form action="@routes.SavedAnimeController.refreshSavedAnime()" method="POST" class="button-form">
+    <form action="@routes.SavedAnimeController.refreshSavedAnime(anime.MALId.toString)" method="POST" class="button-form">
       @CSRF.formField
       <input type="hidden" name="url" value="@request.uri">
-      <input type="hidden" name="id" value="@anime.MALId">
       <input type="hidden" name="savedAt" value="@anime.savedAt">
       <input type="hidden" name="epsWatched" value="@anime.episodesWatched">
       @if(anime.score.nonEmpty) { <input type="hidden" name="score" value="@anime.score"> }
