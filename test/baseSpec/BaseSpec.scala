@@ -2,6 +2,7 @@ package baseSpec
 
 import akka.stream.Materializer
 import connectors.JikanConnector
+import controllers.actions._
 import services.{AnimeRepositoryService, JikanService}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
@@ -32,6 +33,9 @@ trait BaseSpecWithApplication extends BaseSpec with GuiceOneServerPerSuite with 
   lazy val repository: AnimeRepository = injector.instanceOf[AnimeRepository]
   lazy val service: JikanService = injector.instanceOf[JikanService]
   lazy val connector: JikanConnector = injector.instanceOf[JikanConnector]
+
+  lazy val urlActionBuilder: UrlActionBuilderImpl = injector.instanceOf[UrlActionBuilderImpl]
+  lazy val saveAnimeRefiner: SaveAnimeRefiner = injector.instanceOf[SaveAnimeRefiner]
 
   implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   lazy val injector: Injector = app.injector

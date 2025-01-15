@@ -1,5 +1,6 @@
 package controllers
 
+import controllers.actions._
 import models._
 import play.api.libs.json._
 import play.api.mvc._
@@ -11,7 +12,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 @Singleton
-class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, service: JikanService, val controllerComponents: ControllerComponents)
+class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, service: JikanService,
+                                     urlActionBuilder: UrlActionBuilderImpl,
+                                     saveAnimeRefiner: SaveAnimeRefiner,
+                                     val controllerComponents: ControllerComponents)
                                     (implicit ec: ExecutionContext) extends BaseController with play.api.i18n.I18nSupport {
   // JikanService used in refreshSavedAnime
 
@@ -26,7 +30,7 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
     val sortOrderTry: Try[SortOrders.Value] = Try(SortOrders.withName(sortOrder))
 
     (compStatusTry, orderByTry, sortOrderTry) match {
-      case (Success(compStatusValue), Success(orderByValue), Success(sortOrderValue)) => {
+      case (Success(compStatusValue), Success(orderByValue), Success(sortOrderValue)) =>
         repoService.index().map{
           case Right(animeList) => {
             val animeListSorted = animeList.filterByCompStatus(compStatusValue).orderBySortParameter(orderByValue, sortOrderValue)
@@ -34,7 +38,6 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
-      }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Invalid sort parameter")))
     }
   }
@@ -65,28 +68,34 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
 
   def viewSavedAnime(id: String): Action[AnyContent] = Action.async { implicit request =>
     Try(id.toInt) match {
-      case Success(malId) => {
+      case Success(malId) =>
         repoService.read(malId).map{
           case Right(anime: SavedAnime) => Ok(views.html.savedanimedetails(anime))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
-      }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
     }
-
   }
 
-  def saveAnime(): Action[AnyContent] = Action.async { implicit request =>
-    accessToken()
-    val sourceUrl: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("url").flatMap(_.headOption))
-    sourceUrl match {
-      case Some(url) => {
-        repoService.create(request.body.asFormUrlEncoded).map{
-          case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(url)))
-          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
-        }
-      }
-      case None => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+//  def saveAnime(): Action[AnyContent] = Action.async { implicit request =>
+//    accessToken()
+//    val sourceUrl: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("url").flatMap(_.headOption))
+//    sourceUrl match {
+//      case Some(url) => {
+//        repoService.create(request.body.asFormUrlEncoded).map{
+//          case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(url)))
+//          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+//        }
+//      }
+//      case None => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+//    }
+//  }
+
+  def saveAnime(): Action[AnyContent] = (urlActionBuilder andThen saveAnimeRefiner).async { implicit request =>
+    // now the "request" is the output of saveAnimeRefiner, which is a SaveAnimeRequest
+    repoService.create(request.animeToSave).map{
+      case Right(_) => Ok(views.html.confirmation("Anime saved!", Some(request.sourceUrl)))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 
@@ -111,12 +120,11 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
   def showUpdateFormOld(id: String): Action[AnyContent] = Action.async { implicit request =>
     val idTry: Try[Int] = Try(id.toInt)
     idTry match {
-      case Success(id) => {
+      case Success(id) =>
         repoService.read(id).map {
           case Right(anime) => Ok(views.html.updatesavedanime_old(anime))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
-      }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
     }
   }
@@ -133,7 +141,7 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
   def showUpdateForm(id: String): Action[AnyContent] = Action.async { implicit request =>
     val idTry: Try[Int] = Try(id.toInt)
     idTry match {
-      case Success(id) => {
+      case Success(id) =>
         repoService.read(id).map {
           case Right(anime) => {
             val formWithDetails = SavedAnime.savedAnimeForm.fill(anime)
@@ -141,7 +149,6 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
-      }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
     }
   }
@@ -150,10 +157,9 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
     accessToken()
     val idTry: Try[Int] = Try(id.toInt)
     idTry match {
-      case Success(id) => {
+      case Success(id) =>
         SavedAnime.savedAnimeForm.bindFromRequest().fold(
           formWithErrors => {
-            println(formWithErrors.errors)
             Future.successful(BadRequest(views.html.updatesavedanime(id, formWithErrors)))
           },
           formData => {
@@ -163,7 +169,6 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
             }
           }
         )
-      }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
     }
   }
