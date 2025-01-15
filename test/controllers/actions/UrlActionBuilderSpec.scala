@@ -22,7 +22,7 @@ class UrlActionBuilderSpec extends BaseSpecWithApplication with MockFactory {
 
       // dummy implementation of block() checking url
       val block: RequestWithUrl[AnyContent] => Future[Result] = req => {
-        req.url shouldBe "/anime/33263"
+        req.sourceUrl shouldBe "/anime/33263"
         Future.successful(Results.Ok("Success"))
       }
 
