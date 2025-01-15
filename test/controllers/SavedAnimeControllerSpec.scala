@@ -301,7 +301,6 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
 
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
         "url" -> "/saved/2076",
-        "id" -> "2076",
         "savedAt" -> "2024-12-18T10:01:49Z",
         "epsWatched" -> "148",
         "score" -> "10",
@@ -313,7 +312,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
         .returning(EitherT.rightT(AnimeIdSearchResult(kindaichiDataRefreshed)))
         .once()
 
-      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime()(refreshRequest)
+      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime("2076")(refreshRequest)
       status(refreshResult) shouldBe OK
       contentAsString(refreshResult) should include ("Anime details refreshed!")
 
@@ -325,7 +324,6 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     "return a NotFound if the anime ID cannot be found in the database" in {
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
         "url" -> "/saved/2076",
-        "id" -> "2076",
         "savedAt" -> "2024-12-18T10:01:49Z",
         "epsWatched" -> "148",
         "score" -> "10",
@@ -337,42 +335,31 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
         .once()
 
-      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime()(refreshRequest)
+      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime("2076")(refreshRequest)
       status(refreshResult) shouldBe NOT_FOUND
       contentAsString(refreshResult) should include ("Bad response from upstream: Anime not saved in database")
     }
 
     "return a NotFound if the anime ID does not exist on MAL" in {
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
-        "url" -> "/saved/2076",
-        "id" -> "2076",
+        "url" -> "/saved/2076"
       )
 
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
-        .expects("2076", *)
+        .expects("99999", *)
         .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
         .once()
 
-      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime()(refreshRequest)
+      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime("99999")(refreshRequest)
       status(refreshResult) shouldBe NOT_FOUND
       contentAsString(refreshResult) should include ("Bad response from upstream: Not Found")
-    }
-
-    "return a BadRequest if posted anime ID is invalid" in {
-      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
-        "url" -> "/anime/2076",
-        "id" -> "abc"
-      )
-      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime()(refreshRequest)
-      status(refreshResult) shouldBe BAD_REQUEST
-      contentAsString(refreshResult) should include ("Invalid or missing anime ID")
     }
 
     "return a BadRequest if posted source URL is missing" in {
       val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
         "id" -> "2076"
       )
-      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime()(refreshRequest)
+      val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime("2076")(refreshRequest)
       status(refreshResult) shouldBe BAD_REQUEST
       contentAsString(refreshResult) should include ("Failed to post source url")
     }
