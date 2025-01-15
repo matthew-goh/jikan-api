@@ -29,30 +29,7 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
       case (Success(compStatusValue), Success(orderByValue), Success(sortOrderValue)) => {
         repoService.index().map{
           case Right(animeList) => {
-            val animeListFiltered: Seq[SavedAnime] = compStatusValue match {
-              case SavedAnimeStatus.not_started => animeList.filter(anime => anime.numEpisodes.isEmpty || anime.episodesWatched.value == 0)
-              case SavedAnimeStatus.watching => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched.value > 0 && anime.episodesWatched.value < anime.numEpisodes.get)
-              case SavedAnimeStatus.completed => animeList.filter(anime => anime.numEpisodes.nonEmpty && anime.episodesWatched.value == anime.numEpisodes.get)
-              case _ => animeList
-            }
-            val animeListSorted = orderByValue match {
-              case SavedAnimeOrders.saved_at => sortOrderValue match {
-                case SortOrders.desc => animeListFiltered.sortBy(_.savedAt).reverse
-                case _ => animeListFiltered.sortBy(_.savedAt)
-              }
-              case SavedAnimeOrders.title => sortOrderValue match {
-                case SortOrders.desc => animeListFiltered.sortBy(_.title).reverse
-                case _ => animeListFiltered.sortBy(_.title)
-              }
-              case SavedAnimeOrders.year => sortOrderValue match {
-                case SortOrders.desc => animeListFiltered.sortBy(_.year).reverse
-                case _ => animeListFiltered.sortBy(_.year)
-              }
-              case SavedAnimeOrders.score => sortOrderValue match {
-                case SortOrders.desc => animeListFiltered.sortBy(_.score.map(_.value)).reverse
-                case _ => animeListFiltered.sortBy(_.score.map(_.value)) // map Option[ScoreInt] to Option[Int]
-              }
-            }
+            val animeListSorted = animeList.filterByCompStatus(compStatusValue).orderBySortParameter(orderByValue, sortOrderValue)
             Ok(views.html.savedanime(animeListSorted, compStatus, orderBy, sortOrder))
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
@@ -203,8 +180,7 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
     idTry match {
       case Success(id) =>
         repoService.delete(id).map{
-          case Right(_) =>
-            Ok(views.html.confirmation("Anime removed from saved list", Some(sourceUrl)))
+          case Right(_) => Ok(views.html.confirmation("Anime removed from saved list", Some(sourceUrl)))
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
       case _ => Future.successful(BadRequest(views.html.unsuccessful("Anime ID must be an integer")))
