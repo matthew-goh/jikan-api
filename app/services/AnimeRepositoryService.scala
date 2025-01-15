@@ -6,7 +6,7 @@ import models.{APIError, AnimeData, SavedAnime}
 import org.mongodb.scala.result
 import repositories.AnimeRepositoryTrait
 
-import java.time.Instant
+import java.time.{Instant, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.Future
 import scala.util.Try
@@ -108,6 +108,7 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
   }
 
   def refresh(reqBody: Option[Map[String, Seq[String]]], animeData: AnimeData): Future[Either[APIError, result.UpdateResult]] = {
+    val animeYear: Option[Int] = animeData.year.orElse(animeData.aired.from.map(_.atZone(ZoneId.of("UTC")).getYear))
     val missingError = APIError.BadAPIResponse(400, "Missing required value")
     val invalidTypeError = APIError.BadAPIResponse(400, "Invalid data type")
 
@@ -129,7 +130,7 @@ class AnimeRepositoryService @Inject()(repositoryTrait: AnimeRepositoryTrait){
           case Left(_) => Left(invalidTypeError)
         }
       }
-    } yield SavedAnime(animeData.mal_id, animeData.title, animeData.title_english, animeData.`type`, animeData.episodes, animeData.year,
+    } yield SavedAnime(animeData.mal_id, animeData.title, animeData.title_english, animeData.`type`, animeData.episodes, animeYear,
       animeData.score, savedAt, epsWatched, myScore, notes)
 
     reqBodyValuesEither match {

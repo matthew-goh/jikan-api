@@ -77,9 +77,9 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResultContent = contentAsString(searchResult)
       searchResultContent should (include ("Page 1 of 1") and include ("Results 1 - 9"))
       searchResultContent should include ("Kindaichi Shounen no Jikenbo")
-      searchResultContent should include ("Average score: 7.94")
+      searchResultContent should include ("from 8,317 users")
       searchResultContent should include ("Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken")
-      searchResultContent should include ("from 606 users")
+      searchResultContent should include ("Special, 1997") // used year from AirDates
 
       countOccurrences(searchResultContent, "Saved") shouldBe 1
       countOccurrences(searchResultContent, "+ Save") shouldBe 8

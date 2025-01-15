@@ -136,7 +136,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
 
   "UserProfileController .sortFavourites()" should {
     "reload the user's favourite anime page when sort parameters are submitted" in {
-      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody(
+      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites/Emotional-Yam8").withFormUrlEncodedBody(
         "orderBy" -> "start_year",
         "sortOrder" -> "asc"
       )
@@ -146,7 +146,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     }
 
     "set the sort parameters to 'none' if they are missing from the request" in {
-      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites").withFormUrlEncodedBody()
+      val sortRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/sortfavourites/Emotional-Yam8").withFormUrlEncodedBody()
       val sortResult: Future[Result] = TestUserProfileController.sortFavourites("Emotional-Yam8")(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
       redirectLocation(sortResult) shouldBe Some("/users/Emotional-Yam8/favourites/anime/orderby=none/order=none")

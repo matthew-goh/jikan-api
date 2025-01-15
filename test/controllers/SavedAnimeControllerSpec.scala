@@ -299,7 +299,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
       status(createdResult) shouldBe CREATED
 
-      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
+      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh/2076").withFormUrlEncodedBody(
         "url" -> "/saved/2076",
         "savedAt" -> "2024-12-18T10:01:49Z",
         "epsWatched" -> "148",
@@ -322,7 +322,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
 
     "return a NotFound if the anime ID cannot be found in the database" in {
-      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
+      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh/2076").withFormUrlEncodedBody(
         "url" -> "/saved/2076",
         "savedAt" -> "2024-12-18T10:01:49Z",
         "epsWatched" -> "148",
@@ -341,7 +341,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
 
     "return a NotFound if the anime ID does not exist on MAL" in {
-      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
+      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh/99999").withFormUrlEncodedBody(
         "url" -> "/saved/2076"
       )
 
@@ -356,7 +356,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
     }
 
     "return a BadRequest if posted source URL is missing" in {
-      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh").withFormUrlEncodedBody(
+      val refreshRequest: FakeRequest[AnyContentAsFormUrlEncoded] = testRequest.buildPost("/refresh/2076").withFormUrlEncodedBody(
         "id" -> "2076"
       )
       val refreshResult: Future[Result] = TestSavedAnimeController.refreshSavedAnime("2076")(refreshRequest)

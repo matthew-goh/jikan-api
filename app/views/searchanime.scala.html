@@ -1,5 +1,6 @@
 @import helper._
 @import java.text.NumberFormat
+@import java.time.ZoneId
 
 @*RequestHeader needed for form with CRSF*@
 @(animeResults: Seq[AnimeData], pagination: AnimeSearchPagination, search: String, queryExt: String,
@@ -93,14 +94,18 @@
                 @if(anime.title_english.nonEmpty) { <input type="hidden" name="titleEnglish" value="@anime.title_english"> }
                 <input type="hidden" name="type" value="@{anime.`type`}">
                 @if(anime.episodes.nonEmpty) { <input type="hidden" name="numEpisodes" value="@anime.episodes"> }
-                @if(anime.year.nonEmpty) { <input type="hidden" name="year" value="@anime.year"> }
+                @if(anime.year.nonEmpty) {
+                  <input type="hidden" name="year" value="@anime.year">
+                } else {
+                  @if(anime.aired.from.nonEmpty) { <input type="hidden" name="year" value="@{anime.aired.from.get.atZone(ZoneId.of("UTC")).getYear}">  }
+                }
                 @if(anime.score.nonEmpty) { <input type="hidden" name="MALScore" value="@anime.score"> }
                 <button type="submit">+ Save</button>
               </form>
             }
           </div>
           <div class="text-container">
-            <p>@{anime.`type`}@if(anime.year.nonEmpty){, @anime.year}
+            <p>@{anime.`type`}@if(anime.year.nonEmpty || anime.aired.from.nonEmpty){, @anime.year.getOrElse(anime.aired.from.get.atZone(ZoneId.of("UTC")).getYear)}
             <br>@anime.status</p>
             <p>
               @if(anime.episodes.nonEmpty){
