@@ -34,7 +34,7 @@ GET     /saved/titlesearch/:title     controllers.SavedAnimeController.listSaved
 POST     /saved/titlesearch    controllers.SavedAnimeController.searchSavedAnimeByTitle()
 GET     /saved/:id     controllers.SavedAnimeController.viewSavedAnime(id: String)
 POST     /saveanime     controllers.SavedAnimeController.saveAnime()
-POST     /refresh     controllers.SavedAnimeController.refreshSavedAnime()
+POST     /refresh/:id     controllers.SavedAnimeController.refreshSavedAnime(id: String)
 GET     /update/:id     controllers.SavedAnimeController.showUpdateForm(id: String)
 POST     /update/:id     controllers.SavedAnimeController.updateFormSubmit(id: String)
 POST     /unsave/:id     controllers.SavedAnimeController.unsaveAnime(id: String)

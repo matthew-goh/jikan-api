@@ -90,25 +90,21 @@ class SavedAnimeController @Inject()(repoService: AnimeRepositoryService, servic
     }
   }
 
-  def refreshSavedAnime(): Action[AnyContent] = Action.async { implicit request =>
+  def refreshSavedAnime(id: String): Action[AnyContent] = Action.async { implicit request =>
     accessToken()
     val reqBody: Option[Map[String, Seq[String]]] = request.body.asFormUrlEncoded
     val sourceUrl: Option[String] = reqBody.flatMap(_.get("url").flatMap(_.headOption))
-    val idTry: Try[Int] = Try(reqBody.flatMap(_.get("id").flatMap(_.headOption)).get.toInt)
-    (sourceUrl, idTry) match {
-      case (Some(url), Success(id)) => {
-        service.getAnimeById(id.toString).value.flatMap{
-          case Right(animeResult) => {
-            repoService.refresh(reqBody, animeResult.data).map{
+    sourceUrl match {
+      case None | Some("") => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
+      case Some(url) =>
+        service.getAnimeById(id).value.flatMap {
+          case Right(animeResult) =>
+            repoService.refresh(reqBody, animeResult.data).map {
               case Right(_) => Ok(views.html.confirmation("Anime details refreshed!", Some(url)))
               case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
             }
-          }
           case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
         }
-      }
-      case(Some(_), Failure(_)) => Future.successful(BadRequest(views.html.unsuccessful("Invalid or missing anime ID")))
-      case (None, _) => Future.successful(BadRequest(views.html.unsuccessful("Failed to post source url")))
     }
   }
 
