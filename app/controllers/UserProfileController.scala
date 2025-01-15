@@ -41,18 +41,7 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
       case (Success(orderByValue), Success(sortOrderValue)) => {
         service.getUserFavourites(username).value.map{
           case Right(favesResult) => {
-            val animeFaves: Seq[AnimeFavourite] = favesResult.data.anime
-            val animeFavesSorted = orderByValue match {
-              case FavouritesOrders.title => sortOrderValue match {
-                case SortOrders.desc => animeFaves.sortBy(_.title).reverse
-                case _ => animeFaves.sortBy(_.title)
-              }
-              case FavouritesOrders.start_year => sortOrderValue match {
-                case SortOrders.desc => animeFaves.sortBy(_.start_year).reverse
-                case _ => animeFaves.sortBy(_.start_year)
-              }
-              case FavouritesOrders.none => favesResult.data.anime // keep original order
-            }
+            val animeFavesSorted: Seq[AnimeFavourite] = favesResult.data.anime.orderBySortParameter(orderByValue, sortOrderValue)
             Ok(views.html.userfavouriteanime(animeFavesSorted, username, orderBy, sortOrder))
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
