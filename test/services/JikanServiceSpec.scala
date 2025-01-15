@@ -139,7 +139,7 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
         .once()
 
       whenReady(testService.getUserRecommendations("Emotional-Yam8", "1").value) { result =>
-        result shouldBe Right(UserPairingResult(JikanServiceSpec.testSimplePagination, JikanServiceSpec.testUserPairings))
+        result shouldBe Right(JikanServiceSpec.testPairingResult)
       }
     }
 
@@ -151,6 +151,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
 
       whenReady(testService.getUserRecommendations("Emotional-Yam8", "0").value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(400, "The page must be at least 1."))
+      }
+    }
+  }
+
+  "getUserReviews()" should {
+    "return a user's reviews" in {
+      (mockConnector.get[UserReviewsResult](_: String)(_: OFormat[UserReviewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/reviews?page=1", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testUserReviewsJson.as[UserReviewsResult]))
+        .once()
+
+      whenReady(testService.getUserReviews("Emotional-Yam8", "1").value) { result =>
+        result shouldBe Right(JikanServiceSpec.testUserReviewsResult)
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[UserReviewsResult](_: String)(_: OFormat[UserReviewsResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/reviews?page=abc", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The page must be a number.")))
+        .once()
+
+      whenReady(testService.getUserReviews("Emotional-Yam8", "abc").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The page must be a number."))
       }
     }
   }
@@ -503,7 +527,17 @@ object JikanServiceSpec {
       OffsetDateTime.parse("2013-12-14T00:00:00+00:00").toInstant
     )
   )
-  val testPairingResult: UserPairingResult = UserPairingResult(testSimplePagination, testUserPairings)
+  val testPairingResult: UserPairingResult = UserPairingResult(testUserPairings, testSimplePagination)
+
+  val testUserReviews: Seq[UserReview] = Seq(
+    UserReview("anime", RecommendationEntry(54837, "https://myanimelist.net/anime/54837/Akuyaku_Reijou_Level_99__Watashi_wa_Ura-Boss_desu_ga_Maou_dewa_Arimasen",
+      "Test Entry 1", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1150/140028.jpg?s=cbf52f01c862783e3e4d6e1a61c2bbe1")))),
+      OffsetDateTime.parse("2024-03-26T15:17:00+00:00").toInstant, "Test review 1", 8, Seq("Recommended"), is_spoiler = false, is_preliminary = false),
+    UserReview("manga", RecommendationEntry(49613, "https://myanimelist.net/anime/49613/Chiyu_Mahou_no_Machigatta_Tsukaikata",
+        "Test Entry 2", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1733/140802.jpg?s=4f733a28279f1cb059af46a184413b3c")))),
+      OffsetDateTime.parse("2024-03-21T05:59:00+00:00").toInstant, "Test review 2", 8, Seq("Recommended", "Preliminary"), is_spoiler = false, is_preliminary = true)
+  )
+  val testUserReviewsResult: UserReviewsResult = UserReviewsResult(testUserReviews, SimplePagination(1, has_next_page = true))
 
   val testEpisodeList: Seq[AnimeEpisode] = Seq(
     AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
@@ -2405,6 +2439,100 @@ object JikanServiceSpec {
       |  ]
       |}
       |""".stripMargin)
+
+  val testUserReviewsJson: JsValue = Json.parse(
+    """{
+      |  "pagination": {
+      |    "last_visible_page": 1,
+      |    "has_next_page": true
+      |  },
+      |  "data": [
+      |    {
+      |      "mal_id": 519817,
+      |      "url": "https://myanimelist.net/reviews.php?id=519817",
+      |      "type": "anime",
+      |      "reactions": {
+      |        "overall": 3,
+      |        "nice": 1,
+      |        "love_it": 1,
+      |        "funny": 0,
+      |        "confusing": 1,
+      |        "informative": 0,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2024-03-26T15:17:00+00:00",
+      |      "review": "Test review 1",
+      |      "score": 8,
+      |      "tags": [
+      |        "Recommended"
+      |      ],
+      |      "is_spoiler": false,
+      |      "is_preliminary": false,
+      |      "episodes_watched": null,
+      |      "entry": {
+      |        "mal_id": 54837,
+      |        "url": "https://myanimelist.net/anime/54837/Akuyaku_Reijou_Level_99__Watashi_wa_Ura-Boss_desu_ga_Maou_dewa_Arimasen",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/1150/140028.jpg?s=cbf52f01c862783e3e4d6e1a61c2bbe1",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/1150/140028t.jpg?s=cbf52f01c862783e3e4d6e1a61c2bbe1",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/1150/140028l.jpg?s=cbf52f01c862783e3e4d6e1a61c2bbe1"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/1150/140028.webp?s=cbf52f01c862783e3e4d6e1a61c2bbe1",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/1150/140028t.webp?s=cbf52f01c862783e3e4d6e1a61c2bbe1",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/1150/140028l.webp?s=cbf52f01c862783e3e4d6e1a61c2bbe1"
+      |          }
+      |        },
+      |        "title": "Test Entry 1"
+      |      }
+      |    },
+      |    {
+      |      "mal_id": 518977,
+      |      "url": "https://myanimelist.net/reviews.php?id=518977",
+      |      "type": "manga",
+      |      "reactions": {
+      |        "overall": 1,
+      |        "nice": 0,
+      |        "love_it": 1,
+      |        "funny": 0,
+      |        "confusing": 0,
+      |        "informative": 0,
+      |        "well_written": 0,
+      |        "creative": 0
+      |      },
+      |      "date": "2024-03-21T05:59:00+00:00",
+      |      "review": "Test review 2",
+      |      "score": 8,
+      |      "tags": [
+      |        "Recommended",
+      |        "Preliminary"
+      |      ],
+      |      "is_spoiler": false,
+      |      "is_preliminary": true,
+      |      "episodes_watched": null,
+      |      "entry": {
+      |        "mal_id": 49613,
+      |        "url": "https://myanimelist.net/anime/49613/Chiyu_Mahou_no_Machigatta_Tsukaikata",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/1733/140802.jpg?s=4f733a28279f1cb059af46a184413b3c",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/1733/140802t.jpg?s=4f733a28279f1cb059af46a184413b3c",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/1733/140802l.jpg?s=4f733a28279f1cb059af46a184413b3c"
+      |          },
+      |          "webp": {
+      |            "image_url": "https://cdn.myanimelist.net/images/anime/1733/140802.webp?s=4f733a28279f1cb059af46a184413b3c",
+      |            "small_image_url": "https://cdn.myanimelist.net/images/anime/1733/140802t.webp?s=4f733a28279f1cb059af46a184413b3c",
+      |            "large_image_url": "https://cdn.myanimelist.net/images/anime/1733/140802l.webp?s=4f733a28279f1cb059af46a184413b3c"
+      |          }
+      |        },
+      |        "title": "Test Entry 2"
+      |      }
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
 
   val testEpisodeSearchJson: JsValue = Json.parse(
     """{

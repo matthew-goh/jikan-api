@@ -212,8 +212,8 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
       (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
         .expects("veronin", "2", *)
         .returning(EitherT.rightT(UserPairingResult(
-          SimplePagination(1, has_next_page = false),
-          Seq()
+          Seq(),
+          SimplePagination(1, has_next_page = false)
         )))
         .once()
 
@@ -243,8 +243,8 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
       (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
         .expects("veronin", "1", *)
         .returning(EitherT.rightT(UserPairingResult(
-          SimplePagination(1, has_next_page = false),
-          Seq(badPairing)
+          Seq(badPairing),
+          SimplePagination(1, has_next_page = false)
         )))
         .once()
 
@@ -260,6 +260,91 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
         .once()
 
       val searchResult: Future[Result] = TestUserProfileController.getUserRecommendedPairings("abc", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "UserProfileController .getUserReviews()" should {
+    "list the user's reviews (with a next page)" in {
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "1", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testUserReviewsResult))
+        .once()
+
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "2", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testUserReviewsResult))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserReviews("veronin", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("<a href=\"/users/veronin/reviews/page=2\"> Next </a>")
+      searchResultContent should include ("Reviews by veronin")
+      searchResultContent should (include ("Test Entry 1") and include ("Test Entry 2 (Manga)"))
+      searchResultContent should include ("26 Mar 2024 15:17")
+
+      countOccurrences(searchResultContent, "This review is preliminary.") shouldBe 1
+      searchResultContent shouldNot include ("Warning! This review contains spoilers.")
+    }
+
+    "list the user's reviews (without a next page)" in {
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "1", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testUserReviewsResult))
+        .once()
+
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "2", *)
+        .returning(EitherT.rightT(UserReviewsResult(
+          Seq(),
+          SimplePagination(2, has_next_page = false))))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserReviews("veronin", "1")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent shouldNot include ("<a href=\"/users/veronin/reviews/page=2\"> Next </a>")
+      searchResultContent should include ("Reviews by veronin")
+      searchResultContent should (include ("Test Entry 1") and include ("Test Entry 2 (Manga)"))
+      searchResultContent should include ("26 Mar 2024 15:17")
+
+      countOccurrences(searchResultContent, "This review is preliminary.") shouldBe 1
+      searchResultContent shouldNot include ("Warning! This review contains spoilers.")
+    }
+
+    "show 'No reviews available' if there are no results" in {
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", "2", *)
+        .returning(EitherT.rightT(UserReviewsResult(
+          Seq(),
+          SimplePagination(2, has_next_page = false))))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserReviews("veronin", "2")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No reviews available")
+    }
+
+    "return a BadRequest if there is an API result but page number is not a positive integer" in {
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("veronin", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testUserReviewsResult))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserReviews("veronin", "abc")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include("API result obtained but page number is not a positive integer")
+    }
+
+    "return a NotFound if the username is not found" in {
+      (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
+        .expects("abc", "1", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserReviews("abc", "1")(testRequest.fakeRequest)
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }

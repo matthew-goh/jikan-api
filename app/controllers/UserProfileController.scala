@@ -77,4 +77,24 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
+
+  def getUserReviews(username: String, page: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserReviews(username, page).value.flatMap{
+      case Right(reviewsResult) => {
+        Try(page.toInt) match {
+          case Success(pg) if pg > 0 =>
+            // has_next_page from API is not accurate - need to fetch next page's data to see if there are any results
+            if (reviewsResult.data.isEmpty) Future.successful(Ok(views.html.userreviews(username, pg, reviewsResult.data, hasNextPage = false)))
+            else service.getUserReviews(username, (pg + 1).toString).value.map{
+              case Right(reviewsNextPage) =>
+                if (reviewsNextPage.data.isEmpty) Ok(views.html.userreviews(username, pg, reviewsResult.data, hasNextPage = false))
+                else Ok(views.html.userreviews(username, pg, reviewsResult.data, hasNextPage = true))
+              case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+            }
+          case _ => Future.successful(BadRequest(views.html.unsuccessful("API result obtained but page number is not a positive integer")))
+        }
+      }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
 }

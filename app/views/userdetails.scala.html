@@ -44,15 +44,19 @@
 
     <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouriteAnime(username, "title", "asc")">
       <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
-      See favourite anime
+      Favourite anime
     </a></p>
     <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouriteCharacters(username)">
       <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
-      See favourite characters
+      Favourite characters
     </a></p>
     <p><a class="image-text-link" href="@routes.UserProfileController.getUserRecommendedPairings(username, "1")">
       <img class="link-icon" src="@routes.Assets.versioned("images/pairing-icon.png")" alt="Pairing Icon">
-      See recommended anime pairings
+      Recommended anime pairings
+    </a></p>
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserReviews(username, "1")">
+      <img class="link-icon" src="@routes.Assets.versioned("images/thumbs-up-icon.png")" alt="Thumbs up Icon">
+      Reviews written
     </a></p>
   </div>
 }
