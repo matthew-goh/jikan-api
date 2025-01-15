@@ -235,7 +235,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
 
     "return an InternalServerError if an entry in the API result does not contain a pair" in {
       val badPairing: Pairing = Pairing( // only 1 RecommendationEntry
-        Seq(RecommendationEntry(240, "https://myanimelist.net/anime/240/Genshiken", "Genshiken", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994"))))),
+        Seq(MediaEntry(240, "https://myanimelist.net/anime/240/Genshiken", "Genshiken", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994"))))),
         "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
         OffsetDateTime.parse("2015-05-06T00:00:00+00:00").toInstant
       )

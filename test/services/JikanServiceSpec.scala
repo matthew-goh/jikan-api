@@ -509,20 +509,20 @@ object JikanServiceSpec {
 
   val testUserPairings: Seq[Pairing] = Seq(
     Pairing(
-      Seq(RecommendationEntry(240, "https://myanimelist.net/anime/240/Genshiken", "Genshiken", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994")))),
-        RecommendationEntry(25835, "https://myanimelist.net/anime/25835/Shirobako", "Shirobako", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1460/141897.jpg?s=57c5a60e2e898873ab081b88357c792c"))))),
+      Seq(MediaEntry(240, "https://myanimelist.net/anime/240/Genshiken", "Genshiken", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1890/94707.jpg?s=1af369e5e0da3322516d1f06f8ecb994")))),
+        MediaEntry(25835, "https://myanimelist.net/anime/25835/Shirobako", "Shirobako", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1460/141897.jpg?s=57c5a60e2e898873ab081b88357c792c"))))),
       "Adult characters with a focus on the anime industry and otaku subculture. They're both pretty unique in a medium that is all very much the same stuff over and over, so do enjoy.",
       OffsetDateTime.parse("2015-05-06T00:00:00+00:00").toInstant
     ),
     Pairing(
-      Seq(RecommendationEntry(7791, "https://myanimelist.net/anime/7791/K-On", "K-On!!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/76121.jpg?s=b47588ea746198b3551e0340d31fdf83")))),
-        RecommendationEntry(15061, "https://myanimelist.net/anime/15061/Aikatsu", "Aikatsu!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/6/74783.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276"))))),
+      Seq(MediaEntry(7791, "https://myanimelist.net/anime/7791/K-On", "K-On!!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/76121.jpg?s=b47588ea746198b3551e0340d31fdf83")))),
+        MediaEntry(15061, "https://myanimelist.net/anime/15061/Aikatsu", "Aikatsu!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/6/74783.jpg?s=aaec5c3faad7e3a6855cb94d9b10e276"))))),
       "Cute, light-hearted fun devoid of the usual otaku pandering common in anime today. The characters are treated with respect and are not rampantly sexualised. You will not enjoy either of these if you want the complex or the serious, but if you can enjoy a girl's show, they are two of the very best.",
       OffsetDateTime.parse("2014-03-09T00:00:00+00:00").toInstant
     ),
     Pairing(
-      Seq(RecommendationEntry(149, "https://myanimelist.net/manga/149/Blame", "Blame!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/manga/1/174389.jpg?s=01ed78eb073d458b028c4edc07845e64")))),
-        RecommendationEntry(1409, "https://myanimelist.net/manga/1409/Biomega", "Biomega", Images(JpgImage(Some("https://cdn.myanimelist.net/images/manga/2/211783.jpg?s=4fade63eaf0059fabd3b92317d65d723"))))),
+      Seq(MediaEntry(149, "https://myanimelist.net/manga/149/Blame", "Blame!", Images(JpgImage(Some("https://cdn.myanimelist.net/images/manga/1/174389.jpg?s=01ed78eb073d458b028c4edc07845e64")))),
+        MediaEntry(1409, "https://myanimelist.net/manga/1409/Biomega", "Biomega", Images(JpgImage(Some("https://cdn.myanimelist.net/images/manga/2/211783.jpg?s=4fade63eaf0059fabd3b92317d65d723"))))),
       "Both are dystopian sci-fi manga with minimalistic dialogue, created by Tsutomu Nihei. If you ever feel like being awed by the best artwork in the medium, then check these out. They also have the best panelling that I have seen from any manga. It looks and feels like an action movie. Just be prepared for the despair and depression contained in the story.",
       OffsetDateTime.parse("2013-12-14T00:00:00+00:00").toInstant
     )
@@ -530,10 +530,10 @@ object JikanServiceSpec {
   val testPairingResult: UserPairingResult = UserPairingResult(testUserPairings, testSimplePagination)
 
   val testUserReviews: Seq[UserReview] = Seq(
-    UserReview("anime", RecommendationEntry(54837, "https://myanimelist.net/anime/54837/Akuyaku_Reijou_Level_99__Watashi_wa_Ura-Boss_desu_ga_Maou_dewa_Arimasen",
+    UserReview("anime", MediaEntry(54837, "https://myanimelist.net/anime/54837/Akuyaku_Reijou_Level_99__Watashi_wa_Ura-Boss_desu_ga_Maou_dewa_Arimasen",
       "Test Entry 1", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1150/140028.jpg?s=cbf52f01c862783e3e4d6e1a61c2bbe1")))),
       OffsetDateTime.parse("2024-03-26T15:17:00+00:00").toInstant, "Test review 1", 8, Seq("Recommended"), is_spoiler = false, is_preliminary = false),
-    UserReview("manga", RecommendationEntry(49613, "https://myanimelist.net/anime/49613/Chiyu_Mahou_no_Machigatta_Tsukaikata",
+    UserReview("manga", MediaEntry(49613, "https://myanimelist.net/anime/49613/Chiyu_Mahou_no_Machigatta_Tsukaikata",
         "Test Entry 2", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1733/140802.jpg?s=4f733a28279f1cb059af46a184413b3c")))),
       OffsetDateTime.parse("2024-03-21T05:59:00+00:00").toInstant, "Test review 2", 8, Seq("Recommended", "Preliminary"), is_spoiler = false, is_preliminary = true)
   )
@@ -567,7 +567,12 @@ object JikanServiceSpec {
     Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
         |
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
-    Seq(AnimeAppearance("Main", AnimeAppearanceNested(53879, "Kamonohashi Ron no Kindan Suiri")), AnimeAppearance("Main", AnimeAppearanceNested(57635, "Kamonohashi Ron no Kindan Suiri 2nd Season"))),
+    Seq(
+      AnimeAppearance("Main", MediaEntry(53879, "https://myanimelist.net/anime/53879/Kamonohashi_Ron_no_Kindan_Suiri",
+        "Kamonohashi Ron no Kindan Suiri", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1799/137123.jpg?s=a086d60e87f039225ca8a5af44a01b93"))))),
+      AnimeAppearance("Main", MediaEntry(57635, "https://myanimelist.net/anime/57635/Kamonohashi_Ron_no_Kindan_Suiri_2nd_Season",
+        "Kamonohashi Ron no Kindan Suiri 2nd Season", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=0ca422cabe591f4850cb7408ced1f580")))))
+    ),
     Seq(Voice("Japanese", VoiceActor(30853, "Enoki, Junya")))
   )
 
@@ -583,11 +588,11 @@ object JikanServiceSpec {
   val testReviewsResult: ReviewsResult = ReviewsResult(Seq(testReview1, testReview2, testReview3), testSimplePagination)
 
   val testRecommendations: Seq[Recommendation] = Seq(
-    Recommendation(RecommendationEntry(5081, "https://myanimelist.net/anime/5081/Bakemonogatari", "Bakemonogatari",
+    Recommendation(MediaEntry(5081, "https://myanimelist.net/anime/5081/Bakemonogatari", "Bakemonogatari",
       Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/11/75274.jpg?s=3bb5c42c0803621dde09c52f5c4d4249")))), 16),
-    Recommendation(RecommendationEntry(28621, "https://myanimelist.net/anime/28621/Subete_ga_F_ni_Naru", "Subete ga F ni Naru",
+    Recommendation(MediaEntry(28621, "https://myanimelist.net/anime/28621/Subete_ga_F_ni_Naru", "Subete ga F ni Naru",
       Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/76071.jpg?s=fdc6902408ec1ded27127502ae9f0863")))), 10),
-    Recommendation(RecommendationEntry(16592, "https://myanimelist.net/anime/16592/Danganronpa__Kibou_no_Gakuen_to_Zetsubou_no_Koukousei_The_Animation", "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation",
+    Recommendation(MediaEntry(16592, "https://myanimelist.net/anime/16592/Danganronpa__Kibou_no_Gakuen_to_Zetsubou_no_Koukousei_The_Animation", "Danganronpa: Kibou no Gakuen to Zetsubou no Koukousei The Animation",
       Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/4/51463.jpg?s=548e8ef2df2f9256802267ddc6cb07e9")))), 9)
   )
 
