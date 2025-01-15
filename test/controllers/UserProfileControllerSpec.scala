@@ -13,7 +13,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.{JikanService, JikanServiceSpec}
 
-import java.time.{Instant, OffsetDateTime}
+import java.time.OffsetDateTime
 import scala.concurrent.{ExecutionContext, Future}
 
 class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory {

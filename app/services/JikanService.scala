@@ -15,7 +15,6 @@ import models.userprofile.UserProfileResult
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
 
 class JikanService @Inject()(connector: JikanConnector) {
   def getAnimeSearchResults(search: String, page: String, queryExt: String, urlOverride: Option[String] = None)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeSearchResult] = {

@@ -19,11 +19,11 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json._
 
-import java.time.{Instant, OffsetDateTime}
+import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
 
 class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with GuiceOneAppPerSuite {
-  val mockConnector = mock[JikanConnector]
+  val mockConnector: JikanConnector = mock[JikanConnector]
   implicit val executionContext: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   val testService = new JikanService(mockConnector)
 

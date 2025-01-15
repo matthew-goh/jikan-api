@@ -1,7 +1,6 @@
 package controllers
 
 import cats.data.EitherT
-import eu.timepit.refined.auto._
 import models._
 import models.relations.Relation
 import play.api.libs.json._
@@ -175,14 +174,14 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
       relations <- service.getRelatedAnime(id)
     } yield {
       val animeRelations: Seq[Relation] = relations.data.map { relation =>
-        Relation(relation.relation, relation.entry.filter(entry => entry.`type` == "anime"))
+        Relation(relation.relation, relation.entry.filter(_.`type` == "anime"))
       }.filter(_.entry.nonEmpty)
       Ok(views.html.relations(anime.data, animeRelations, themes.data))
     }
 
     result.value.map {
       case Right(res) => res
-      case Left(error) => // use the error of the first service call that failed
+      case Left(error) => // uses the error of the first service call that failed
         Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
