@@ -8,6 +8,7 @@ import models._
 import models.characters._
 import models.episodes._
 import models.news.{AnimeNews, NewsResult}
+import models.people._
 import models.recommendations._
 import models.relations._
 import models.reviews._
@@ -418,6 +419,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getPersonProfile()" should {
+    "return a person's profile" in {
+      (mockConnector.get[PersonResult](_: String)(_: OFormat[PersonResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/people/686/full", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testPersonResultJson.as[PersonResult]))
+        .once()
+
+      whenReady(testService.getPersonProfile("686").value) { result =>
+        result shouldBe Right(PersonResult(JikanServiceSpec.testPersonProfile))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[PersonResult](_: String)(_: OFormat[PersonResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/people/0/full", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The id must be at least 1.")))
+        .once()
+
+      whenReady(testService.getPersonProfile("0").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(400, "The id must be at least 1."))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -638,6 +663,23 @@ object JikanServiceSpec {
       "Stark700", Images(JpgImage(Some("https://cdn.myanimelist.net/s/common/uploaded_files/1462462489-94ca66a78c9921eba68cc11037c3d793.jpeg?s=d9d2cadb09bcba288e01c556cb9824b9"))),
       "A special page on author NisiOisiN's official website has announced an anime project of the Zaregoto light novel series. Zaregoto was originally published betwe...")
   )
+
+  val kindaichiCharacterInfo: CharacterInfo = CharacterInfo(17650, "Kindaichi, Hajime",
+    Images(JpgImage(Some("https://cdn.myanimelist.net/r/84x124/images/characters/3/289646.jpg?s=68fc5e2f5de42d2e79bc50f96f360eb8"))))
+  val testVoicedCharacter1: VoicedCharacter = VoicedCharacter("Main",
+    MediaEntry(22817, "https://myanimelist.net/anime/22817/Kindaichi_Shounen_no_Jikenbo_Returns", "Kindaichi Shounen no Jikenbo Returns",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/7/61271.jpg?s=10b4fb741297f9a88d39fcbc2c555ac7")))),
+    kindaichiCharacterInfo
+  )
+  val testVoicedCharacter2: VoicedCharacter = VoicedCharacter("Main",
+    MediaEntry(2076, "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo", "Kindaichi Shounen no Jikenbo",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6")))),
+    kindaichiCharacterInfo
+  )
+  val testPersonProfile: PersonProfile = PersonProfile(686, Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg"))),
+    "Taiki Matsuno", Seq(), Some(OffsetDateTime.parse("1967-10-16T00:00:00+00:00").toInstant), 28,
+    Some("Birth name: Matsuno, Tatsuya (松野 達也)\nBirth place: Tokyo, Japan \nBlood type: A\nHeight: 160cm\nWeight: 53kg\nDate of death: June 26, 2024\n\nHobbies: Dance\n\nBlog:\n- http://blog.livedoor.jp/taikeymania/\n\nCV:\n- http://www.aoni.co.jp/actor/ma/pdf/matsuno-taiki.pdf"),
+    Seq(testVoicedCharacter1, testVoicedCharacter2))
 
   val testAnimeSearchJsonStr: String =
     """
@@ -3254,4 +3296,99 @@ object JikanServiceSpec {
       |  ]
       |}""".stripMargin
   )
+
+  val testPersonResultJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": {
+      |    "mal_id": 686,
+      |    "url": "https://myanimelist.net/people/686/Taiki_Matsuno",
+      |    "website_url": "http://www.aoni.co.jp/actor/ma/matsuno-taiki.html",
+      |    "images": {
+      |      "jpg": {
+      |        "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg"
+      |      }
+      |    },
+      |    "name": "Taiki Matsuno",
+      |    "given_name": "太紀",
+      |    "family_name": "松野",
+      |    "alternate_names": [],
+      |    "birthday": "1967-10-16T00:00:00+00:00",
+      |    "favorites": 28,
+      |    "about": "Birth name: Matsuno, Tatsuya (松野 達也)\nBirth place: Tokyo, Japan \nBlood type: A\nHeight: 160cm\nWeight: 53kg\nDate of death: June 26, 2024\n\nHobbies: Dance\n\nBlog:\n- http://blog.livedoor.jp/taikeymania/\n\nCV:\n- http://www.aoni.co.jp/actor/ma/pdf/matsuno-taiki.pdf",
+      |    "anime": [],
+      |    "manga": [],
+      |    "voices": [
+      |      {
+      |        "role": "Main",
+      |        "anime": {
+      |          "mal_id": 22817,
+      |          "url": "https://myanimelist.net/anime/22817/Kindaichi_Shounen_no_Jikenbo_Returns",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/7/61271.jpg?s=10b4fb741297f9a88d39fcbc2c555ac7",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/7/61271t.jpg?s=10b4fb741297f9a88d39fcbc2c555ac7",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/7/61271l.jpg?s=10b4fb741297f9a88d39fcbc2c555ac7"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/7/61271.webp?s=10b4fb741297f9a88d39fcbc2c555ac7",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/7/61271t.webp?s=10b4fb741297f9a88d39fcbc2c555ac7",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/7/61271l.webp?s=10b4fb741297f9a88d39fcbc2c555ac7"
+      |            }
+      |          },
+      |          "title": "Kindaichi Shounen no Jikenbo Returns"
+      |        },
+      |        "character": {
+      |          "mal_id": 17650,
+      |          "url": "https://myanimelist.net/character/17650/Hajime_Kindaichi",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/r/84x124/images/characters/3/289646.jpg?s=68fc5e2f5de42d2e79bc50f96f360eb8"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/r/84x124/images/characters/3/289646.webp?s=68fc5e2f5de42d2e79bc50f96f360eb8",
+      |              "small_image_url": "https://cdn.myanimelist.net/r/84x124/images/characters/3/289646t.webp?s=68fc5e2f5de42d2e79bc50f96f360eb8"
+      |            }
+      |          },
+      |          "name": "Kindaichi, Hajime"
+      |        }
+      |      },
+      |      {
+      |        "role": "Main",
+      |        "anime": {
+      |          "mal_id": 2076,
+      |          "url": "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440t.jpg?s=51203256d844fab8f73d1f948cd47ec6",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440l.jpg?s=51203256d844fab8f73d1f948cd47ec6"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1702/120440.webp?s=51203256d844fab8f73d1f948cd47ec6",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440t.webp?s=51203256d844fab8f73d1f948cd47ec6",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440l.webp?s=51203256d844fab8f73d1f948cd47ec6"
+      |            }
+      |          },
+      |          "title": "Kindaichi Shounen no Jikenbo"
+      |        },
+      |        "character": {
+      |          "mal_id": 17650,
+      |          "url": "https://myanimelist.net/character/17650/Hajime_Kindaichi",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/r/84x124/images/characters/3/289646.jpg?s=68fc5e2f5de42d2e79bc50f96f360eb8"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/r/84x124/images/characters/3/289646.webp?s=68fc5e2f5de42d2e79bc50f96f360eb8",
+      |              "small_image_url": "https://cdn.myanimelist.net/r/84x124/images/characters/3/289646t.webp?s=68fc5e2f5de42d2e79bc50f96f360eb8"
+      |            }
+      |          },
+      |          "name": "Kindaichi, Hajime"
+      |        }
+      |      }
+      |    ]
+      |  }
+      |}
+      |""".stripMargin)
 }

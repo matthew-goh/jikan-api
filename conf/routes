@@ -28,6 +28,9 @@ GET     /anime/:id/related    controllers.ApplicationController.getAnimeRelation
 GET     /anime/:id/statistics    controllers.ApplicationController.getAnimeStatistics(id: String)
 GET     /anime/:id/news    controllers.ApplicationController.getAnimeNews(id: String)
 
+# People
+GET     /people/:id    controllers.PersonController.getPersonProfile(id: String)
+
 # Saved anime
 GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.SavedAnimeController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)
 POST     /sortsaved    controllers.SavedAnimeController.sortSavedList()

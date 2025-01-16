@@ -6,6 +6,7 @@ import models._
 import models.characters._
 import models.episodes.{EpisodeSearchResult, SingleEpisodeResult}
 import models.news.NewsResult
+import models.people.PersonResult
 import models.recommendations._
 import models.relations.{RelationsResult, ThemesResult}
 import models.reviews.ReviewsResult
@@ -92,5 +93,9 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getAnimeNews(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, NewsResult] = {
     connector.get[NewsResult](s"https://api.jikan.moe/v4/anime/$id/news")
+  }
+
+  def getPersonProfile(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, PersonResult] = {
+    connector.get[PersonResult](s"https://api.jikan.moe/v4/people/$id/full")
   }
 }

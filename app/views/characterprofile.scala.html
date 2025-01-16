@@ -19,7 +19,7 @@
     <h2>Character Profile</h2>
     <h3>@character.name</h3>
     <p><b>Nicknames:</b> @{if(character.nicknames.nonEmpty) character.nicknames.mkString(", ") else "None"}</p>
-    <p>Favourited by @{NumberFormat.getInstance().format(character.favorites)} @{if(character.favorites == 1) "user" else "users"}</p>
+    <p>Favourited by <b>@NumberFormat.getInstance().format(character.favorites)</b> @{if(character.favorites == 1) "user" else "users"}</p>
     <img class="char-img-profile" src="@character.images.jpg.image_url" alt="Character image">
 
     <p><b>About:</b><br>@raw(character.about.getOrElse("Not available").replace("\n", "<br>"))</p>
@@ -31,7 +31,7 @@
       <ul>
       @for(voice <- character.voices) {
         <li>
-          @voice.person.name (@voice.language)
+          <a href="@routes.PersonController.getPersonProfile(voice.person.mal_id.toString)">@voice.person.name</a> (@voice.language)
         </li>
       }
       </ul>
