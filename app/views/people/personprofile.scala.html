@@ -21,11 +21,8 @@
     <h2>Person Profile</h2>
     <h3>@person.name</h3>
     <p><b>Other names:</b> @{if(person.alternate_names.nonEmpty) person.alternate_names.mkString(", ") else "None"}</p>
-    <p>
-      Has voiced characters in <b>@person.voices.length</b> anime
-      @if(person.voices.nonEmpty) { <br>See all }
-    </p>
     <p>Favourited by <b>@NumberFormat.getInstance().format(person.favorites)</b> @{if(person.favorites == 1) "user" else "users"}</p>
+    <p><a href="@routes.PersonController.getVoicedCharacters(person.mal_id.toString, "all", "none", "none")">See Voiced Characters</a></p>
     <img class="char-img-profile" src="@person.images.jpg.image_url" alt="Person image">
 
     @if(person.birthday.nonEmpty) { <p><b>Birthday:</b> @{person.birthday.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p> }
