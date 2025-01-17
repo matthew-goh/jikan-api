@@ -49,7 +49,7 @@
       @for(pairing <- pairings) {
         <li class="li-with-box">
           <div class="char-img-container">
-            @if(pairing.entry.head.url.value.contains("/manga/")) {
+            @if(pairing.entry.head.url.contains("/manga/")) {
               <p><b>@pairing.entry.head.title</b> (Manga)</p>
             } else {
               <p><a href="@routes.ApplicationController.getAnimeById(pairing.entry.head.mal_id.toString)" target="_blank"> <b>@pairing.entry.head.title</b> </a></p>
@@ -61,7 +61,7 @@
             <p>@pairing.content</p>
           </div>
           <div class="char-img-container">
-            @if(pairing.entry.last.url.value.contains("/manga/")) {
+            @if(pairing.entry.last.url.contains("/manga/")) {
               <p><b>@pairing.entry.last.title</b> (Manga)</p>
             } else {
               <p><a href="@routes.ApplicationController.getAnimeById(pairing.entry.last.mal_id.toString)" target="_blank"> <b>@pairing.entry.last.title</b> </a></p>

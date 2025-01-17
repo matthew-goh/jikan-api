@@ -72,8 +72,11 @@ class JikanConnectorSpec extends BaseSpecWithApplication {
           .withBody(
             """{"pagination":{"last_visible_page":2,"has_next_page":true,"current_page":1,"items":{"count":25,"total":39,"per_page":25}}}""")))
 
-      whenReady(TestJikanConnector.get[AnimeSearchResult](s"http://$Host:$Port/searchanime/kindaichi/page=1/status=&min_score=abc&max_score=1000&order_by=&sort=").value) { result =>
-        result shouldBe Left(APIError.BadAPIResponse(200, "Could not parse JSON into required model"))
+      whenReady(TestJikanConnector.get[AnimeSearchResult](s"http://$Host:$Port/searchanime/kindaichi/page=1/status=&min_score=abc&max_score=1000&order_by=&sort=").value) {
+        case Left(error) =>
+          error.httpResponseStatus shouldBe 200
+          error.reason should include ("Could not parse JSON into required model")
+        case Right(_) => fail("Expected a Left to be returned")
       }
     }
 

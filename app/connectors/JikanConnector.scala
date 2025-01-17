@@ -18,10 +18,9 @@ class JikanConnector @Inject()(ws: WSClient) {
       response.map {
           result => {
             val resultJson: JsValue = Json.parse(result.body)
-//            println(resultJson)
             resultJson.validate[Response] match {
               case JsSuccess(responseItem, _) => Right(responseItem)
-              case JsError(_) =>
+              case JsError(e) =>
                 result.status match {
                   case 404 => {
                     val message: Option[String] = (resultJson \ "message").asOpt[String]
@@ -33,7 +32,7 @@ class JikanConnector @Inject()(ws: WSClient) {
                     }
                     Left(APIError.BadAPIResponse(400, messages.getOrElse("Unknown 400 error")))
                   }
-                  case _ => Left(APIError.BadAPIResponse(result.status, "Could not parse JSON into required model"))
+                  case _ => Left(APIError.BadAPIResponse(result.status, s"Could not parse JSON into required model. $e"))
                 }
             }
           }
