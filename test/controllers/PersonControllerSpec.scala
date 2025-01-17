@@ -4,7 +4,7 @@ import baseSpec.BaseSpecWithApplication
 import cats.data.EitherT
 import eu.timepit.refined.auto._
 import models._
-import models.people.PersonResult
+import models.people.{AnimePosition, PersonResult}
 import org.scalamock.scalatest.MockFactory
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -36,6 +36,8 @@ class PersonControllerSpec extends BaseSpecWithApplication with MockFactory {
       contentAsString(searchResult) should include ("Taiki Matsuno")
       contentAsString(searchResult) should include ("<b>Other names:</b> None")
       contentAsString(searchResult) should include ("<b>Birthday:</b> 16 Oct 1967")
+      contentAsString(searchResult) should include ("See Voiced Characters")
+      contentAsString(searchResult) shouldNot include ("See Anime Positions")
     }
 
     "return a NotFound if the person is not found" in {
@@ -84,7 +86,7 @@ class PersonControllerSpec extends BaseSpecWithApplication with MockFactory {
 
       val listingResult: Future[Result] = TestPersonController.getVoicedCharacters("686", "supporting", "none", "none")(testRequest.fakeRequest)
       status(listingResult) shouldBe OK
-      contentAsString(listingResult) should include ("No characters.")
+      contentAsString(listingResult) should include ("No characters")
     }
 
     "return a BadRequest if the sort parameter values are invalid" in {
@@ -111,6 +113,53 @@ class PersonControllerSpec extends BaseSpecWithApplication with MockFactory {
       val sortResult: Future[Result] = TestPersonController.sortVoicedCharacters("686")(sortRequest)
       status(sortResult) shouldBe SEE_OTHER
       redirectLocation(sortResult) shouldBe Some("/people/686/voices/role=all/orderby=none/order=none")
+    }
+  }
+
+  "PersonController .getAnimePositions()" should {
+    "list the person's anime positions ordered by anime title" in {
+      (mockJikanService.getPersonProfile(_: String)(_: ExecutionContext))
+        .expects("686", *)
+        .returning(EitherT.rightT(PersonResult(
+          JikanServiceSpec.testPersonProfile.copy(anime = Seq(
+            AnimePosition("add Planning, Chief Producer",
+              MediaEntry(29589, "https://myanimelist.net/anime/29589/Denpa_Kyoushi", "Denpa Kyoushi",
+                Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/4/73475.jpg?s=665480179e07867230685d3e44f4b027"))))),
+            AnimePosition("add Producer ((YTV))",
+              MediaEntry(2076, "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo", "Kindaichi Shounen no Jikenbo",
+                Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6")))))
+          ))
+        )))
+        .once()
+
+      val listingResult: Future[Result] = TestPersonController.getAnimePositions("686")(testRequest.fakeRequest)
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("Denpa Kyoushi")
+      contentAsString(listingResult).indexOf("Denpa Kyoushi") should be < contentAsString(listingResult).indexOf("Kindaichi Shounen no Jikenbo")
+      contentAsString(listingResult) should (include ("Planning, Chief Producer") and not include("add Planning, Chief Producer"))
+      countOccurrences(contentAsString(listingResult), "<tr>") shouldBe 3 // including header
+    }
+
+    "show 'No positions to display' if there are no results" in {
+      (mockJikanService.getPersonProfile(_: String)(_: ExecutionContext))
+        .expects("686", *)
+        .returning(EitherT.rightT(PersonResult(JikanServiceSpec.testPersonProfile)))
+        .once()
+
+      val listingResult: Future[Result] = TestPersonController.getAnimePositions("686")(testRequest.fakeRequest)
+      status(listingResult) shouldBe OK
+      contentAsString(listingResult) should include ("No positions to display")
+    }
+
+    "return a NotFound if the person is not found" in {
+      (mockJikanService.getPersonProfile(_: String)(_: ExecutionContext))
+        .expects("99999", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      val searchResult: Future[Result] = TestPersonController.getAnimePositions("99999")(FakeRequest())
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
     }
   }
 }

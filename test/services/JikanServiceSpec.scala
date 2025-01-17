@@ -710,7 +710,7 @@ object JikanServiceSpec {
   val testPersonProfile: PersonProfile = PersonProfile(686, Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg"))),
     "Taiki Matsuno", Seq(), Some(OffsetDateTime.parse("1967-10-16T00:00:00+00:00").toInstant), 28,
     Some("Birth name: Matsuno, Tatsuya (松野 達也)\nBirth place: Tokyo, Japan \nBlood type: A\nHeight: 160cm\nWeight: 53kg\nDate of death: June 26, 2024\n\nHobbies: Dance\n\nBlog:\n- http://blog.livedoor.jp/taikeymania/\n\nCV:\n- http://www.aoni.co.jp/actor/ma/pdf/matsuno-taiki.pdf"),
-    Seq(testVoicedCharacter1, testVoicedCharacter2))
+    Seq(), Seq(testVoicedCharacter1, testVoicedCharacter2))
 
   val testAnimeSearchJsonStr: String =
     """

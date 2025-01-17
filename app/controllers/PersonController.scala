@@ -45,4 +45,11 @@ class PersonController @Inject()(service: JikanService, val controllerComponents
     val sortOrder: Option[String] = request.body.asFormUrlEncoded.flatMap(_.get("sortOrder").flatMap(_.headOption))
     Future.successful(Redirect(routes.PersonController.getVoicedCharacters(id, role.getOrElse("all"), orderBy.getOrElse("none"), sortOrder.getOrElse("none"))))
   }
+
+  def getAnimePositions(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getPersonProfile(id).value.map{
+      case Right(personResult) => Ok(views.html.people.animepositionlist(personResult.data))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
 }
