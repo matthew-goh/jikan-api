@@ -1,0 +1,45 @@
+@import helper._
+@import models.people.PersonProfile
+
+@(person: PersonProfile)
+@main("Anime Positions"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.PersonController.getPersonProfile(person.mal_id.toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/profile-icon.png")" alt="Profile Icon">
+      Back to Person Profile
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Anime Positions held by <i>@person.name</i></h2>
+    @if(person.anime.isEmpty) {
+      <p>No positions to display.</p>
+    } else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" width="8%">No.</th>
+            <th scope="col" width="48%">Anime</th>
+            <th scope="col" width="44%">Position(s)</th>
+          </tr>
+        </thead>
+        <tbody>
+        @for((animePos, index) <- person.anime.zipWithIndex) {
+          <tr>
+            <td align="center">@{index + 1}</td>
+            <td><a href="@routes.ApplicationController.getAnimeById(animePos.anime.mal_id.toString)">@animePos.anime.title</a></td>
+            <td>
+              @animePos.position.stripPrefix("add ")
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
+  </div>
+}

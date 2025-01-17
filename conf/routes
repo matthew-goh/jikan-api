@@ -27,6 +27,13 @@ GET     /anime/:id/recommendations    controllers.ApplicationController.getAnime
 GET     /anime/:id/related    controllers.ApplicationController.getAnimeRelations(id: String)
 GET     /anime/:id/statistics    controllers.ApplicationController.getAnimeStatistics(id: String)
 GET     /anime/:id/news    controllers.ApplicationController.getAnimeNews(id: String)
+GET     /anime/:id/staff    controllers.ApplicationController.getAnimeStaff(id: String)
+
+# People
+GET     /people/:id    controllers.PersonController.getPersonProfile(id: String)
+GET     /people/:id/voices/role=:role/orderby=:orderBy/order=:sortOrder    controllers.PersonController.getVoicedCharacters(id: String, role: String, orderBy: String, sortOrder: String)
+POST     /people/sortvoices/:id    controllers.PersonController.sortVoicedCharacters(id: String)
+GET     /people/:id/positions    controllers.PersonController.getAnimePositions(id: String)
 
 # Saved anime
 GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.SavedAnimeController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)

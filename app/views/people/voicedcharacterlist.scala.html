@@ -1,0 +1,72 @@
+@import helper._
+@import models.people.PersonProfile
+
+@(person: PersonProfile, role: String, orderBy: String, sortOrder: String)(implicit request: RequestHeader)
+@main("Voiced Characters"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.PersonController.getPersonProfile(person.mal_id.toString)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/profile-icon.png")" alt="Profile Icon">
+      Back to Person Profile
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Anime Characters Voiced by <i>@person.name</i></h2>
+    @form(action = routes.PersonController.sortVoicedCharacters(person.mal_id.toString)) {
+      @CSRF.formField
+      <div class="form-div">
+        Role type:
+        <select name="role">
+          <option value="all" @(if(role == "all") "selected" else "")>All</option>
+          <option value="main" @(if(role == "main") "selected" else "")>Main</option>
+          <option value="supporting" @(if(role == "supporting") "selected" else "")>Supporting</option>
+        </select>
+          &nbsp;&nbsp; Order by:
+        <select name="orderBy">
+          <option value="none" @(if(orderBy == "none") "selected" else "")>Select</option>
+          <option value="anime" @(if(orderBy == "anime") "selected" else "")>Anime title</option>
+          <option value="character" @(if(orderBy == "character") "selected" else "")>Character name</option>
+        </select>
+          &nbsp;&nbsp; Sort order:
+        <select name="sortOrder">
+          <option value="none" @(if(sortOrder == "none") "selected" else "")>Select</option>
+          <option value="asc" @(if(sortOrder == "asc") "selected" else "")>Ascending</option>
+          <option value="desc" @(if(sortOrder == "desc") "selected" else "")>Descending</option>
+        </select>
+        <button type="submit">Sort</button>
+      </div>
+    }
+
+    <br>
+    @if(person.voices.isEmpty) {
+      <p>No characters.</p>
+    } else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" width="8%">No.</th>
+            <th scope="col" width="48%">Anime</th>
+            <th scope="col" width="44%">Character</th>
+          </tr>
+        </thead>
+        <tbody>
+        @for((voicedChar, index) <- person.voices.zipWithIndex) {
+          <tr>
+            <td align="center">@{index + 1}</td>
+            <td><a href="@routes.ApplicationController.getAnimeById(voicedChar.anime.mal_id.toString)">@voicedChar.anime.title</a></td>
+            <td>
+              <a href="@routes.ApplicationController.getCharacterProfile(voicedChar.character.mal_id.toString)">@voicedChar.character.name</a>
+              - @voicedChar.role
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
+  </div>
+}

@@ -20,7 +20,7 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
 
   def getUserProfile(username: String): Action[AnyContent] = Action.async { implicit request =>
     service.getUserProfile(username).value.map{
-      case Right(userResult) => Ok(views.html.userdetails(userResult.data, username))
+      case Right(userResult) => Ok(views.html.userprofile.userdetails(userResult.data, username))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
@@ -42,7 +42,7 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
         service.getUserFavourites(username).value.map{
           case Right(favesResult) => {
             val animeFavesSorted: Seq[AnimeFavourite] = favesResult.data.anime.orderBySortParameter(orderByValue, sortOrderValue)
-            Ok(views.html.userfavouriteanime(animeFavesSorted, username, orderBy, sortOrder))
+            Ok(views.html.userprofile.userfavouriteanime(animeFavesSorted, username, orderBy, sortOrder))
           }
           case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
         }
@@ -59,7 +59,7 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
 
   def getUserFavouriteCharacters(username: String): Action[AnyContent] = Action.async { implicit request =>
     service.getUserFavourites(username).value.map{
-      case Right(favesResult) => Ok(views.html.userfavouritecharacters(favesResult.data.characters.sortBy(_.name), username))
+      case Right(favesResult) => Ok(views.html.userprofile.userfavouritecharacters(favesResult.data.characters.sortBy(_.name), username))
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
@@ -70,7 +70,7 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
         if (pairingsResult.data.exists(pairing => pairing.entry.length != 2))
           InternalServerError(views.html.unsuccessful("Error: An entry returned by the API does not contain a pair"))
         else Try(page.toInt) match {
-          case Success(pg) if pg > 0 => Ok(views.html.userpairings(pairingsResult.data, username, pg, pairingsResult.pagination))
+          case Success(pg) if pg > 0 => Ok(views.html.userprofile.userpairings(pairingsResult.data, username, pg, pairingsResult.pagination))
           case _ => BadRequest(views.html.unsuccessful("API result obtained but page number is not a positive integer"))
         }
       }
@@ -84,11 +84,11 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
         Try(page.toInt) match {
           case Success(pg) if pg > 0 =>
             // has_next_page from API is not accurate - need to fetch next page's data to see if there are any results
-            if (reviewsResult.data.isEmpty) Future.successful(Ok(views.html.userreviews(username, pg, reviewsResult.data, hasNextPage = false)))
+            if (reviewsResult.data.isEmpty) Future.successful(Ok(views.html.userprofile.userreviews(username, pg, reviewsResult.data, hasNextPage = false)))
             else service.getUserReviews(username, (pg + 1).toString).value.map{
               case Right(reviewsNextPage) =>
-                if (reviewsNextPage.data.isEmpty) Ok(views.html.userreviews(username, pg, reviewsResult.data, hasNextPage = false))
-                else Ok(views.html.userreviews(username, pg, reviewsResult.data, hasNextPage = true))
+                if (reviewsNextPage.data.isEmpty) Ok(views.html.userprofile.userreviews(username, pg, reviewsResult.data, hasNextPage = false))
+                else Ok(views.html.userprofile.userreviews(username, pg, reviewsResult.data, hasNextPage = true))
               case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
             }
           case _ => Future.successful(BadRequest(views.html.unsuccessful("API result obtained but page number is not a positive integer")))
