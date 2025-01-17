@@ -420,6 +420,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
     }
   }
 
+  "getAnimeStaff()" should {
+    "return anime staff" in {
+      (mockConnector.get[StaffResult](_: String)(_: OFormat[StaffResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/staff", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testAnimeStaffJson.as[StaffResult]))
+        .once()
+
+      whenReady(testService.getAnimeStaff("2076").value) { result =>
+        result shouldBe Right(StaffResult(JikanServiceSpec.testStaffList))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[StaffResult](_: String)(_: OFormat[StaffResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/abc/staff", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      whenReady(testService.getAnimeStaff("abc").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
+      }
+    }
+  }
+
   "getPersonProfile()" should {
     "return a person's profile" in {
       (mockConnector.get[PersonResult](_: String)(_: OFormat[PersonResult], _: ExecutionContext))
@@ -662,6 +686,13 @@ object JikanServiceSpec {
     AnimeNews("Anime Project of 'Zaregoto' Light Novel Series Announced", "https://myanimelist.net/news/45895386", OffsetDateTime.parse("2016-05-05T08:39:00+00:00").toInstant,
       "Stark700", Images(JpgImage(Some("https://cdn.myanimelist.net/s/common/uploaded_files/1462462489-94ca66a78c9921eba68cc11037c3d793.jpeg?s=d9d2cadb09bcba288e01c556cb9824b9"))),
       "A special page on author NisiOisiN's official website has announced an anime project of the Zaregoto light novel series. Zaregoto was originally published betwe...")
+  )
+
+  val testStaffList: Seq[Staff] = Seq(
+    Staff(BasicProfileInfo(7501, "Suwa, Michihiko", Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/1/80727.jpg?s=700ffa8205f2814a0a653c07724815d0")))),
+      Seq("Producer")),
+    Staff(BasicProfileInfo(6823, "Nishio, Daisuke", Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/79477.jpg?s=e2089a81eac41e884b155c9c19cc9d23")))),
+      Seq("Director", "Episode Director", "Storyboard"))
   )
 
   val kindaichiCharacterInfo: BasicProfileInfo = BasicProfileInfo(17650, "Kindaichi, Hajime",
@@ -3292,6 +3323,45 @@ object JikanServiceSpec {
       |      },
       |      "comments": 96,
       |      "excerpt": "A special page on author NisiOisiN's official website has announced an anime project of the Zaregoto light novel series. Zaregoto was originally published betwe..."
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
+
+  val testAnimeStaffJson: JsValue = Json.parse(
+    """{
+      |  "data": [
+      |    {
+      |      "person": {
+      |        "mal_id": 7501,
+      |        "url": "https://myanimelist.net/people/7501/Michihiko_Suwa",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/voiceactors/1/80727.jpg?s=700ffa8205f2814a0a653c07724815d0"
+      |          }
+      |        },
+      |        "name": "Suwa, Michihiko"
+      |      },
+      |      "positions": [
+      |        "Producer"
+      |      ]
+      |    },
+      |    {
+      |      "person": {
+      |        "mal_id": 6823,
+      |        "url": "https://myanimelist.net/people/6823/Daisuke_Nishio",
+      |        "images": {
+      |          "jpg": {
+      |            "image_url": "https://cdn.myanimelist.net/images/voiceactors/2/79477.jpg?s=e2089a81eac41e884b155c9c19cc9d23"
+      |          }
+      |        },
+      |        "name": "Nishio, Daisuke"
+      |      },
+      |      "positions": [
+      |        "Director",
+      |        "Episode Director",
+      |        "Storyboard"
+      |      ]
       |    }
       |  ]
       |}""".stripMargin

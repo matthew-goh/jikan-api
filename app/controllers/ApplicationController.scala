@@ -204,4 +204,15 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
+
+  def getAnimeStaff(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAnimeById(id).value.flatMap{
+      case Right(animeResult) =>
+        service.getAnimeStaff(id).value.map{
+          case Right(staffResult) => Ok(views.html.staff(animeResult.data, staffResult.data))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
 }

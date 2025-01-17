@@ -3,6 +3,7 @@ body, h1, h2, h3, p, ul, ol, li, a {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    list-style-type: disc;
 }
 
 /* Body styling */

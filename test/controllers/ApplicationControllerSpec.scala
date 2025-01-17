@@ -7,6 +7,7 @@ import models._
 import models.characters._
 import models.episodes._
 import models.news.NewsResult
+import models.people.StaffResult
 import models.recommendations._
 import models.relations._
 import models.reviews.ReviewsResult
@@ -824,6 +825,55 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestApplicationController.getAnimeNews("abc")(testRequest.fakeRequest)
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "ApplicationController .getAnimeStaff()" should {
+    "list anime staff" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeStaff(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(StaffResult(JikanServiceSpec.testStaffList)))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeStaff("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo")
+      searchResultContent should (include ("Suwa, Michihiko") and include ("Nishio, Daisuke"))
+      countOccurrences(searchResultContent, "Staff image") shouldBe 2
+      countOccurrences(searchResultContent, "<li>") shouldBe 4 // positions
+    }
+
+    "show 'No staff to display' if there are no results" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
+        .once()
+
+      (mockJikanService.getAnimeStaff(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(StaffResult(Seq())))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeStaff("2076")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No staff to display")
+    }
+
+    "return a BadRequest if the anime ID is invalid" in {
+      (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
+        .expects("000", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(400, "The id must be at least 1.")))
+        .once()
+
+      val searchResult: Future[Result] = TestApplicationController.getAnimeStaff("000")(testRequest.fakeRequest)
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The id must be at least 1.")
     }
   }
 }
