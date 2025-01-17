@@ -581,10 +581,10 @@ object JikanServiceSpec {
     Some("""The real identity of the "Conductor" is revealed. (Source: Wikipedia)"""))
 
   val testCharacters: Seq[AnimeCharacter] = Seq(
-    AnimeCharacter(CharacterInfo(29593, "Boku", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171")))), "Main", 784),
-    AnimeCharacter(CharacterInfo(29594, "Kunagisa, Tomo", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6")))), "Main", 371),
-    AnimeCharacter(CharacterInfo(29595, "Aikawa, Jun", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5")))), "Supporting", 231),
-    AnimeCharacter(CharacterInfo(36560, "Akagami, Iria", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e")))), "Supporting", 1)
+    AnimeCharacter(BasicProfileInfo(29593, "Boku", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/15/317434.jpg?s=b7f89a35d49c9fe2dea566acb974c171")))), "Main", 784),
+    AnimeCharacter(BasicProfileInfo(29594, "Kunagisa, Tomo", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/7/311929.jpg?s=624f081ad1ac310bc945be5a5fdd17f6")))), "Main", 371),
+    AnimeCharacter(BasicProfileInfo(29595, "Aikawa, Jun", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/4/371513.jpg?s=97d1a9538f07cda0e3498b4804948cf5")))), "Supporting", 231),
+    AnimeCharacter(BasicProfileInfo(36560, "Akagami, Iria", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e")))), "Supporting", 1)
   )
 
   val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
@@ -598,7 +598,7 @@ object JikanServiceSpec {
       AnimeAppearance("Main", MediaEntry(57635, "https://myanimelist.net/anime/57635/Kamonohashi_Ron_no_Kindan_Suiri_2nd_Season",
         "Kamonohashi Ron no Kindan Suiri 2nd Season", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=0ca422cabe591f4850cb7408ced1f580")))))
     ),
-    Seq(Voice("Japanese", VoiceActor(30853, "Enoki, Junya")))
+    Seq(Voice("Japanese", BasicProfileInfo(30853, "Enoki, Junya", Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/62840.jpg"))))))
   )
 
   val testReview1: AnimeReview = AnimeReview(Reviewer("MasterGhost"), OffsetDateTime.parse("2014-08-16T08:21:00+00:00").toInstant,
@@ -664,7 +664,7 @@ object JikanServiceSpec {
       "A special page on author NisiOisiN's official website has announced an anime project of the Zaregoto light novel series. Zaregoto was originally published betwe...")
   )
 
-  val kindaichiCharacterInfo: CharacterInfo = CharacterInfo(17650, "Kindaichi, Hajime",
+  val kindaichiCharacterInfo: BasicProfileInfo = BasicProfileInfo(17650, "Kindaichi, Hajime",
     Images(JpgImage(Some("https://cdn.myanimelist.net/r/84x124/images/characters/3/289646.jpg?s=68fc5e2f5de42d2e79bc50f96f360eb8"))))
   val testVoicedCharacter1: VoicedCharacter = VoicedCharacter("Main",
     MediaEntry(22817, "https://myanimelist.net/anime/22817/Kindaichi_Shounen_no_Jikenbo_Returns", "Kindaichi Shounen no Jikenbo Returns",

@@ -1,10 +1,9 @@
 package models.people
 
 import models._
-import models.characters.CharacterInfo
 import play.api.libs.json.{Json, OFormat}
 
-case class VoicedCharacter(role: String, anime: MediaEntry, character: CharacterInfo)
+case class VoicedCharacter(role: String, anime: MediaEntry, character: BasicProfileInfo)
 
 object VoicedCharacter {
   implicit val formats: OFormat[VoicedCharacter] = Json.format[VoicedCharacter]
