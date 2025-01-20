@@ -19,7 +19,7 @@ GET     /users/:username/reviews/page=:page    controllers.UserProfileController
 # Anime extra info
 GET     /anime/:animeId/episodes/page=:page    controllers.ApplicationController.getEpisodeList(animeId: String, page: String)
 GET     /anime/:animeId/episodes/:episodeId    controllers.ApplicationController.getSingleEpisodeDetails(animeId: String, episodeId: String)
-GET     /anime/:animeId/characters    controllers.ApplicationController.getAnimeCharacters(animeId: String)
+GET     /anime/:id/characters    controllers.ApplicationController.getAnimeCharacters(id: String)
 GET     /characters/:id    controllers.ApplicationController.getCharacterProfile(id: String)
 GET     /anime/:id/reviews/page=:page/preliminary=:prelim/spoilers=:spoilers    controllers.ApplicationController.getAnimeReviews(id: String, page: String, prelim: String, spoilers: String)
 POST     /filterreviews/:id    controllers.ApplicationController.filterReviews(id: String)

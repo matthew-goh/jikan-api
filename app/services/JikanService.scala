@@ -39,6 +39,11 @@ class JikanService @Inject()(connector: JikanConnector) {
     connector.get[AnimeIdSearchResult](s"https://api.jikan.moe/v4/anime/$id")
   }
 
+  def getAnimeImages(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeImageList] = {
+    connector.get[AnimeImageList](s"https://api.jikan.moe/v4/anime/$id/pictures")
+  }
+
+  // User profiles
   def getUserProfile(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserProfileResult] = {
     connector.get[UserProfileResult](s"https://api.jikan.moe/v4/users/$username/full")
   }
@@ -55,6 +60,7 @@ class JikanService @Inject()(connector: JikanConnector) {
     connector.get[UserReviewsResult](s"https://api.jikan.moe/v4/users/$username/reviews?page=$page")
   }
 
+  // Anime extra info
   def getAnimeEpisodes(animeId: String, page: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, EpisodeSearchResult] = {
     connector.get[EpisodeSearchResult](s"https://api.jikan.moe/v4/anime/$animeId/episodes?page=$page")
   }
@@ -99,6 +105,7 @@ class JikanService @Inject()(connector: JikanConnector) {
     connector.get[StaffResult](s"https://api.jikan.moe/v4/anime/$id/staff")
   }
 
+  // People
   def getPersonProfile(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, PersonResult] = {
     connector.get[PersonResult](s"https://api.jikan.moe/v4/people/$id/full")
   }

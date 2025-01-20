@@ -317,3 +317,51 @@ label {
     padding: 10px;
     margin: auto; /* centre-align */
 }
+
+/*Glide carousel*/
+.glide {
+    width: 30%;
+    left: 30px;
+}
+.li-carousel {
+    list-style-type: none;
+}
+
+/* Ensure images fit the width of the carousel */
+.glide__slide img {
+    width: 100%;  /* Resize images to fit the container */
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Style for the carousel buttons (left and right) */
+.glide__prev, .glide__next {
+    position: absolute;                /* Position them on the sides */
+    top: 50%;                          /* Vertically center the buttons */
+    transform: translateY(-50%);       /* Adjust vertical alignment */
+    background-color: transparent;     /* Transparent background */
+    border: none;                      /* Remove default border */
+    padding: 0;                         /* Remove default padding */
+    cursor: pointer;                   /* Cursor on hover */
+    z-index: 10;                        /* Ensure buttons are above images */
+}
+
+/* Left button */
+.glide__prev {
+    left: -40px;  /* Adjust the distance from the left edge */
+}
+
+/* Right button */
+.glide__next {
+    right: -40px; /* Adjust the distance from the right edge */
+}
+
+/* Style for the arrow images inside the buttons */
+.glide__prev img, .glide__next img {
+    width: 30px;  /* Adjust the size of the arrows */
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Add hover effect to the buttons */
+.glide__prev:hover, .glide__next:hover {
+    opacity: 0.7;
+}
