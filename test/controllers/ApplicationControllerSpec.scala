@@ -183,21 +183,30 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   }
 
   "ApplicationController .getAnimeById()" should {
-    "display the anime's details when it is not saved in the database" in {
+    "display the anime's details when it is not saved in the database and has multiple images" in {
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
         .expects("2076", *)
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
         .once()
 
+      (mockJikanService.getAnimeImages(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeImageList(JikanServiceSpec.testAnimeImages)))
+        .once()
+
       val searchResult: Future[Result] = TestApplicationController.getAnimeById("2076")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
-      contentAsString(searchResult) should include ("Mon, 11 Sep 2000")
-      contentAsString(searchResult) should include ("Scored by 8,317 users")
-      contentAsString(searchResult) should include ("+ Save")
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
+      searchResultContent should include ("Mon, 11 Sep 2000")
+      searchResultContent should include ("Scored by 8,317 users")
+      searchResultContent should include ("+ Save")
+
+      searchResultContent should include ("class=\"glide\"")
+      countOccurrences(searchResultContent, "<li class=\"glide__slide li-carousel\">") shouldBe 2
     }
 
-    "display the anime's details when it is already saved in the database" in {
+    "display the anime's details when it is already saved in the database and has a single image" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
       status(createdResult) shouldBe CREATED
@@ -207,10 +216,17 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
         .once()
 
+      (mockJikanService.getAnimeImages(_: String)(_: ExecutionContext))
+        .expects("2076", *)
+        .returning(EitherT.rightT(AnimeImageList(Seq(JikanServiceSpec.kindaichiImage1))))
+        .once()
+
       val searchResult: Future[Result] = TestApplicationController.getAnimeById("2076")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
       contentAsString(searchResult) should include ("Saved")
+      contentAsString(searchResult) should include ("<img class=\"char-img-profile\"") // image element with no glide carousel
+      contentAsString(searchResult) shouldNot include ("class=\"glide\"")
     }
 
     "return a NotFound if the anime is not found" in {
