@@ -84,6 +84,41 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
     }
   }
 
+  "getImageList()" should {
+    "return anime images" in {
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/2076/pictures", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testAnimeImagesJson.as[ImageList]))
+        .once()
+
+      whenReady(testService.getImageList("2076", ImageListSubjects.anime).value) { result =>
+        result shouldBe Right(ImageList(JikanServiceSpec.testAnimeImages))
+      }
+    }
+
+    "return character images" in {
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/characters/192285/pictures", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testCharacterImagesJson.as[ImageList]))
+        .once()
+
+      whenReady(testService.getImageList("192285", ImageListSubjects.characters).value) { result =>
+        result shouldBe Right(ImageList(JikanServiceSpec.testCharacterImages))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/anime/abc/pictures", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      whenReady(testService.getImageList("abc", ImageListSubjects.anime).value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
+      }
+    }
+  }
+
   "getUserProfile()" should {
     "return a user's details" in {
       (mockConnector.get[UserProfileResult](_: String)(_: OFormat[UserProfileResult], _: ExecutionContext))
@@ -473,6 +508,7 @@ object JikanServiceSpec {
   val testSimplePagination: SimplePagination = SimplePagination(1, has_next_page = false)
   val testSearchPagination: AnimeSearchPagination = AnimeSearchPagination(1, 1, has_next_page = false, AnimeSearchPagItems(9, 9, 25))
 
+  val kindaichiImage1: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg")))
   val kindaichiData1: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
     Some("R - 17+ (violence & profanity)"),Some(7.94),Some(8317),
@@ -480,7 +516,7 @@ object JikanServiceSpec {
            |
            |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
            |
-           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg"))))
+           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), kindaichiImage1)
 
   val kindaichiData2: AnimeData = AnimeData(22817,"Kindaichi Shounen no Jikenbo Returns",Some("The File of Young Kindaichi Returns"),"TV",Some(25),"Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2014-04-05T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2014-09-27T00:00:00+00:00").toInstant)),
@@ -538,8 +574,12 @@ object JikanServiceSpec {
     List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1256/92959.jpg"))))
 
   val testSearchData: Seq[AnimeData] = Seq(kindaichiData1, kindaichiData2, kindaichiData3, kindaichiData4, kindaichiData5, kindaichiData6, kindaichiData7, kindaichiData8, kindaichiData9)
-
   val testAnimeSearchResult: AnimeSearchResult = AnimeSearchResult(testSearchPagination, testSearchData)
+
+  val testAnimeImages: Seq[Images] = Seq(
+    kindaichiImage1,
+    Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1127/115908.jpg")))
+  )
 
   val testUserAnimeStatistics: UserAnimeStatistics = UserAnimeStatistics(21.1, 6.92, 1, 91, 4, 1, 1245)
 
@@ -611,8 +651,8 @@ object JikanServiceSpec {
     AnimeCharacter(BasicProfileInfo(36560, "Akagami, Iria", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e")))), "Supporting", 1)
   )
 
-  val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
-    Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg"))), "Totomaru Isshiki", Seq("Toto"), 26,
+  val totoImage1: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg")))
+  val testCharacterProfile: CharacterProfile = CharacterProfile(192285, totoImage1, "Totomaru Isshiki", Seq("Toto"), 26,
     Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
         |
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
@@ -623,6 +663,10 @@ object JikanServiceSpec {
         "Kamonohashi Ron no Kindan Suiri 2nd Season", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=0ca422cabe591f4850cb7408ced1f580")))))
     ),
     Seq(Voice("Japanese", BasicProfileInfo(30853, "Enoki, Junya", Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/62840.jpg"))))))
+  )
+  val testCharacterImages: Seq[Images] = Seq(
+    Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/483247.jpg"))),
+    totoImage1
   )
 
   val testReview1: AnimeReview = AnimeReview(Reviewer("MasterGhost"), OffsetDateTime.parse("2014-08-16T08:21:00+00:00").toInstant,
@@ -2097,6 +2141,45 @@ object JikanServiceSpec {
       |  }
       |}
       |""".stripMargin)
+
+  val testAnimeImagesJson: JsValue = Json.parse(
+    """{
+      |  "data": [
+      |    {
+      |      "jpg": {
+      |        "image_url": "https://cdn.myanimelist.net/images/anime/1702/120440.jpg",
+      |        "small_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440t.jpg",
+      |        "large_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440l.jpg"
+      |      },
+      |      "webp": {
+      |        "image_url": "https://cdn.myanimelist.net/images/anime/1702/120440.webp",
+      |        "small_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440t.webp",
+      |        "large_image_url": "https://cdn.myanimelist.net/images/anime/1702/120440l.webp"
+      |      }
+      |    },
+      |    {
+      |      "jpg": {
+      |        "image_url": "https://cdn.myanimelist.net/images/anime/1127/115908.jpg",
+      |        "small_image_url": "https://cdn.myanimelist.net/images/anime/1127/115908t.jpg",
+      |        "large_image_url": "https://cdn.myanimelist.net/images/anime/1127/115908l.jpg"
+      |      },
+      |      "webp": {
+      |        "image_url": "https://cdn.myanimelist.net/images/anime/1127/115908.webp",
+      |        "small_image_url": "https://cdn.myanimelist.net/images/anime/1127/115908t.webp",
+      |        "large_image_url": "https://cdn.myanimelist.net/images/anime/1127/115908l.webp"
+      |      }
+      |    }
+      |  ]
+      |}""".stripMargin
+  )
+
+  val testCharacterImagesJson: JsValue = Json.parse(
+    """{
+      |  "data": [
+      |    {"jpg": {"image_url": "https://cdn.myanimelist.net/images/characters/11/483247.jpg"}},
+      |    {"jpg": {"image_url": "https://cdn.myanimelist.net/images/characters/11/516963.jpg"}}
+      |  ]
+      |}""".stripMargin)
 
   val testUserProfileJson: JsValue = Json.parse(
     """

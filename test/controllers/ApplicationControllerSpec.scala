@@ -183,21 +183,30 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   }
 
   "ApplicationController .getAnimeById()" should {
-    "display the anime's details when it is not saved in the database" in {
+    "display the anime's details when it is not saved in the database and has multiple images" in {
       (mockJikanService.getAnimeById(_: String)(_: ExecutionContext))
         .expects("2076", *)
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
         .once()
 
+      (mockJikanService.getImageList(_: String, _: ImageListSubjects.Value)(_: ExecutionContext))
+        .expects("2076", ImageListSubjects.anime, *)
+        .returning(EitherT.rightT(ImageList(JikanServiceSpec.testAnimeImages)))
+        .once()
+
       val searchResult: Future[Result] = TestApplicationController.getAnimeById("2076")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
-      contentAsString(searchResult) should include ("Mon, 11 Sep 2000")
-      contentAsString(searchResult) should include ("Scored by 8,317 users")
-      contentAsString(searchResult) should include ("+ Save")
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
+      searchResultContent should include ("Mon, 11 Sep 2000")
+      searchResultContent should include ("Scored by 8,317 users")
+      searchResultContent should include ("+ Save")
+
+      searchResultContent should include ("class=\"glide\"")
+      countOccurrences(searchResultContent, "<li class=\"glide__slide li-carousel\">") shouldBe 2
     }
 
-    "display the anime's details when it is already saved in the database" in {
+    "display the anime's details when it is already saved in the database and has a single image" in {
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
       status(createdResult) shouldBe CREATED
@@ -207,10 +216,17 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
         .returning(EitherT.rightT(AnimeIdSearchResult(JikanServiceSpec.kindaichiData1)))
         .once()
 
+      (mockJikanService.getImageList(_: String, _: ImageListSubjects.Value)(_: ExecutionContext))
+        .expects("2076", ImageListSubjects.anime, *)
+        .returning(EitherT.rightT(ImageList(Seq(JikanServiceSpec.kindaichiImage1))))
+        .once()
+
       val searchResult: Future[Result] = TestApplicationController.getAnimeById("2076")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
       contentAsString(searchResult) should include ("Kindaichi Shounen no Jikenbo (MAL ID: 2076)")
       contentAsString(searchResult) should include ("Saved")
+      contentAsString(searchResult) should include ("<img class=\"char-img-profile\"") // image element with no glide carousel
+      contentAsString(searchResult) shouldNot include ("class=\"glide\"")
     }
 
     "return a NotFound if the anime is not found" in {
@@ -434,10 +450,15 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   }
 
   "ApplicationController .getCharacterProfile()" should {
-    "display a character's profile" in {
+    "display a character's profile with multiple images" in {
       (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
         .expects("192285", *)
         .returning(EitherT.rightT(CharacterProfileResult(JikanServiceSpec.testCharacterProfile)))
+        .once()
+
+      (mockJikanService.getImageList(_: String, _: ImageListSubjects.Value)(_: ExecutionContext))
+        .expects("192285", ImageListSubjects.characters, *)
+        .returning(EitherT.rightT(ImageList(JikanServiceSpec.testCharacterImages)))
         .once()
 
       val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("192285")(testRequest.fakeRequest)
@@ -447,16 +468,23 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent should include ("<b>Nicknames:</b> Toto")
       searchResultContent should include ("Kamonohashi Ron no Kindan Suiri 2nd Season")
       countOccurrences(searchResultContent, "Main role") shouldBe 2
+
+      searchResultContent should include ("class=\"glide\"")
+      countOccurrences(searchResultContent, "<li class=\"glide__slide li-carousel\">") shouldBe 2
     }
 
-    "display a character's profile with no biography, anime appearances or voice actor info" in {
-      val characterInNoAnime: CharacterProfile = CharacterProfile(192285,
-        Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg"))),
+    "display a character's profile with a single image and no biography, anime appearances or voice actor info" in {
+      val characterInNoAnime: CharacterProfile = CharacterProfile(192285, JikanServiceSpec.totoImage1,
         "Character Name", Seq("Nickname 1", "Nickname 2"), 0, None, Seq(), Seq())
 
       (mockJikanService.getCharacterProfile(_: String)(_: ExecutionContext))
         .expects("192285", *)
         .returning(EitherT.rightT(CharacterProfileResult(characterInNoAnime)))
+        .once()
+
+      (mockJikanService.getImageList(_: String, _: ImageListSubjects.Value)(_: ExecutionContext))
+        .expects("192285", ImageListSubjects.characters, *)
+        .returning(EitherT.rightT(ImageList(Seq(JikanServiceSpec.totoImage1))))
         .once()
 
       val searchResult: Future[Result] = TestApplicationController.getCharacterProfile("192285")(testRequest.fakeRequest)
@@ -466,6 +494,8 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
       searchResultContent should include ("<b>About:</b><br>Not available")
       searchResultContent should include ("Not appearing in any anime.")
       searchResultContent should include ("No voice actor info.")
+      searchResultContent should include ("<img class=\"char-img-profile\"") // image element with no glide carousel
+      searchResultContent shouldNot include ("class=\"glide\"")
     }
 
     "return a NotFound if the character is not found" in {

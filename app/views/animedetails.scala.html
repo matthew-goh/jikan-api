@@ -6,7 +6,7 @@
 
 @import play.twirl.api.HtmlFormat.raw
 
-@(anime: AnimeData, inDatabase: Boolean)(implicit request: RequestHeader)
+@(anime: AnimeData, imageList: Seq[Images], inDatabase: Boolean)(implicit request: RequestHeader)
 @main("Anime Details"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -20,7 +20,34 @@
     <h2>Anime details</h2>
     <h3>@anime.title (MAL ID: @anime.mal_id)</h3>
     @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
-    <img class="char-img-profile" src="@anime.images.jpg.image_url" alt="Anime image">
+
+    @if(imageList.length <= 1){
+      <img class="char-img-profile" src="@anime.images.jpg.image_url" alt="Anime image">
+    } else { @*Glide.js carousel*@
+      <script src="https://cdn.jsdelivr.net/npm/@@glidejs/glide@@3.4.1/dist/glide.min.js"></script>
+      <script src="@routes.Assets.versioned("javascripts/glideCarousel.js")"></script>
+      <div class="glide">
+        <div class="glide__track" data-glide-el="track">
+          <ul class="glide__slides">
+          @for((image, index) <- imageList.zipWithIndex) {
+            <li class="glide__slide li-carousel">
+              <img src="@image.jpg.image_url" class="d-block w-100" alt="Anime image @{index + 1}">
+            </li>
+          }
+          </ul>
+        </div>
+          <!-- Navigation buttons -->
+        <div data-glide-el="controls">
+          <button data-glide-dir="<" class="glide__prev">
+            <img src="@routes.Assets.versioned("images/left-icon.png")" alt="Prev">
+          </button>
+          <button data-glide-dir=">" class="glide__next">
+            <img src="@routes.Assets.versioned("images/right-icon.png")" alt="Next">
+          </button>
+        </div>
+      </div>
+    }
+
     <p><b>Type:</b> @{anime.`type`}</p>
     <p><b>Maturity rating:</b> @anime.rating.getOrElse("N/A")</p>
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ") </p>
@@ -33,14 +60,12 @@
     @if(anime.aired.from.nonEmpty) { <p><b>Start date:</b> @{anime.aired.from.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}</p> }
     @if(anime.aired.to.nonEmpty) { <p><b>End date:</b> @{anime.aired.to.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("E, dd MMM yyyy"))}</p> }
     <br>
-    <p><b>Average score:</b> @anime.score.getOrElse("N/A")</p>
-    @if(anime.scored_by.nonEmpty) {
-      @if(anime.scored_by.get == 1){
-        <p>Scored by 1 user</p>
-      } else {
-        <p>Scored by @NumberFormat.getInstance().format(anime.scored_by.get) users</p>
+    <p>
+      <b>Average score:</b> @anime.score.getOrElse("N/A")
+      @if(anime.scored_by.nonEmpty) {
+        <br>Scored by @{NumberFormat.getInstance().format(anime.scored_by.get)} @{if(anime.scored_by.get == 1) "user" else "users"}
       }
-    }
+    </p>
     <br>
     <p><b>Synopsis:</b><br>@raw(anime.synopsis.getOrElse("Not available").replace("\n", "<br>"))</p>
 
