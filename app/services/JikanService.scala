@@ -39,8 +39,8 @@ class JikanService @Inject()(connector: JikanConnector) {
     connector.get[AnimeIdSearchResult](s"https://api.jikan.moe/v4/anime/$id")
   }
 
-  def getAnimeImages(id: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, AnimeImageList] = {
-    connector.get[AnimeImageList](s"https://api.jikan.moe/v4/anime/$id/pictures")
+  def getImageList(id: String, subject: ImageListSubjects.Value)(implicit ec: ExecutionContext): EitherT[Future, APIError, ImageList] = {
+    connector.get[ImageList](s"https://api.jikan.moe/v4/$subject/$id/pictures")
   }
 
   // User profiles

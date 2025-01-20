@@ -63,7 +63,7 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   def getAnimeById(id: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAnimeById(id).value.flatMap{
       case Right(animeResult) =>
-        service.getAnimeImages(id).value.flatMap{
+        service.getImageList(id, ImageListSubjects.anime).value.flatMap{
           case Right(imageList) =>
             // check if the anime has already been saved
             repoService.read(animeResult.data.mal_id).map{
@@ -119,9 +119,13 @@ class ApplicationController @Inject()(repoService: AnimeRepositoryService, servi
   }
 
   def getCharacterProfile(id: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getCharacterProfile(id).value.map{
-      case Right(charResult) => Ok(views.html.characterprofile(charResult.data))
-      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    service.getCharacterProfile(id).value.flatMap {
+      case Right(charResult) =>
+        service.getImageList(id, ImageListSubjects.characters).value.map{
+          case Right(imageList) => Ok(views.html.characterprofile(charResult.data, imageList.data))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
 

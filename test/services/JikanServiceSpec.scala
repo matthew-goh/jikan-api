@@ -84,25 +84,36 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
     }
   }
 
-  "getAnimeImages()" should {
+  "getImageList()" should {
     "return anime images" in {
-      (mockConnector.get[AnimeImageList](_: String)(_: OFormat[AnimeImageList], _: ExecutionContext))
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
         .expects("https://api.jikan.moe/v4/anime/2076/pictures", *, *)
-        .returning(EitherT.rightT(JikanServiceSpec.testAnimeImagesJson.as[AnimeImageList]))
+        .returning(EitherT.rightT(JikanServiceSpec.testAnimeImagesJson.as[ImageList]))
         .once()
 
-      whenReady(testService.getAnimeImages("2076").value) { result =>
-        result shouldBe Right(AnimeImageList(JikanServiceSpec.testAnimeImages))
+      whenReady(testService.getImageList("2076", ImageListSubjects.anime).value) { result =>
+        result shouldBe Right(ImageList(JikanServiceSpec.testAnimeImages))
+      }
+    }
+
+    "return character images" in {
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/characters/192285/pictures", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testCharacterImagesJson.as[ImageList]))
+        .once()
+
+      whenReady(testService.getImageList("192285", ImageListSubjects.characters).value) { result =>
+        result shouldBe Right(ImageList(JikanServiceSpec.testCharacterImages))
       }
     }
 
     "return an error" in {
-      (mockConnector.get[AnimeImageList](_: String)(_: OFormat[AnimeImageList], _: ExecutionContext))
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
         .expects("https://api.jikan.moe/v4/anime/abc/pictures", *, *)
         .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
         .once()
 
-      whenReady(testService.getAnimeImages("abc").value) { result =>
+      whenReady(testService.getImageList("abc", ImageListSubjects.anime).value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
       }
     }
@@ -640,8 +651,8 @@ object JikanServiceSpec {
     AnimeCharacter(BasicProfileInfo(36560, "Akagami, Iria", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/8/311171.jpg?s=ebb18f7088b52cf64834c6b7e688b74e")))), "Supporting", 1)
   )
 
-  val testCharacterProfile: CharacterProfile = CharacterProfile(192285,
-    Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg"))), "Totomaru Isshiki", Seq("Toto"), 26,
+  val totoImage1: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg")))
+  val testCharacterProfile: CharacterProfile = CharacterProfile(192285, totoImage1, "Totomaru Isshiki", Seq("Toto"), 26,
     Some("""Totomaru, frequently shortened to Toto, is a police detective of the Metropolitan Police Department. He is currently helping Ron Kamonohashi investigate cases by pretending to be the one who solves them.
         |
         |(Source: Ron Kamonohashi: Deranged Detective Wiki)""".stripMargin),
@@ -652,6 +663,10 @@ object JikanServiceSpec {
         "Kamonohashi Ron no Kindan Suiri 2nd Season", Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=0ca422cabe591f4850cb7408ced1f580")))))
     ),
     Seq(Voice("Japanese", BasicProfileInfo(30853, "Enoki, Junya", Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/62840.jpg"))))))
+  )
+  val testCharacterImages: Seq[Images] = Seq(
+    Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/483247.jpg"))),
+    totoImage1
   )
 
   val testReview1: AnimeReview = AnimeReview(Reviewer("MasterGhost"), OffsetDateTime.parse("2014-08-16T08:21:00+00:00").toInstant,
@@ -2157,6 +2172,14 @@ object JikanServiceSpec {
       |  ]
       |}""".stripMargin
   )
+
+  val testCharacterImagesJson: JsValue = Json.parse(
+    """{
+      |  "data": [
+      |    {"jpg": {"image_url": "https://cdn.myanimelist.net/images/characters/11/483247.jpg"}},
+      |    {"jpg": {"image_url": "https://cdn.myanimelist.net/images/characters/11/516963.jpg"}}
+      |  ]
+      |}""".stripMargin)
 
   val testUserProfileJson: JsValue = Json.parse(
     """

@@ -1,11 +1,9 @@
 @import helper._
 @import models.characters.CharacterProfile
-
 @import java.text.NumberFormat
-
 @import play.twirl.api.HtmlFormat.raw
 
-@(character: CharacterProfile)
+@(character: CharacterProfile, imageList: Seq[Images])
 @main("Character Profile"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -20,7 +18,33 @@
     <h3>@character.name</h3>
     <p><b>Nicknames:</b> @{if(character.nicknames.nonEmpty) character.nicknames.mkString(", ") else "None"}</p>
     <p>Favourited by <b>@NumberFormat.getInstance().format(character.favorites)</b> @{if(character.favorites == 1) "user" else "users"}</p>
-    <img class="char-img-profile" src="@character.images.jpg.image_url" alt="Character image">
+
+    @if(imageList.length <= 1){
+      <img class="char-img-profile" src="@character.images.jpg.image_url" alt="Character image">
+    } else {
+      <script src="https://cdn.jsdelivr.net/npm/@@glidejs/glide@@3.4.1/dist/glide.min.js"></script>
+      <script src="@routes.Assets.versioned("javascripts/glideCarousel.js")"></script>
+      <div class="glide">
+        <div class="glide__track" data-glide-el="track">
+          <ul class="glide__slides">
+          @for((image, index) <- imageList.zipWithIndex) {
+            <li class="glide__slide li-carousel">
+              <img src="@image.jpg.image_url" class="d-block w-100" alt="Character image @{index + 1}">
+            </li>
+          }
+          </ul>
+        </div>
+          <!-- Navigation buttons -->
+        <div data-glide-el="controls">
+          <button data-glide-dir="<" class="glide__prev">
+            <img src="@routes.Assets.versioned("images/left-icon.png")" alt="Prev">
+          </button>
+          <button data-glide-dir=">" class="glide__next">
+            <img src="@routes.Assets.versioned("images/right-icon.png")" alt="Next">
+          </button>
+        </div>
+      </div>
+    }
 
     <p><b>About:</b><br>@raw(character.about.getOrElse("Not available").replace("\n", "<br>"))</p>
     <br>
