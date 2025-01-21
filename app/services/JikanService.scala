@@ -13,6 +13,7 @@ import models.reviews.ReviewsResult
 import models.statistics.StatisticsResult
 import models.userfavourites.UserFavouritesResult
 import models.userprofile.UserProfileResult
+import models.userupdates.UserUpdatesResult
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +59,10 @@ class JikanService @Inject()(connector: JikanConnector) {
 
   def getUserReviews(username: String, page: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserReviewsResult] = {
     connector.get[UserReviewsResult](s"https://api.jikan.moe/v4/users/$username/reviews?page=$page")
+  }
+
+  def getUserUpdates(username: String)(implicit ec: ExecutionContext): EitherT[Future, APIError, UserUpdatesResult] = {
+    connector.get[UserUpdatesResult](s"https://api.jikan.moe/v4/users/$username/userupdates")
   }
 
   // Anime extra info

@@ -97,4 +97,11 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
+
+  def getUserUpdates(username: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserUpdates(username).value.map{
+      case Right(updatesResult) => Ok(views.html.userprofile.userupdates(updatesResult.data.anime, username))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
 }
