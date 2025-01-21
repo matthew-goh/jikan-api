@@ -7,6 +7,7 @@ import models._
 import models.recommendations._
 import models.userfavourites._
 import models.userprofile.UserProfileResult
+import models.userupdates.{UserUpdatesData, UserUpdatesEmptyResult, UserUpdatesResult}
 import org.scalamock.scalatest.MockFactory
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -93,7 +94,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     "list the user's favourite anime sorted by start year in descending order" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites))))
+        .returning(EitherT.rightT(JikanServiceSpec.testFavouritesResult))
         .once()
 
       val searchResult: Future[Result] = TestUserProfileController.getUserFavouriteAnime("Emotional-Yam8", "start_year", "desc")(testRequest.fakeRequest)
@@ -157,7 +158,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     "list the user's favourite characters" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites))))
+        .returning(EitherT.rightT(JikanServiceSpec.testFavouritesResult))
         .once()
 
       val searchResult: Future[Result] = TestUserProfileController.getUserFavouriteCharacters("Emotional-Yam8")(testRequest.fakeRequest)
@@ -253,7 +254,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include("Error: An entry returned by the API does not contain a pair")
     }
 
-    "return a NotFound if the username is not found" in {
+    "return a NotFound if the user is not found" in {
       (mockJikanService.getUserRecommendations(_: String, _: String)(_: ExecutionContext))
         .expects("abc", "1", *)
         .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
@@ -338,7 +339,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
       contentAsString(searchResult) should include("API result obtained but page number is not a positive integer")
     }
 
-    "return a NotFound if the username is not found" in {
+    "return a NotFound if the user is not found" in {
       (mockJikanService.getUserReviews(_: String, _: String)(_: ExecutionContext))
         .expects("abc", "1", *)
         .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
@@ -347,6 +348,49 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestUserProfileController.getUserReviews("abc", "1")(testRequest.fakeRequest)
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
+    }
+  }
+
+  "UserProfileController .getUserUpdates()" should {
+    "display the user's 3 most recently updated anime" in {
+      (mockJikanService.getUserUpdates(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(Future.successful(Right(JikanServiceSpec.testUserUpdatesResult)))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserUpdates("Emotional-Yam8")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Tasokare Hotel")
+      searchResultContent.indexOf("Tasokare Hotel") should be < searchResultContent.indexOf("Nazotoki wa Dinner no Ato de")
+      searchResultContent.indexOf("Nazotoki wa Dinner no Ato de") should be < searchResultContent.indexOf("Kamonohashi Ron no Kindan Suiri 2nd Season")
+      countOccurrences(searchResultContent, "Watching") shouldBe 1
+      countOccurrences(searchResultContent, "Plan to Watch") shouldBe 1
+      countOccurrences(searchResultContent, "Completed") shouldBe 1
+      countOccurrences(searchResultContent, "episodes)") shouldBe 2 // episodes_seen not None
+      countOccurrences(searchResultContent, "Updated:") shouldBe 3
+    }
+
+    "show 'No updates to display' if the user has no anime list updates" in {
+      (mockJikanService.getUserUpdates(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(Future.successful(Right(UserUpdatesEmptyResult(Seq()))))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserUpdates("Emotional-Yam8")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No updates to display")
+    }
+
+    "return a BadRequest if the username is invalid" in {
+      (mockJikanService.getUserUpdates(_: String)(_: ExecutionContext))
+        .expects("a", *)
+        .returning(Future.successful(Left(APIError.BadAPIResponse(400, "The username must be at least 3 characters."))))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserUpdates("a")(FakeRequest())
+      status(searchResult) shouldBe BAD_REQUEST
+      contentAsString(searchResult) should include ("Bad response from upstream: The username must be at least 3 characters.")
     }
   }
 }
