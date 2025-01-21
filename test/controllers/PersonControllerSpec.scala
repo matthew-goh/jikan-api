@@ -20,24 +20,65 @@ class PersonControllerSpec extends BaseSpecWithApplication with MockFactory {
     component // comes from BaseSpecWithApplication
   )
 
+  private lazy val testAnimePosition1 = AnimePosition("add Planning, Chief Producer",
+    MediaEntry(29589, "https://myanimelist.net/anime/29589/Denpa_Kyoushi", "Denpa Kyoushi",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/4/73475.jpg?s=665480179e07867230685d3e44f4b027")))))
+
+  private lazy val testAnimePosition2 = AnimePosition("add Producer ((YTV))",
+    MediaEntry(2076, "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo", "Kindaichi Shounen no Jikenbo",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6")))))
+
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)
   
   
-  "UserProfileController .getUserProfile()" should {
-    "display a person's profile" in {
+  "PersonController .getPersonProfile()" should {
+    "display a person's profile with multiple images, voiced characters and no anime positions" in {
       (mockJikanService.getPersonProfile(_: String)(_: ExecutionContext))
         .expects("686", *)
         .returning(EitherT.rightT(PersonResult(JikanServiceSpec.testPersonProfile)))
         .once()
 
+      (mockJikanService.getImageList(_: String, _: ImageListSubjects.Value)(_: ExecutionContext))
+        .expects("686", ImageListSubjects.people, *)
+        .returning(EitherT.rightT(ImageList(JikanServiceSpec.testPersonImages)))
+        .once()
+
       val searchResult: Future[Result] = TestPersonController.getPersonProfile("686")(testRequest.fakeRequest)
       status(searchResult) shouldBe OK
-      contentAsString(searchResult) should include ("Taiki Matsuno")
-      contentAsString(searchResult) should include ("<b>Other names:</b> None")
-      contentAsString(searchResult) should include ("<b>Birthday:</b> 16 Oct 1967")
-      contentAsString(searchResult) should include ("See Voiced Characters")
-      contentAsString(searchResult) shouldNot include ("See Anime Positions")
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Taiki Matsuno")
+      searchResultContent should include ("<b>Other names:</b> None")
+      searchResultContent should include ("<b>Birthday:</b> 16 Oct 1967")
+      searchResultContent should include ("See Voiced Characters")
+      searchResultContent shouldNot include ("See Anime Positions")
+
+      searchResultContent should include ("class=\"glide\"")
+      countOccurrences(searchResultContent, "<li class=\"glide__slide li-carousel\">") shouldBe 2
+    }
+
+    "display a person's profile with a single image, anime positions and no voiced characters" in {
+      (mockJikanService.getPersonProfile(_: String)(_: ExecutionContext))
+        .expects("686", *)
+        .returning(EitherT.rightT(
+          PersonResult(JikanServiceSpec.testPersonProfile.copy(voices = Seq(), anime = Seq(testAnimePosition1)))
+        ))
+        .once()
+
+      (mockJikanService.getImageList(_: String, _: ImageListSubjects.Value)(_: ExecutionContext))
+        .expects("686", ImageListSubjects.people, *)
+        .returning(EitherT.rightT(ImageList(Seq(JikanServiceSpec.testVoiceActorImage))))
+        .once()
+
+      val searchResult: Future[Result] = TestPersonController.getPersonProfile("686")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("Taiki Matsuno")
+      searchResultContent shouldNot include ("See Voiced Characters")
+      searchResultContent should include ("See Anime Positions")
+
+      searchResultContent should include ("<img class=\"char-img-profile\"") // image element with no glide carousel
+      searchResultContent shouldNot include ("class=\"glide\"")
     }
 
     "return a NotFound if the person is not found" in {
@@ -120,16 +161,9 @@ class PersonControllerSpec extends BaseSpecWithApplication with MockFactory {
     "list the person's anime positions ordered by anime title" in {
       (mockJikanService.getPersonProfile(_: String)(_: ExecutionContext))
         .expects("686", *)
-        .returning(EitherT.rightT(PersonResult(
-          JikanServiceSpec.testPersonProfile.copy(anime = Seq(
-            AnimePosition("add Planning, Chief Producer",
-              MediaEntry(29589, "https://myanimelist.net/anime/29589/Denpa_Kyoushi", "Denpa Kyoushi",
-                Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/4/73475.jpg?s=665480179e07867230685d3e44f4b027"))))),
-            AnimePosition("add Producer ((YTV))",
-              MediaEntry(2076, "https://myanimelist.net/anime/2076/Kindaichi_Shounen_no_Jikenbo", "Kindaichi Shounen no Jikenbo",
-                Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6")))))
-          ))
-        )))
+        .returning(EitherT.rightT(
+          PersonResult(JikanServiceSpec.testPersonProfile.copy(anime = Seq(testAnimePosition1, testAnimePosition2)))
+        ))
         .once()
 
       val listingResult: Future[Result] = TestPersonController.getAnimePositions("686")(testRequest.fakeRequest)

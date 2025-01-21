@@ -25,5 +25,5 @@ object VoicedCharacterOrders extends Enumeration {
 }
 
 object ImageListSubjects extends Enumeration {
-  val anime, characters = Value
+  val anime, characters, people = Value
 }

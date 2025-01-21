@@ -15,9 +15,13 @@ class PersonController @Inject()(service: JikanService, val controllerComponents
                                 (implicit ec: ExecutionContext) extends BaseController with play.api.i18n.I18nSupport {
 
   def getPersonProfile(id: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getPersonProfile(id).value.map{
-      case Right(personResult) => Ok(views.html.people.personprofile(personResult.data))
-      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    service.getPersonProfile(id).value.flatMap {
+      case Right(personResult) =>
+        service.getImageList(id, ImageListSubjects.people).value.map{
+          case Right(imageList) => Ok(views.html.people.personprofile(personResult.data, imageList.data))
+          case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+        }
+      case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
     }
   }
 

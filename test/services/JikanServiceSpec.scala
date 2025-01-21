@@ -107,6 +107,17 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
 
+    "return person images" in {
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/people/686/pictures", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testPersonImagesJson.as[ImageList]))
+        .once()
+
+      whenReady(testService.getImageList("686", ImageListSubjects.people).value) { result =>
+        result shouldBe Right(ImageList(JikanServiceSpec.testPersonImages))
+      }
+    }
+
     "return an error" in {
       (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
         .expects("https://api.jikan.moe/v4/anime/abc/pictures", *, *)
@@ -751,10 +762,15 @@ object JikanServiceSpec {
       Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6")))),
     kindaichiCharacterInfo
   )
-  val testPersonProfile: PersonProfile = PersonProfile(686, Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg"))),
-    "Taiki Matsuno", Seq(), Some(OffsetDateTime.parse("1967-10-16T00:00:00+00:00").toInstant), 28,
+
+  val testVoiceActorImage: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg")))
+  val testPersonProfile: PersonProfile = PersonProfile(686, testVoiceActorImage, "Taiki Matsuno", Seq(), Some(OffsetDateTime.parse("1967-10-16T00:00:00+00:00").toInstant), 28,
     Some("Birth name: Matsuno, Tatsuya (松野 達也)\nBirth place: Tokyo, Japan \nBlood type: A\nHeight: 160cm\nWeight: 53kg\nDate of death: June 26, 2024\n\nHobbies: Dance\n\nBlog:\n- http://blog.livedoor.jp/taikeymania/\n\nCV:\n- http://www.aoni.co.jp/actor/ma/pdf/matsuno-taiki.pdf"),
     Seq(), Seq(testVoicedCharacter1, testVoicedCharacter2))
+  val testPersonImages: Seq[Images] = Seq(
+    Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/1/9597.jpg"))),
+    testVoiceActorImage
+  )
 
   val testAnimeSearchJsonStr: String =
     """
@@ -3543,5 +3559,10 @@ object JikanServiceSpec {
       |    ]
       |  }
       |}
+      |""".stripMargin)
+
+  val testPersonImagesJson: JsValue = Json.parse(
+    """{"data":[{"jpg":{"image_url":"https:\/\/cdn.myanimelist.net\/images\/voiceactors\/1\/9597.jpg"}},
+      |{"jpg":{"image_url":"https:\/\/cdn.myanimelist.net\/images\/voiceactors\/2\/31037.jpg"}}]}
       |""".stripMargin)
 }
