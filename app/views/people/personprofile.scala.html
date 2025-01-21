@@ -7,7 +7,7 @@
 
 @import play.twirl.api.HtmlFormat.raw
 
-@(person: PersonProfile)
+@(person: PersonProfile, imageList: Seq[Images])
 @main("Person Profile"){
   <div class="container mb-5">
     <h1>Jikan API</h1>
@@ -28,7 +28,32 @@
     @if(person.anime.nonEmpty) {
       <p><a href="@routes.PersonController.getAnimePositions(person.mal_id.toString)">See Anime Positions</a></p>
     }
-    <img class="char-img-profile" src="@person.images.jpg.image_url" alt="Person image">
+    @if(imageList.length <= 1){
+      <img class="char-img-profile" src="@person.images.jpg.image_url" alt="Person image">
+    } else {
+      <script src="https://cdn.jsdelivr.net/npm/@@glidejs/glide@@3.4.1/dist/glide.min.js"></script>
+      <script src="@routes.Assets.versioned("javascripts/glideCarousel.js")"></script>
+      <div class="glide">
+        <div class="glide__track" data-glide-el="track">
+          <ul class="glide__slides">
+          @for((image, index) <- imageList.zipWithIndex) {
+            <li class="glide__slide li-carousel">
+              <img src="@image.jpg.image_url" class="d-block w-100" alt="Person image @{index + 1}">
+            </li>
+          }
+          </ul>
+        </div>
+          <!-- Navigation buttons -->
+        <div data-glide-el="controls">
+          <button data-glide-dir="<" class="glide__prev">
+            <img src="@routes.Assets.versioned("images/left-icon.png")" alt="Prev">
+          </button>
+          <button data-glide-dir=">" class="glide__next">
+            <img src="@routes.Assets.versioned("images/right-icon.png")" alt="Next">
+          </button>
+        </div>
+      </div>
+    }
 
     @if(person.birthday.nonEmpty) { <p><b>Birthday:</b> @{person.birthday.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p> }
     <p><b>About:</b><br>@raw(person.about.getOrElse("Not available").replace("\n", "<br>"))</p>

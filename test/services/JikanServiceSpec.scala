@@ -7,7 +7,7 @@ import eu.timepit.refined.auto._
 import models._
 import models.characters._
 import models.episodes._
-import models.news.{AnimeNews, NewsResult}
+import models.news._
 import models.people._
 import models.recommendations._
 import models.relations._
@@ -15,6 +15,7 @@ import models.reviews._
 import models.statistics._
 import models.userfavourites._
 import models.userprofile._
+import models.userupdates._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -107,6 +108,17 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
 
+    "return person images" in {
+      (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/people/686/pictures", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testPersonImagesJson.as[ImageList]))
+        .once()
+
+      whenReady(testService.getImageList("686", ImageListSubjects.people).value) { result =>
+        result shouldBe Right(ImageList(JikanServiceSpec.testPersonImages))
+      }
+    }
+
     "return an error" in {
       (mockConnector.get[ImageList](_: String)(_: OFormat[ImageList], _: ExecutionContext))
         .expects("https://api.jikan.moe/v4/anime/abc/pictures", *, *)
@@ -151,7 +163,7 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
         .once()
 
       whenReady(testService.getUserFavourites("Emotional-Yam8").value) { result =>
-        result shouldBe Right(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites)))
+        result shouldBe Right(JikanServiceSpec.testFavouritesResult)
       }
     }
 
@@ -211,6 +223,46 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
 
       whenReady(testService.getUserReviews("Emotional-Yam8", "abc").value) { result =>
         result shouldBe Left(APIError.BadAPIResponse(400, "The page must be a number."))
+      }
+    }
+  }
+
+  "getUserUpdates()" should {
+    "return a user's latest anime list updates" in {
+      (mockConnector.get[UserUpdatesResult](_: String)(_: OFormat[UserUpdatesResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/userupdates", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testUserUpdatesJson.as[UserUpdatesResult]))
+        .once()
+
+      whenReady(testService.getUserUpdates("Emotional-Yam8")) { result =>
+        result shouldBe Right(JikanServiceSpec.testUserUpdatesResult)
+      }
+    }
+
+    "return an empty list" in {
+      (mockConnector.get[UserUpdatesResult](_: String)(_: OFormat[UserUpdatesResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/userupdates", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(200, "Could not parse JSON into required model")))
+        .once()
+
+      (mockConnector.get[UserUpdatesEmptyResult](_: String)(_: OFormat[UserUpdatesEmptyResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/Emotional-Yam8/userupdates", *, *)
+        .returning(EitherT.rightT(UserUpdatesEmptyResult(Seq())))
+        .once()
+
+      whenReady(testService.getUserUpdates("Emotional-Yam8")) { result =>
+        result shouldBe Right(UserUpdatesEmptyResult(Seq()))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[UserUpdatesResult](_: String)(_: OFormat[UserUpdatesResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/users/abc/userupdates", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Resource does not exist")))
+        .once()
+
+      whenReady(testService.getUserUpdates("abc")) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Resource does not exist"))
       }
     }
   }
@@ -595,6 +647,7 @@ object JikanServiceSpec {
     CharacterFavourite(17650, "Kindaichi, Hajime", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e")))),
     CharacterFavourite(192285, "Isshiki, Totomaru", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"))))
   )
+  val testFavouritesResult: UserFavouritesResult = UserFavouritesResult(UserFavouritesData(testAnimeFavourites, testCharacterFavourites))
 
   val testUserPairings: Seq[Pairing] = Seq(
     Pairing(
@@ -627,6 +680,19 @@ object JikanServiceSpec {
       OffsetDateTime.parse("2024-03-21T05:59:00+00:00").toInstant, "Test review 2", 8, Seq("Recommended", "Preliminary"), is_spoiler = false, is_preliminary = true)
   )
   val testUserReviewsResult: UserReviewsResult = UserReviewsResult(testUserReviews, SimplePagination(1, has_next_page = true))
+
+  val testUserUpdates: Seq[UserListUpdate] = Seq(
+    UserListUpdate(MediaEntry(59136, "https://myanimelist.net/anime/59136/Tasokare_Hotel", "Tasokare Hotel",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1974/147269.jpg?s=bef93c43ea661ccddde23d353ccfb6e0")))),
+      Some(0), "Watching", Some(2), Some(12), OffsetDateTime.parse("2025-01-19T11:45:00+00:00").toInstant),
+    UserListUpdate(MediaEntry(60377, "https://myanimelist.net/anime/60377/Nazotoki_wa_Dinner_no_Ato_de", "Nazotoki wa Dinner no Ato de",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1496/146890.jpg?s=0d6f2f205f7f269bb4405cc68f77fcde")))),
+      Some(0), "Plan to Watch", None, None, OffsetDateTime.parse("2025-01-18T15:55:00+00:00").toInstant),
+    UserListUpdate(MediaEntry(57635, "https://myanimelist.net/anime/57635/Kamonohashi_Ron_no_Kindan_Suiri_2nd_Season", "Kamonohashi Ron no Kindan Suiri 2nd Season",
+      Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=92815361dbcce986d3502fbe5a765245")))),
+      Some(8), "Completed", Some(13), Some(13), OffsetDateTime.parse("2024-12-30T11:40:00+00:00").toInstant)
+  )
+  val testUserUpdatesResult: UserUpdatesResult = UserUpdatesResult(UserUpdatesData(testUserUpdates))
 
   val testEpisodeList: Seq[AnimeEpisode] = Seq(
     AnimeEpisode(1, "Day 3 (1) The Savant Gathering", Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(4.17)),
@@ -751,10 +817,15 @@ object JikanServiceSpec {
       Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=51203256d844fab8f73d1f948cd47ec6")))),
     kindaichiCharacterInfo
   )
-  val testPersonProfile: PersonProfile = PersonProfile(686, Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg"))),
-    "Taiki Matsuno", Seq(), Some(OffsetDateTime.parse("1967-10-16T00:00:00+00:00").toInstant), 28,
+
+  val testVoiceActorImage: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/2/31037.jpg")))
+  val testPersonProfile: PersonProfile = PersonProfile(686, testVoiceActorImage, "Taiki Matsuno", Seq(), Some(OffsetDateTime.parse("1967-10-16T00:00:00+00:00").toInstant), 28,
     Some("Birth name: Matsuno, Tatsuya (松野 達也)\nBirth place: Tokyo, Japan \nBlood type: A\nHeight: 160cm\nWeight: 53kg\nDate of death: June 26, 2024\n\nHobbies: Dance\n\nBlog:\n- http://blog.livedoor.jp/taikeymania/\n\nCV:\n- http://www.aoni.co.jp/actor/ma/pdf/matsuno-taiki.pdf"),
     Seq(), Seq(testVoicedCharacter1, testVoicedCharacter2))
+  val testPersonImages: Seq[Images] = Seq(
+    Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/1/9597.jpg"))),
+    testVoiceActorImage
+  )
 
   val testAnimeSearchJsonStr: String =
     """
@@ -2695,6 +2766,90 @@ object JikanServiceSpec {
       |}""".stripMargin
   )
 
+  val testUserUpdatesEmptyJson: JsValue = Json.parse("""{"data":[]}""")
+  val testUserUpdatesJson: JsValue = Json.parse(
+    """
+      |{
+      |  "data": {
+      |    "anime": [
+      |      {
+      |        "entry": {
+      |          "mal_id": 59136,
+      |          "url": "https://myanimelist.net/anime/59136/Tasokare_Hotel",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1974/147269.jpg?s=bef93c43ea661ccddde23d353ccfb6e0",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1974/147269t.jpg?s=bef93c43ea661ccddde23d353ccfb6e0",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1974/147269l.jpg?s=bef93c43ea661ccddde23d353ccfb6e0"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1974/147269.webp?s=bef93c43ea661ccddde23d353ccfb6e0",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1974/147269t.webp?s=bef93c43ea661ccddde23d353ccfb6e0",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1974/147269l.webp?s=bef93c43ea661ccddde23d353ccfb6e0"
+      |            }
+      |          },
+      |          "title": "Tasokare Hotel"
+      |        },
+      |        "score": 0,
+      |        "status": "Watching",
+      |        "episodes_seen": 2,
+      |        "episodes_total": 12,
+      |        "date": "2025-01-19T11:45:00+00:00"
+      |      },
+      |      {
+      |        "entry": {
+      |          "mal_id": 60377,
+      |          "url": "https://myanimelist.net/anime/60377/Nazotoki_wa_Dinner_no_Ato_de",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1496/146890.jpg?s=0d6f2f205f7f269bb4405cc68f77fcde",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1496/146890t.jpg?s=0d6f2f205f7f269bb4405cc68f77fcde",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1496/146890l.jpg?s=0d6f2f205f7f269bb4405cc68f77fcde"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1496/146890.webp?s=0d6f2f205f7f269bb4405cc68f77fcde",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1496/146890t.webp?s=0d6f2f205f7f269bb4405cc68f77fcde",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1496/146890l.webp?s=0d6f2f205f7f269bb4405cc68f77fcde"
+      |            }
+      |          },
+      |          "title": "Nazotoki wa Dinner no Ato de"
+      |        },
+      |        "score": 0,
+      |        "status": "Plan to Watch",
+      |        "episodes_seen": null,
+      |        "episodes_total": null,
+      |        "date": "2025-01-18T15:55:00+00:00"
+      |      },
+      |      {
+      |        "entry": {
+      |          "mal_id": 57635,
+      |          "url": "https://myanimelist.net/anime/57635/Kamonohashi_Ron_no_Kindan_Suiri_2nd_Season",
+      |          "images": {
+      |            "jpg": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1917/144334.jpg?s=92815361dbcce986d3502fbe5a765245",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334t.jpg?s=92815361dbcce986d3502fbe5a765245",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334l.jpg?s=92815361dbcce986d3502fbe5a765245"
+      |            },
+      |            "webp": {
+      |              "image_url": "https://cdn.myanimelist.net/images/anime/1917/144334.webp?s=92815361dbcce986d3502fbe5a765245",
+      |              "small_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334t.webp?s=92815361dbcce986d3502fbe5a765245",
+      |              "large_image_url": "https://cdn.myanimelist.net/images/anime/1917/144334l.webp?s=92815361dbcce986d3502fbe5a765245"
+      |            }
+      |          },
+      |          "title": "Kamonohashi Ron no Kindan Suiri 2nd Season"
+      |        },
+      |        "score": 8,
+      |        "status": "Completed",
+      |        "episodes_seen": 13,
+      |        "episodes_total": 13,
+      |        "date": "2024-12-30T11:40:00+00:00"
+      |      }
+      |    ],
+      |    "manga": []
+      |  }
+      |}
+      |""".stripMargin)
+
   val testEpisodeSearchJson: JsValue = Json.parse(
     """{
       |  "pagination": {
@@ -3543,5 +3698,10 @@ object JikanServiceSpec {
       |    ]
       |  }
       |}
+      |""".stripMargin)
+
+  val testPersonImagesJson: JsValue = Json.parse(
+    """{"data":[{"jpg":{"image_url":"https:\/\/cdn.myanimelist.net\/images\/voiceactors\/1\/9597.jpg"}},
+      |{"jpg":{"image_url":"https:\/\/cdn.myanimelist.net\/images\/voiceactors\/2\/31037.jpg"}}]}
       |""".stripMargin)
 }

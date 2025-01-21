@@ -1,0 +1,50 @@
+@import helper._
+@import java.text.NumberFormat
+@import java.time.format.DateTimeFormatter
+@import java.time.ZoneId
+@import models.userupdates.UserListUpdate
+
+@(updates: Seq[UserListUpdate], username: String)
+@main("User's Latest Updates"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserProfile(username)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/back-icon.png")" alt="Back Icon">
+      Back to User Profile
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Latest Updated Anime on @username's List</h2>
+
+    @if(updates.isEmpty) {
+      <p>No updates to display.</p>
+    } else {
+      <ul class="ul-with-boxes">
+      @for(update <- updates) {
+        <li class="li-with-box">
+          <div class="news-img-container">
+            <img class="news-img" src="@update.entry.images.jpg.image_url" alt="Anime image">
+          </div>
+          <div class="news-info-container">
+            <p><a href="@routes.ApplicationController.getAnimeById(update.entry.mal_id.toString)" target="_blank"><b>@update.entry.title</b></a></p>
+            <p>
+              @update.status
+              @if(update.episodes_seen.nonEmpty){
+                (@update.episodes_seen / @update.episodes_total.getOrElse("??")
+                @{if (update.episodes_total.nonEmpty && update.episodes_total.get == 1) "episode" else "episodes" })
+              }
+              @if(update.score.nonEmpty && update.score.get > 0) { <br>Scored: @update.score }
+            </p>
+            <p class="smaller-text">Updated: @{update.date.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
+          </div>
+        </li>
+      }
+      </ul>
+    }
+  </div>
+}

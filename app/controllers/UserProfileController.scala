@@ -2,6 +2,7 @@ package controllers
 
 import models._
 import models.userfavourites.AnimeFavourite
+import models.userupdates.{UserUpdatesEmptyResult, UserUpdatesResult}
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import services.JikanService
@@ -95,6 +96,14 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
         }
       }
       case Left(error) => Future.successful(Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason)))
+    }
+  }
+
+  def getUserUpdates(username: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserUpdates(username).map{
+      case Right(updatesResult: UserUpdatesResult) => Ok(views.html.userprofile.userupdates(updatesResult.data.anime, username))
+      case Right(_: UserUpdatesEmptyResult) => Ok(views.html.userprofile.userupdates(Seq(), username))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }
 }

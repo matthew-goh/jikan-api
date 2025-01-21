@@ -15,6 +15,7 @@ POST     /sortfavourites/:username    controllers.UserProfileController.sortFavo
 GET     /users/:username/favourites/characters    controllers.UserProfileController.getUserFavouriteCharacters(username: String)
 GET     /users/:username/pairings/page=:page    controllers.UserProfileController.getUserRecommendedPairings(username: String, page: String)
 GET     /users/:username/reviews/page=:page    controllers.UserProfileController.getUserReviews(username: String, page: String)
+GET     /users/:username/updates    controllers.UserProfileController.getUserUpdates(username: String)
 
 # Anime extra info
 GET     /anime/:animeId/episodes/page=:page    controllers.ApplicationController.getEpisodeList(animeId: String, page: String)
