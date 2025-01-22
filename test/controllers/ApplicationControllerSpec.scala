@@ -47,7 +47,7 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
   private lazy val kubikiriData: AnimeData = AnimeData(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", Some("The Kubikiri Cycle"),
     Seq("Zaregoto Series","The Headless Cycle","The Beheading Cycle: The Blue Savant and the Nonsense Bearer"), "OVA", Some(8), "Finished Airing",
     AirDates(Some(OffsetDateTime.parse("2016-10-26T00:00:00+00:00").toInstant), Some(OffsetDateTime.parse("2017-09-27T00:00:00+00:00").toInstant)),
-    Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440), Some(886),
+    Some("29 min per ep"), Some("R - 17+ (violence & profanity)"), Some(7.75), Some(34440), Some(886),
     Some("""Due to a mysterious disease, the genius Iria Akagami has been forced by her family to stay in a mansion on the isolated Wet Crow's Feather Island with only a handful of maids. To keep herself entertained, Iria invites a variety of fellow geniuses to stay as guests in her home, including computer savant Tomo Kunagisa and her unnamed assistant, skilled fortune-teller Maki Himena, famous artist Kanami Ibuki, academic scholar Akane Sonoyama, and renowned cook Yayoi Sashirono.
            |
            |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
