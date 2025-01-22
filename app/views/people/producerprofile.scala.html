@@ -1,0 +1,34 @@
+@import helper._
+@import models.producers.ProducerData
+
+@import java.text.NumberFormat
+@import java.time.ZoneId
+@import java.time.format.DateTimeFormatter
+
+@import play.twirl.api.HtmlFormat.raw
+
+@(producer: ProducerData, defaultName: String)
+@main("Producer Profile"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>Producer Profile</h2>
+    <h3>@defaultName</h3>
+    <p><b>Other names:</b> @{
+      val otherTitles = producer.titles.filter(_.`type` == "Synonym")
+      if(otherTitles.nonEmpty) otherTitles.map(_.title).mkString(", ") else "None"
+    }</p>
+    <p>Favourited by <b>@NumberFormat.getInstance().format(producer.favorites)</b> @{if(producer.favorites == 1) "user" else "users"}</p>
+    <img class="char-img-profile" src="@producer.images.jpg.image_url" alt="Producer logo">
+    
+    @if(producer.established.nonEmpty) { <p><b>Established:</b> @{producer.established.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p> }
+    <p><b>Anime count:</b> @producer.count</p>
+    <p><b>About:</b><br>@raw(producer.about.getOrElse("Not available").replace("\n", "<br>"))</p>
+  </div>
+}

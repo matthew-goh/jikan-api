@@ -35,6 +35,7 @@ GET     /people/:id    controllers.PersonController.getPersonProfile(id: String)
 GET     /people/:id/voices/role=:role/orderby=:orderBy/order=:sortOrder    controllers.PersonController.getVoicedCharacters(id: String, role: String, orderBy: String, sortOrder: String)
 POST     /people/sortvoices/:id    controllers.PersonController.sortVoicedCharacters(id: String)
 GET     /people/:id/positions    controllers.PersonController.getAnimePositions(id: String)
+GET     /producers/:id    controllers.PersonController.getProducerProfile(id: String)
 
 # Saved anime
 GET     /saved/status=:compStatus/orderby=:orderBy/order=:sortOrder     controllers.SavedAnimeController.listSavedAnime(compStatus: String, orderBy: String, sortOrder: String)

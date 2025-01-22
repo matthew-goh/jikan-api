@@ -2,6 +2,7 @@ package controllers
 
 import models._
 import models.people.VoicedCharacter
+import models.producers.Title
 import play.api.mvc._
 import play.filters.csrf.CSRF
 import services.JikanService
@@ -53,6 +54,19 @@ class PersonController @Inject()(service: JikanService, val controllerComponents
   def getAnimePositions(id: String): Action[AnyContent] = Action.async { implicit request =>
     service.getPersonProfile(id).value.map{
       case Right(personResult) => Ok(views.html.people.animepositionlist(personResult.data))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
+  def getProducerProfile(id: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getProducerProfile(id).value.map{
+      case Right(producerResult) => {
+        val defaultTitleObject: Option[Title] = producerResult.data.titles.find(t => t.`type` == "Default")
+        defaultTitleObject match {
+          case Some(t) => Ok(views.html.people.producerprofile(producerResult.data, t.title))
+          case None => InternalServerError(views.html.unsuccessful("Error: No default title returned by API"))
+        }
+      }
       case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
     }
   }

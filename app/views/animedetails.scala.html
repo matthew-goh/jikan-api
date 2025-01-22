@@ -51,6 +51,13 @@
       </div>
     }
 
+     @if(anime.studios.nonEmpty){
+       <p><b>@{if(anime.studios.length == 1) "Studio" else "Studios"}:</b>
+         @raw(anime.studios.map{ studio =>
+           s"<a href=\"${routes.PersonController.getProducerProfile(studio.mal_id.toString)}\">${studio.name}</a>"
+         }.mkString(", "))
+       </p>
+    }
     <p><b>Type:</b> @{anime.`type`}</p>
     <p><b>Maturity rating:</b> @anime.rating.getOrElse("N/A")</p>
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ")</p>
