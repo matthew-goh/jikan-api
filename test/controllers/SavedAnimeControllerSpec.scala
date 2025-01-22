@@ -275,15 +275,7 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
 
   "SavedAnimeController .refreshSavedAnime()" should {
     "refresh an anime's MAL details in the database" in {
-      val kindaichiDataRefreshed: AnimeData = AnimeData(2076,"Kindaichi Shounen no Jikenbo",Some("The File of Young Kindaichi"),"TV",Some(148),"Finished Airing",
-        AirDates(Some(OffsetDateTime.parse("1997-04-07T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2000-09-11T00:00:00+00:00").toInstant)),
-        Some("R - 17+ (violence & profanity)"),Some(7.97),Some(8317),
-        Some("""
-         |Hajime Kindaichi's unorganized appearance and lax nature may give the impression of an average high school student, but a book should never be judged by its cover. Hajime is the grandson of the man who was once Japan's greatest detective, and he is also a remarkable sleuth himself.
-         |
-         |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
-         |
-         |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), testImage)
+      val kindaichiDataRefreshed: AnimeData = JikanServiceSpec.kindaichiData1.copy(score = Some(7.97))
 
       val request: FakeRequest[JsValue] = testRequest.buildPost("/api").withBody[JsValue](Json.toJson(kindaichi))
       val createdResult: Future[Result] = TestSavedAnimeController.create()(request)
