@@ -5,6 +5,7 @@ import cats.data.EitherT
 import eu.timepit.refined.auto._
 import models._
 import models.people.{AnimePosition, PersonResult}
+import models.producers.ProducerResult
 import org.scalamock.scalatest.MockFactory
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -194,6 +195,45 @@ class PersonControllerSpec extends BaseSpecWithApplication with MockFactory {
       val searchResult: Future[Result] = TestPersonController.getAnimePositions("99999")(FakeRequest())
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
+    }
+  }
+
+  "PersonController .getProducerProfile()" should {
+    "display a producer's profile" in {
+      (mockJikanService.getProducerProfile(_: String)(_: ExecutionContext))
+        .expects("18", *)
+        .returning(EitherT.rightT(ProducerResult(JikanServiceSpec.testProducerData)))
+        .once()
+
+      val searchResult: Future[Result] = TestPersonController.getProducerProfile("18")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("Toei Animation")
+      contentAsString(searchResult) should include ("<b>Other names:</b> Toei Doga")
+      contentAsString(searchResult) should include ("<b>Established:</b> 23 Jan 1948")
+    }
+
+    "return an InternalServerError if no default title is returned by the API" in {
+      (mockJikanService.getProducerProfile(_: String)(_: ExecutionContext))
+        .expects("18", *)
+        .returning(EitherT.rightT(
+          ProducerResult(JikanServiceSpec.testProducerData.copy(titles = Seq()))
+        ))
+        .once()
+
+      val searchResult: Future[Result] = TestPersonController.getProducerProfile("18")(testRequest.fakeRequest)
+      status(searchResult) shouldBe INTERNAL_SERVER_ERROR
+      contentAsString(searchResult) should include ("Error: No default title returned by API")
+    }
+
+    "return a NotFound if the producer is not found" in {
+      (mockJikanService.getProducerProfile(_: String)(_: ExecutionContext))
+        .expects("-1", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      val searchResult: Future[Result] = TestPersonController.getProducerProfile("-1")(FakeRequest())
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: Not Found")
     }
   }
 }

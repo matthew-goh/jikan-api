@@ -9,6 +9,7 @@ import models.characters._
 import models.episodes._
 import models.news._
 import models.people._
+import models.producers._
 import models.recommendations._
 import models.relations._
 import models.reviews._
@@ -554,6 +555,30 @@ class JikanServiceSpec extends BaseSpec with MockFactory with ScalaFutures with 
       }
     }
   }
+
+  "getProducerProfile()" should {
+    "return a producer's profile" in {
+      (mockConnector.get[ProducerResult](_: String)(_: OFormat[ProducerResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/producers/18", *, *)
+        .returning(EitherT.rightT(JikanServiceSpec.testProducerResultJson.as[ProducerResult]))
+        .once()
+
+      whenReady(testService.getProducerProfile("18").value) { result =>
+        result shouldBe Right(ProducerResult(JikanServiceSpec.testProducerData))
+      }
+    }
+
+    "return an error" in {
+      (mockConnector.get[ProducerResult](_: String)(_: OFormat[ProducerResult], _: ExecutionContext))
+        .expects("https://api.jikan.moe/v4/producers/-1", *, *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "Not Found")))
+        .once()
+
+      whenReady(testService.getProducerProfile("-1").value) { result =>
+        result shouldBe Left(APIError.BadAPIResponse(404, "Not Found"))
+      }
+    }
+  }
 }
 
 object JikanServiceSpec {
@@ -832,6 +857,10 @@ object JikanServiceSpec {
     Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/1/9597.jpg"))),
     testVoiceActorImage
   )
+
+  val testProducerData: ProducerData = ProducerData(18, Seq(Title("Default", "Toei Animation"), Title("Japanese","東映アニメーション"), Title("Synonym", "Toei Doga")),
+    Images(JpgImage(Some("https://cdn.myanimelist.net/s/common/company_logos/33d49515-685a-4133-8ad3-41b09197e88d_600x600_i?s=cd6405cb06051286ce2bfbd4ce645443"))),
+    8054, 946, Some(OffsetDateTime.parse("1948-01-23T00:00:00+00:00").toInstant), Some("Toei Animation (Toei Animation Co., Ltd.) is a Japanese animation studio owned by the Toei Company."))
 
   val testAnimeSearchJsonStr: String =
     """
@@ -3710,4 +3739,36 @@ object JikanServiceSpec {
     """{"data":[{"jpg":{"image_url":"https:\/\/cdn.myanimelist.net\/images\/voiceactors\/1\/9597.jpg"}},
       |{"jpg":{"image_url":"https:\/\/cdn.myanimelist.net\/images\/voiceactors\/2\/31037.jpg"}}]}
       |""".stripMargin)
+
+  val testProducerResultJson: JsValue = Json.parse(
+    """{
+      |  "data": {
+      |    "mal_id": 18,
+      |    "url": "https://myanimelist.net/anime/producer/18/Toei_Animation",
+      |    "titles": [
+      |      {
+      |        "type": "Default",
+      |        "title": "Toei Animation"
+      |      },
+      |      {
+      |        "type": "Japanese",
+      |        "title": "東映アニメーション"
+      |      },
+      |      {
+      |        "type": "Synonym",
+      |        "title": "Toei Doga"
+      |      }
+      |    ],
+      |    "images": {
+      |      "jpg": {
+      |        "image_url": "https://cdn.myanimelist.net/s/common/company_logos/33d49515-685a-4133-8ad3-41b09197e88d_600x600_i?s=cd6405cb06051286ce2bfbd4ce645443"
+      |      }
+      |    },
+      |    "favorites": 8054,
+      |    "established": "1948-01-23T00:00:00+00:00",
+      |    "about": "Toei Animation (Toei Animation Co., Ltd.) is a Japanese animation studio owned by the Toei Company.",
+      |    "count": 946
+      |  }
+      |}""".stripMargin
+  )
 }

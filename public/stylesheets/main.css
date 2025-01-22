@@ -296,6 +296,12 @@ label {
     max-height: 200px;
 }
 
+/* Producer logo */
+.producer-logo {
+    max-height: 200px;
+    margin-bottom: 10px;
+}
+
 /* Charts */
 .bar-chart {
     width: 90%;
