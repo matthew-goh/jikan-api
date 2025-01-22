@@ -680,9 +680,9 @@ object JikanServiceSpec {
     AnimeFavourite(2076, "Kindaichi Shounen no Jikenbo", "TV", 1997, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1702/120440.jpg?s=d0612b378c4a74b0bbca8588229a3975")))),
     AnimeFavourite(407, "Tantei Gakuen Q", "TV", 2003, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1/407.jpg?s=9f41e7b4e410ae8bd9dbbd307e85bb44"))))
   )
-  val testCharacterFavourites: Seq[CharacterFavourite] = Seq(
-    CharacterFavourite(17650, "Kindaichi, Hajime", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e")))),
-    CharacterFavourite(192285, "Isshiki, Totomaru", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"))))
+  val testCharacterFavourites: Seq[BasicProfileInfo] = Seq(
+    BasicProfileInfo(17650, "Kindaichi, Hajime", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e")))),
+    BasicProfileInfo(192285, "Isshiki, Totomaru", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"))))
   )
   val testFavouritesResult: UserFavouritesResult = UserFavouritesResult(UserFavouritesData(testAnimeFavourites, testCharacterFavourites))
 
