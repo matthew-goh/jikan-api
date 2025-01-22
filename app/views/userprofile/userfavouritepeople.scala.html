@@ -1,0 +1,37 @@
+@(peopleFaves: Seq[BasicProfileInfo], username: String)
+@main("User's Favourite People"){
+  <div class="container mb-5">
+    <h1>Jikan API</h1>
+    <p><a class="image-text-link" href="@routes.HomeController.index()">
+      <img class="link-icon" src="@routes.Assets.versioned("images/home-icon.png")" alt="Home Icon">
+      Back to Home
+    </a></p>
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserProfile(username)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/profile-icon.png")" alt="Profile Icon">
+      Back to User Profile
+    </a></p>
+  </div>
+
+  <div class="container mb-5">
+    <h2>@username's Favourite People</h2>
+    @if(peopleFaves.isEmpty) {
+      <p>No favourite people.</p>
+    } else {
+      <p><b>@peopleFaves.length</b> favourite @{if(peopleFaves.length == 1) "person" else "people"} on @username's list:</p>
+
+      <ul class="ul-char-favourites">
+      @for(person <- peopleFaves) {
+        <li class="li-char-favourites">
+          <div class="char-favourites-container">
+            <b><a href="@routes.PersonController.getPersonProfile(person.mal_id.toString)" target="_blank">@person.name</a></b>
+          </div>
+          <div class="char-favourites-container">
+            <a href="@routes.PersonController.getPersonProfile(person.mal_id.toString)" target="_blank">
+              <img class="char-img" src="@person.images.jpg.image_url" alt="Person image"></a>
+          </div>
+        </li>
+      }
+      </ul>
+    }
+  </div>
+}

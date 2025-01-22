@@ -79,7 +79,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     "list the user's favourite anime in default order (ascending title)" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(JikanServiceSpec.testAnimeFavourites, JikanServiceSpec.testCharacterFavourites))))
+        .returning(EitherT.rightT(JikanServiceSpec.testFavouritesResult))
         .once()
 
       val searchResult: Future[Result] = TestUserProfileController.getUserFavouriteAnime("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
@@ -109,7 +109,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     "show 'No anime favourites' if the user has no favourites listed" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq(), Seq()))))
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq(), Seq(), Seq()))))
         .once()
 
       val searchResult: Future[Result] = TestUserProfileController.getUserFavouriteAnime("Emotional-Yam8", "title", "asc")(testRequest.fakeRequest)
@@ -171,7 +171,7 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
     "show 'No favourite characters' if the user has no favourites listed" in {
       (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
         .expects("Emotional-Yam8", *)
-        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq(), Seq()))))
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(Seq(), Seq(), Seq()))))
         .once()
 
       val searchResult: Future[Result] = TestUserProfileController.getUserFavouriteCharacters("Emotional-Yam8")(testRequest.fakeRequest)
@@ -188,6 +188,48 @@ class UserProfileControllerSpec extends BaseSpecWithApplication with MockFactory
       val searchResult: Future[Result] = TestUserProfileController.getUserFavouriteCharacters("abc")(FakeRequest())
       status(searchResult) shouldBe NOT_FOUND
       contentAsString(searchResult) should include ("Bad response from upstream: Resource does not exist")
+    }
+  }
+
+  "UserProfileController .getUserFavouritePeople()" should {
+    "list the user's favourite people" in {
+      val testFavouritePerson: BasicProfileInfo = BasicProfileInfo(5738, "Hisaishi, Joe",
+        Images(JpgImage(Some("https://cdn.myanimelist.net/images/voiceactors/3/38874.jpg?s=5f8d9a3d3e86cad7a4bf9774b7f89aad"))))
+
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(EitherT.rightT(UserFavouritesResult(UserFavouritesData(
+          Seq(), Seq(), Seq(testFavouritePerson)
+        ))))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserFavouritePeople("Emotional-Yam8")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      val searchResultContent = contentAsString(searchResult)
+      searchResultContent should include ("<b>1</b> favourite person on Emotional-Yam8's list")
+      searchResultContent should include ("Hisaishi, Joe")
+    }
+
+    "show 'No favourite characters' if the user has no favourites listed" in {
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("Emotional-Yam8", *)
+        .returning(EitherT.rightT(JikanServiceSpec.testFavouritesResult))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserFavouritePeople("Emotional-Yam8")(testRequest.fakeRequest)
+      status(searchResult) shouldBe OK
+      contentAsString(searchResult) should include ("No favourite people")
+    }
+
+    "return a NotFound if the user is not found" in {
+      (mockJikanService.getUserFavourites(_: String)(_: ExecutionContext))
+        .expects("0", *)
+        .returning(EitherT.leftT(APIError.BadAPIResponse(404, "The username must be at least 3 characters.")))
+        .once()
+
+      val searchResult: Future[Result] = TestUserProfileController.getUserFavouritePeople("0")(FakeRequest())
+      status(searchResult) shouldBe NOT_FOUND
+      contentAsString(searchResult) should include ("Bad response from upstream: The username must be at least 3 characters.")
     }
   }
 

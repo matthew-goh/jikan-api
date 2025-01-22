@@ -41,7 +41,10 @@
       }
     </ul>
     <br>
+  </div>
 
+  <div class="container mb-5">
+    <h3>Favourites and Activity</h3>
     <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouriteAnime(username, "title", "asc")">
       <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
       Favourite anime
@@ -49,6 +52,10 @@
     <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouriteCharacters(username)">
       <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
       Favourite characters
+    </a></p>
+    <p><a class="image-text-link" href="@routes.UserProfileController.getUserFavouritePeople(username)">
+      <img class="link-icon" src="@routes.Assets.versioned("images/star-icon.png")" alt="Star Icon">
+      Favourite people
     </a></p>
     <p><a class="image-text-link" href="@routes.UserProfileController.getUserRecommendedPairings(username, "1")">
       <img class="link-icon" src="@routes.Assets.versioned("images/pairing-icon.png")" alt="Pairing Icon">

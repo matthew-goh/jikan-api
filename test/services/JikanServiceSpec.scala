@@ -684,7 +684,7 @@ object JikanServiceSpec {
     BasicProfileInfo(17650, "Kindaichi, Hajime", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/3/289646.jpg?s=ca273592603d81a2ccac1993d479020e")))),
     BasicProfileInfo(192285, "Isshiki, Totomaru", Images(JpgImage(Some("https://cdn.myanimelist.net/images/characters/11/516963.jpg?s=14c1c7bed8811a93ec27586ce5d281cb"))))
   )
-  val testFavouritesResult: UserFavouritesResult = UserFavouritesResult(UserFavouritesData(testAnimeFavourites, testCharacterFavourites))
+  val testFavouritesResult: UserFavouritesResult = UserFavouritesResult(UserFavouritesData(testAnimeFavourites, testCharacterFavourites, Seq()))
 
   val testUserPairings: Seq[Pairing] = Seq(
     Pairing(

@@ -65,6 +65,13 @@ class UserProfileController @Inject()(service: JikanService, val controllerCompo
     }
   }
 
+  def getUserFavouritePeople(username: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getUserFavourites(username).value.map{
+      case Right(favesResult) => Ok(views.html.userprofile.userfavouritepeople(favesResult.data.people.sortBy(_.name), username))
+      case Left(error) => Status(error.httpResponseStatus)(views.html.unsuccessful(error.reason))
+    }
+  }
+
   def getUserRecommendedPairings(username: String, page: String): Action[AnyContent] = Action.async { implicit request =>
     service.getUserRecommendations(username, page).value.map{
       case Right(pairingsResult) => {
