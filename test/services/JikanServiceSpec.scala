@@ -568,14 +568,14 @@ object JikanServiceSpec {
            |
            |With the help of his best friend, Miyuki Nanase, and the peculiar inspector Isamu Kenmochi, Hajime travels to remote islands, ominous towns, abysmal seas, and other hostile environments. His life's mission is to uncover the truth behind some of the most cunning, grueling, and disturbing mysteries the world has ever faced.
            |
-           |[Written by MAL Rewrite]""".stripMargin),List(Genre(7,"Mystery")),Some(1997), kindaichiImage1)
+           |[Written by MAL Rewrite]""".stripMargin),List(Resource(7,"anime","Mystery")),Some(1997), kindaichiImage1)
 
   val kindaichiData2: AnimeData = AnimeData(22817,"Kindaichi Shounen no Jikenbo Returns",Some("The File of Young Kindaichi Returns"), Seq("Kindaichi Shounen no Jikenbo R", "Kindaichi Case Files Returns", "Kindaichi Case Files R"),
     "TV",Some(25),"Finished Airing", AirDates(Some(OffsetDateTime.parse("2014-04-05T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2014-09-27T00:00:00+00:00").toInstant)),
     Some("R - 17+ (violence & profanity)"),Some(7.54),Some(7902), Some(67),
     Some("""High school student Hajime Kindaichi is the supposed grandson of famous private detective Kosuke Kindaichi. Visiting Hong Kong for a fashion event with Kindaichi, our hero's girlfriend Miyuki is captured by a stranger in a case of mistaken identity. The journey to save Miyuki itself leads to yet another crime case...
            |
-           |(Source: YTV)""".stripMargin),List(Genre(7,"Mystery")),Some(2014), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/7/61271.jpg"))))
+           |(Source: YTV)""".stripMargin),List(Resource(7,"anime","Mystery")),Some(2014), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/7/61271.jpg"))))
 
   val kindaichiData3: AnimeData = AnimeData(3245,"Kindaichi Shounen no Jikenbo Specials",Some("Kindaichi Case Files Special"), Seq("Kindaichi Shounen no Jikenbo: Kyuuketsuki Densetsu Satsujin Jiken", "Kindaichi Case Files: The Case of the Vampire Legend Murder", "Operaza Kan Saigo no Satsujin", "The Third Opera House Murders"),
     "TV Special",Some(2),"Finished Airing", AirDates(Some(OffsetDateTime.parse("2007-11-12T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2007-11-19T00:00:00+00:00").toInstant)),
@@ -583,7 +583,7 @@ object JikanServiceSpec {
     Some("""Kindaichi and the gang are on their way to a hot spring, but get lost and end up at a run down and sinister hotel. They are told that a vampire used to live in the hotel way back. Someone even died (was found with bite marks on the neck).
            |
            |Six years ago a girl was found in the cellar with bite marks on her neck, and the villagers killed her. When one of the guests is killed and Miyuki is attacked by a creature with fangs, it would seem like the vampire is still there...""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1766/121287.jpg"))))
+    List(Resource(7,"anime","Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1766/121287.jpg"))))
 
   val kindaichiData4: AnimeData = AnimeData(31227,"Kindaichi Shounen no Jikenbo Returns 2nd Season",None, Seq("Kindaichi Shounen no Jikenbo R 2", "Kindaichi Case Files Returns", "Kindaichi Case Files R 2", "The File of Young Kindaichi Returns 2nd Season"),
     "TV",Some(22),"Finished Airing", AirDates(Some(OffsetDateTime.parse("2015-10-03T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2016-03-26T00:00:00+00:00").toInstant)),
@@ -591,13 +591,13 @@ object JikanServiceSpec {
     Some("""Hajime Kindaichi once again becomes embroiled in solving baffling cases and deciphering puzzling crimes that would confound the most seasoned of detectives. Whether it's a gruesome murder and shady circumstances surrounding the Japanese board game Go; a perplexing and macabre case involving a mysterious character, "Rosenkreutz," and blue roses; or blood curdling crimes associated with an urban legend at a winter ski resort – Hajime is out to crack them all!
            |
            |(Source: YTV)""".stripMargin),
-    List(Genre(7,"Mystery")),Some(2015), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/75726.jpg"))))
+    List(Resource(7,"anime","Mystery")),Some(2015), Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/75726.jpg"))))
 
   val kindaichiData5: AnimeData = AnimeData(2077,"Kindaichi Shounen no Jikenbo Movie 1: Operazakan - Aratanaru Satsujin",None, Seq("The Cases of Young Kindaichi", "The Case Files of Young Kindaichi Movie", "Kindaichi Shounen no Jikenbo: Operazakan - Aratanaru Satsujin"),
     "Movie",Some(1),"Finished Airing", AirDates(Some(OffsetDateTime.parse("1996-12-14T00:00:00+00:00").toInstant),None),
     Some("PG-13 - Teens 13 or older"),Some(7.1),Some(1731), Some(8),
     Some(s"""Invited for a anniversary celebration, Kindaichi, Miyuki and inspector Kenmochi re-visit the Opera House. There they discover that a play of "The Phantom of the Opera" is being rehearsed again. However, it doesn't take long when members of the acting troupe are killed by the "Phantom". Kindaichi will once again have to solve a murder series in the Opera House. \n\n(Source: ANN)"""),
-    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/10/25372.jpg"))))
+    List(Resource(7,"anime","Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/10/25372.jpg"))))
 
   val kindaichiData6: AnimeData = AnimeData(9154,"Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue", Some("Young Kindaichi's Casebook: Deep Blue Massacre"), Seq(),
     "Movie",Some(1),"Finished Airing", AirDates(Some(OffsetDateTime.parse("1999-08-21T00:00:00+00:00").toInstant),None),
@@ -605,12 +605,12 @@ object JikanServiceSpec {
     Some("""The movie is an alternative version to the "Satsuriku no Deep Blue" arc of the 1997 Kindaichi TV series.
            |
            |Kindaichi, Miyuki and Fumi are invited to the resort of the Deep Blue Island by their senpai Akane, the daughter of the president of the Aizawa Group. A group of criminals infiltrate the hotel diguised as waiters to kill the members of the Aizawa Group. The criminals don't know their boss in person, and they don't know either that he's in the hotel with the members of the Aizawa Group.""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1845/92957.jpg"))))
+    List(Resource(7,"anime","Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1845/92957.jpg"))))
 
   val kindaichiData7: AnimeData = AnimeData(15819,"Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen",None, Seq("Kindaichi Shounen no Jikenbo (2012)", "Kindaichi Case Files: Black Magic Murder Case"),
     "OVA",Some(2),"Finished Airing",  AirDates(Some(OffsetDateTime.parse("2012-12-17T00:00:00+00:00").toInstant),Some(OffsetDateTime.parse("2013-03-15T00:00:00+00:00").toInstant)),
-    Some("R - 17+ (violence & profanity)"),Some(7.01),Some(705), Some(5),
-    Some("Kindaichi is back with another mystery to solve."),List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/3/45070.jpg"))))
+    Some("R - 17+ (violence & profanity)"),Some(7.01),Some(705), Some(5), Some("Kindaichi is back with another mystery to solve."),
+    List(Resource(7,"anime","Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/3/45070.jpg"))))
 
   val kindaichiData8: AnimeData = AnimeData(32376,"Kindaichi Shounen no Jikenbo Returns 2nd Season: Akechi Keibu no Jikenbo",None, Seq("Kindaichi Case Files Returns: The File of Inspector Akechi"),
     "Special",Some(1), "Finished Airing",AirDates(Some(OffsetDateTime.parse("2015-12-26T00:00:00+00:00").toInstant),None),
@@ -618,7 +618,7 @@ object JikanServiceSpec {
     Some("""The official website of the The File of Young Kindaichi Returns anime announced that a one-hour special television episode of the anime titled "The File of Inspector Akechi" (Akechi Keibu no Jikenbo) will air on December 26. The site streamed a trailer on Sunday, which previews the episode and its story. The video also reveals that Yudai Chiba will play Ryūtaro Kobayashi, a junior detective under detective Kengo Akechi.
            |
            |(Source: ANN)""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/77703.jpg"))))
+    List(Resource(7,"anime","Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/9/77703.jpg"))))
 
   val kindaichiData9: AnimeData = AnimeData(21701,"Kindaichi Shounen no Jikenbo: Shinigami Byouin Satsujin Jiken",None, Seq("Shinigami Hospital Murder"),
     "Special",Some(1), "Finished Airing",AirDates(Some(OffsetDateTime.parse("1997-04-27T00:00:00+00:00").toInstant),None),
@@ -626,7 +626,7 @@ object JikanServiceSpec {
     Some("""A one-hour special that aired after a month of the series' absence on television between episodes 23 and 24.
            |
            |Kindaichi will have to investigate in a hospital where series of murder happen.""".stripMargin),
-    List(Genre(7,"Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1256/92959.jpg"))))
+    List(Resource(7,"anime","Mystery")),None, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/1256/92959.jpg"))))
 
   val testSearchData: Seq[AnimeData] = Seq(kindaichiData1, kindaichiData2, kindaichiData3, kindaichiData4, kindaichiData5, kindaichiData6, kindaichiData7, kindaichiData8, kindaichiData9)
   val testAnimeSearchResult: AnimeSearchResult = AnimeSearchResult(testSearchPagination, testSearchData)
@@ -759,10 +759,10 @@ object JikanServiceSpec {
   )
 
   val testRelations: Seq[Relation] = Seq(
-    Relation("Sequel", Seq(RelatedAnime(22817, "anime", "Kindaichi Shounen no Jikenbo Returns"))),
-    Relation("Adaptation", Seq(RelatedAnime(393, "manga", "Kindaichi Shounen no Jikenbo: File Series"))),
-    Relation("Side Story", Seq(RelatedAnime(3245, "anime", "Kindaichi Shounen no Jikenbo Specials"), RelatedAnime(15819, "anime", "Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen"))),
-    Relation("Alternative Version", Seq(RelatedAnime(9154, "anime", "Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue")))
+    Relation("Sequel", Seq(Resource(22817, "anime", "Kindaichi Shounen no Jikenbo Returns"))),
+    Relation("Adaptation", Seq(Resource(393, "manga", "Kindaichi Shounen no Jikenbo: File Series"))),
+    Relation("Side Story", Seq(Resource(3245, "anime", "Kindaichi Shounen no Jikenbo Specials"), Resource(15819, "anime", "Kindaichi Shounen no Jikenbo: Kuromajutsu Satsujin Jiken-hen"))),
+    Relation("Alternative Version", Seq(Resource(9154, "anime", "Kindaichi Shounen no Jikenbo Movie 2: Satsuriku no Deep Blue")))
   )
   val testThemeSongs: ThemeSongs = ThemeSongs(
     Seq("1: \"Confused Memories\" by Yuko Tsuburaya (eps 1-23)",

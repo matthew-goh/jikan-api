@@ -7,7 +7,7 @@ import models._
 import models.recommendations._
 import models.userfavourites._
 import models.userprofile.UserProfileResult
-import models.userupdates.{UserUpdatesData, UserUpdatesEmptyResult, UserUpdatesResult}
+import models.userupdates.UserUpdatesEmptyResult
 import org.scalamock.scalatest.MockFactory
 import play.api.mvc._
 import play.api.test.FakeRequest

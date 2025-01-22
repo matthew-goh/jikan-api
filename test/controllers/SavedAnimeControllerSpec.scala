@@ -41,8 +41,6 @@ class SavedAnimeControllerSpec extends BaseSpecWithApplication with MockFactory 
 
   private lazy val kubikiriUpdated: SavedAnime = kubikiri.copy(episodesWatched = 4, notes = "Closed circle mystery on an island")
 
-  private lazy val testImage: Images = Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/81588.jpg")))
-
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)
   
