@@ -15,15 +15,15 @@
     <h2>Episode details</h2>
     <h3>@anime.title
       @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
-    <h3>Episode @NumberFormat.getInstance().format(episode.mal_id)</h3>
 
     @if(episode.title.isEmpty) {
+      <h3>Episode @NumberFormat.getInstance().format(episode.mal_id)</h3>
       <p>No episode data available.</p>
       @if(anime.episodes.nonEmpty && episode.mal_id > anime.episodes.get) {
         <p>This anime only has @anime.episodes episodes.</p>
       }
     } else {
-      <h4>@episode.title</h4>
+      <h3>Episode @NumberFormat.getInstance().format(episode.mal_id): <i>@episode.title</i></h3>
       <p>
         @if(episode.filler || episode.recap) {
           @if(episode.filler){

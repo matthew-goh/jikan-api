@@ -20,8 +20,8 @@
 
   <div class="container mb-5">
     <h2>User and Score Statistics</h2>
-    <h3>@anime.title</h3>
-    @if(anime.title_english.nonEmpty) { <h3><i>@anime.title_english</i></h3> }
+    <h3>@anime.title
+      @if(anime.title_english.nonEmpty) { <br><i>@anime.title_english</i> }</h3>
 
     <b>Total members:</b> @NumberFormat.getInstance().format(statistics.total)
     <div id="viewers-chart" hidden>@Json.toJson(statistics)</div>

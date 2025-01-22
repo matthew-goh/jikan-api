@@ -305,8 +305,8 @@ label {
 }
 
 .pie-chart {
-    width: 60%;
-    max-width: 1800px;
+    width: 55%;
+    max-width: 1650px;
     padding: 10px;
     margin: auto; /* centre-align */
 }
