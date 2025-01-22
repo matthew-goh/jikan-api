@@ -58,6 +58,13 @@
         }.mkString(", "))
       </p>
     }
+    @if(anime.licensors.nonEmpty){
+      <p><b>@{if(anime.licensors.length == 1) "Licensor" else "Licensors"}:</b>
+        @raw(anime.licensors.map{ producer =>
+          s"<a href=\"${routes.PersonController.getProducerProfile(producer.mal_id.toString)}\" target=\"_blank\">${producer.name}</a>"
+        }.mkString(", "))
+      </p>
+    }
      @if(anime.studios.nonEmpty){
        <p><b>@{if(anime.studios.length == 1) "Studio" else "Studios"}:</b>
          @raw(anime.studios.map{ studio =>
@@ -65,6 +72,7 @@
          }.mkString(", "))
        </p>
     }
+
     <p><b>Type:</b> @{anime.`type`}</p>
     <p><b>Maturity rating:</b> @anime.rating.getOrElse("N/A")</p>
     <p><b>Genres:</b> @anime.genres.map(_.name).mkString(", ")</p>

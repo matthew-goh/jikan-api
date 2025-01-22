@@ -28,7 +28,7 @@
     <img class="producer-logo" src="@producer.images.jpg.image_url" alt="Producer logo">
 
     @if(producer.established.nonEmpty) { <p><b>Established:</b> @{producer.established.get.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p> }
-    <p><b>Anime count:</b> @producer.count</p>
+    <p><b>Anime count:</b> @NumberFormat.getInstance().format(producer.count)</p>
     <p><b>About:</b><br>@raw(producer.about.getOrElse("Not available").replace("\n", "<br>"))</p>
   </div>
 }
