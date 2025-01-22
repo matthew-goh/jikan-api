@@ -53,7 +53,8 @@ class ApplicationControllerSpec extends BaseSpecWithApplication with MockFactory
            |These visits progress as normal until one of the guests is found gruesomely murdered in the night without a single clue as to the identity of the killer or a possible motive. Tensions rise between those on the island as the killer remains at large, and Tomo's assistant takes it upon himself to uncover the culprit's identity before the murderous events progress any further.
            |
            |[Written by MAL Rewrite]""".stripMargin),
-    List(Resource(44, "anime", "Shaft")), List(Resource(8, "anime", "Drama"), Resource(7, "anime", "Mystery"), Resource(37, "anime", "Supernatural")), None, testImage)
+    producers = List(Resource(17, "anime", "Aniplex"), Resource(159, "anime", "Kodansha")), studios = List(Resource(44, "anime", "Shaft")),
+    genres = List(Resource(8, "anime", "Drama"), Resource(7, "anime", "Mystery"), Resource(37, "anime", "Supernatural")), None, testImage)
 
   def countOccurrences(fullContent: String, target: String): Int =
     fullContent.sliding(target.length).count(window => window == target)

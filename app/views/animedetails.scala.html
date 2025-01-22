@@ -51,10 +51,17 @@
       </div>
     }
 
+    @if(anime.producers.nonEmpty){
+      <p><b>@{if(anime.producers.length == 1) "Producer" else "Producers"}:</b>
+        @raw(anime.producers.map{ producer =>
+          s"<a href=\"${routes.PersonController.getProducerProfile(producer.mal_id.toString)}\" target=\"_blank\">${producer.name}</a>"
+        }.mkString(", "))
+      </p>
+    }
      @if(anime.studios.nonEmpty){
        <p><b>@{if(anime.studios.length == 1) "Studio" else "Studios"}:</b>
          @raw(anime.studios.map{ studio =>
-           s"<a href=\"${routes.PersonController.getProducerProfile(studio.mal_id.toString)}\">${studio.name}</a>"
+           s"<a href=\"${routes.PersonController.getProducerProfile(studio.mal_id.toString)}\" target=\"_blank\">${studio.name}</a>"
          }.mkString(", "))
        </p>
     }
