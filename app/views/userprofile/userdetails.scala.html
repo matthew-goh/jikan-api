@@ -20,6 +20,9 @@
     <p><b>Location</b>: @user.location.getOrElse("Not provided")</p>
     <p><b>Date joined</b>: @{user.joined.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}</p>
     <p><b>Last online</b>: @{user.last_online.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"))}</p>
+    @if(user.images.jpg.image_url.nonEmpty) {
+      <img class="char-img-profile" src="@user.images.jpg.image_url" alt="User image">
+    }
     <br>
 
     <h3>Viewing Statistics</h3>

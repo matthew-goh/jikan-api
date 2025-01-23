@@ -673,7 +673,7 @@ object JikanServiceSpec {
   val testUserAnimeStatistics: UserAnimeStatistics = UserAnimeStatistics(21.1, 6.92, 1, 91, 4, 1, 1245)
 
   val testUserProfile: UserProfile = UserProfile(14084682, "Emotional-Yam8", OffsetDateTime.parse("2024-12-16T17:00:29+00:00").toInstant,
-    OffsetDateTime.parse("2021-11-21T00:00:00+00:00").toInstant, None, UserStatisticsObj(testUserAnimeStatistics))
+    OffsetDateTime.parse("2021-11-21T00:00:00+00:00").toInstant, None, UserStatisticsObj(testUserAnimeStatistics), Images(JpgImage(None)))
 
   val testAnimeFavourites: Seq[AnimeFavourite] = Seq(
     AnimeFavourite(33263, "Kubikiri Cycle: Aoiro Savant to Zaregotozukai", "OVA", 2016, Images(JpgImage(Some("https://cdn.myanimelist.net/images/anime/12/81588.jpg?s=96117a32acdeb4883b97db0ae9f24e13")))),
